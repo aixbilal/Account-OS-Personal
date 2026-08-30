@@ -125,3 +125,11 @@ Create additional files only when real project growth proves they are necessary.
 Expected availability: roughly 3–4 focused hours per week.
 
 Finish V2, then freeze major feature work and build Final gradually.
+
+---
+
+## D017 — V1 Foundation Toolchain
+
+**Decision:** V1 uses Tauri 2 with a React 19 + TypeScript + Vite renderer, Tailwind CSS through its official Vite plugin, and Lucide React icons.
+
+Application dependencies are local to the repository and selected for compatibility at scaffold time. UI remains Account OS-specific rather than adopting a large component framework.

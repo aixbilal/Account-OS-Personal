@@ -1,5 +1,15 @@
 # Account OS — Build Plan
 
+```text
+CURRENT VERSION: V1 Desktop
+CURRENT MILESTONE: 2 — Domain Model + Fake Data
+STATUS: Milestone 1 verified
+NEXT TASK: Implement typed domain models and a synthetic dataset
+ESTIMATED REMAINING HOURS: 13 focused milestones
+BLOCKERS: None
+LAST VERIFIED BUILD: 2026-08-30 — frontend build, cargo check, Tauri dev launch
+```
+
 ## Current Strategy
 
 Build sequentially:
@@ -170,17 +180,3 @@ Recommended:
 Account OS should eventually save time rather than become a permanent daily obligation.
 
 ---
-
-# Progress Header
-
-Keep this section updated during development:
-
-```text
-CURRENT VERSION:
-CURRENT MILESTONE:
-STATUS:
-NEXT TASK:
-ESTIMATED REMAINING HOURS:
-BLOCKERS:
-LAST VERIFIED BUILD:
-```
