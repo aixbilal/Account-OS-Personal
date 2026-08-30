@@ -133,3 +133,11 @@ Finish V2, then freeze major feature work and build Final gradually.
 **Decision:** V1 uses Tauri 2 with a React 19 + TypeScript + Vite renderer, Tailwind CSS through its official Vite plugin, and Lucide React icons.
 
 Application dependencies are local to the repository and selected for compatibility at scaffold time. UI remains Account OS-specific rather than adopting a large component framework.
+
+---
+
+## D018 — V1 Local Vault Cryptography
+
+**Decision:** The V1 vault uses Argon2id (64 MiB memory, 3 iterations, parallelism 1) to derive a 32-byte vault key from the master password and a random 16-byte salt. Vault payloads use XChaCha20-Poly1305 authenticated encryption with a fresh random 24-byte nonce for every write.
+
+The master password is used only during create/unlock and is not retained. The derived vault key stays only in locked-process memory while the vault is unlocked, then is zeroized on lock. The versioned encrypted envelope and its KDF/encryption metadata are stored in Tauri's app-data directory; writes use an encrypted, same-directory temporary file followed by replacement. No plaintext vault or backup file is written.

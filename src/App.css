@@ -124,7 +124,9 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   background: var(--surface-1);
   font-size: 11px;
   font-weight: 600;
+  cursor: pointer;
 }
+.vault-state:hover { border-color: var(--line-strong); color: var(--text); }
 
 .placeholder-panel {
   display: flex;
@@ -152,6 +154,23 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .account-summary > p { margin: 4px 0 0; color: var(--text-muted); font-size: 11px; }
 .account-metadata { display: flex; gap: 13px; margin-top: 9px; color: var(--text-faint); font-size: 10px; }
 .account-metadata span { display: inline-flex; min-width: 0; align-items: center; gap: 5px; }
+.vault-empty { border: 1px dashed var(--line-strong); border-radius: 12px; padding: 28px; color: var(--text-muted); background: rgba(21, 25, 34, 0.55); }
+.vault-empty h3 { margin: 0; color: var(--text); font-size: 14px; font-weight: 620; }
+.vault-empty p { margin: 7px 0 0; font-size: 12px; }
+.unlock-screen { display: grid; min-height: 100vh; place-items: center; padding: 28px; color: var(--text); background: radial-gradient(circle at 50% -20%, rgba(84, 103, 160, 0.16), transparent 38%), var(--surface-0); }
+.unlock-card { width: min(100%, 420px); border: 1px solid var(--line); border-radius: 16px; padding: 30px; background: var(--surface-1); box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22); }
+.unlock-card > .brand-mark { margin-bottom: 23px; }
+.unlock-card h1 { margin: 10px 0 10px; font-size: 27px; font-weight: 600; letter-spacing: -0.035em; }
+.unlock-description { margin: 0; color: var(--text-muted); font-size: 13px; line-height: 1.65; }
+.unlock-card form { display: grid; gap: 8px; margin-top: 24px; }
+.unlock-card label { margin-top: 6px; color: var(--text-muted); font-size: 11px; font-weight: 600; }
+.unlock-card input { width: 100%; border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 11px; color: var(--text); background: var(--surface-0); }
+.unlock-card input:focus { border-color: var(--accent); outline: none; }
+.unlock-submit { margin-top: 12px; border: 1px solid rgba(127, 156, 245, 0.4); border-radius: 8px; padding: 10px 12px; color: #eef1ff; background: #536fc1; cursor: pointer; font-size: 12px; font-weight: 650; }
+.unlock-submit:hover:not(:disabled) { background: #607ed6; }
+.unlock-submit:disabled { cursor: wait; opacity: 0.72; }
+.form-error { margin: 8px 0 0; color: #ef9a9a; font-size: 12px; }
+.unlock-footnote { margin: 20px 0 0; color: var(--text-faint); font-size: 11px; }
 .placeholder-icon {
   display: grid;
   width: 58px;

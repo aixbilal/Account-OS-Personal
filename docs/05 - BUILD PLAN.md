@@ -2,12 +2,12 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 3 — Encrypted Local Vault
-STATUS: Milestone 2 verified
-NEXT TASK: Implement the Rust encrypted vault boundary and unlock flow
-ESTIMATED REMAINING HOURS: 12 focused milestones
+CURRENT MILESTONE: 4 — Account CRUD
+STATUS: Milestone 3 verified
+NEXT TASK: Add, edit, delete, and persist accounts through the unlocked encrypted vault
+ESTIMATED REMAINING HOURS: 11 focused milestones
 BLOCKERS: None
-LAST VERIFIED BUILD: 2026-08-30 — frontend build, cargo check, Tauri dev launch
+LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```
 
 ## Current Strategy

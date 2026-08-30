@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useState } from "react";
 import {
   Boxes,
   CircleUserRound,
@@ -10,9 +11,17 @@ import {
 } from "lucide-react";
 import { AccountList } from "./components/AccountList";
 import { fakeVault } from "./data/fakeVault";
+import type { VaultData } from "./domain/types";
 import "./App.css";
 
 type View = "vault" | "map" | "settings";
+
+interface NativeVaultStatus {
+  hasVault: boolean;
+  unlocked: boolean;
+}
+
+const isTauriRuntime = "__TAURI_INTERNALS__" in window;
 
 const navigation: Array<{ id: View; label: string; icon: typeof Vault }> = [
   { id: "vault", label: "Vault", icon: Vault },
@@ -49,9 +58,59 @@ const viewContent: Record<
 
 function App() {
   const [activeView, setActiveView] = useState<View>("vault");
+  const [vaultStatus, setVaultStatus] = useState<NativeVaultStatus | null>(null);
+  const [vaultData, setVaultData] = useState<VaultData | null>(null);
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
-  const relationshipCount = fakeVault.relationships.length;
+  const displayedVault = vaultData ?? (isTauriRuntime ? null : fakeVault);
+  const relationshipCount = displayedVault?.relationships.length ?? 0;
+
+  useEffect(() => {
+    if (!isTauriRuntime) {
+      setVaultStatus({ hasVault: true, unlocked: true });
+      return;
+    }
+
+    invoke<NativeVaultStatus>("vault_status")
+      .then(setVaultStatus)
+      .catch(() => setVaultStatus({ hasVault: false, unlocked: false }));
+  }, []);
+
+  async function handleCreateVault(password: string) {
+    const vault = await invoke<VaultData>("create_vault", { password });
+    setVaultData(vault);
+    setVaultStatus({ hasVault: true, unlocked: true });
+  }
+
+  async function handleUnlockVault(password: string) {
+    const vault = await invoke<VaultData>("unlock_vault", { password });
+    setVaultData(vault);
+    setVaultStatus({ hasVault: true, unlocked: true });
+  }
+
+  async function handleLockVault() {
+    if (!isTauriRuntime) {
+      return;
+    }
+
+    await invoke("lock_vault");
+    setVaultData(null);
+    setVaultStatus({ hasVault: true, unlocked: false });
+  }
+
+  if (!vaultStatus) {
+    return <main className="unlock-screen">Preparing the local vault…</main>;
+  }
+
+  if (!vaultStatus.unlocked) {
+    return (
+      <UnlockScreen
+        hasVault={vaultStatus.hasVault}
+        onCreate={handleCreateVault}
+        onUnlock={handleUnlockVault}
+      />
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -101,10 +160,15 @@ function App() {
             <p className="section-kicker">Account OS / V1</p>
             <h1>{navigation.find((item) => item.id === activeView)?.label}</h1>
           </div>
-          <div className="vault-state" aria-label="Vault state: locked" role="status">
+          <button
+            className="vault-state"
+            onClick={handleLockVault}
+            type="button"
+            aria-label={isTauriRuntime ? "Lock local vault" : "Web preview mode"}
+          >
             <LockKeyhole size={15} />
-            Locked
-          </div>
+            {isTauriRuntime ? "Lock vault" : "Preview mode"}
+          </button>
         </header>
 
         {activeView === "vault" ? (
@@ -115,14 +179,21 @@ function App() {
                 <h2 id="view-title">{content.title}</h2>
                 <p>{content.description}</p>
               </div>
-              <span className="synthetic-badge">Synthetic data only</span>
+              {!isTauriRuntime && <span className="synthetic-badge">Synthetic preview only</span>}
             </div>
             <div className="vault-summary" aria-label="Synthetic vault summary">
-              <span>{fakeVault.accounts.length} accounts</span>
+              <span>{displayedVault?.accounts.length ?? 0} accounts</span>
               <span>{relationshipCount} relationships</span>
-              <span>{fakeVault.categories.length} categories</span>
+              <span>{displayedVault?.categories.length ?? 0} categories</span>
             </div>
-            <AccountList accounts={fakeVault.accounts} />
+            {displayedVault && displayedVault.accounts.length > 0 ? (
+              <AccountList accounts={displayedVault.accounts} />
+            ) : (
+              <div className="vault-empty">
+                <h3>Your local vault is ready.</h3>
+                <p>Add your first synthetic account in the next milestone.</p>
+              </div>
+            )}
           </section>
         ) : (
           <section className="placeholder-panel" aria-labelledby="view-title">
@@ -152,3 +223,92 @@ function App() {
 }
 
 export default App;
+
+interface UnlockScreenProps {
+  hasVault: boolean;
+  onCreate: (password: string) => Promise<void>;
+  onUnlock: (password: string) => Promise<void>;
+}
+
+function UnlockScreen({ hasVault, onCreate, onUnlock }: UnlockScreenProps) {
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const creating = !hasVault;
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+
+    if (password.length < 12) {
+      setError("Use a master password with at least 12 characters.");
+      return;
+    }
+    if (creating && password !== confirmation) {
+      setError("The master password confirmation does not match.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (creating) {
+        await onCreate(password);
+      } else {
+        await onUnlock(password);
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Unable to access the local vault.");
+    } finally {
+      setPassword("");
+      setConfirmation("");
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <main className="unlock-screen">
+      <section className="unlock-card" aria-labelledby="unlock-title">
+        <div className="brand-mark" aria-hidden="true">
+          <LockKeyhole size={22} strokeWidth={1.8} />
+        </div>
+        <p className="eyebrow">Local-first desktop vault</p>
+        <h1 id="unlock-title">{creating ? "Create your local vault" : "Unlock Account OS"}</h1>
+        <p className="unlock-description">
+          {creating
+            ? "Choose a master password. It stays on this device and is used only to encrypt your local vault."
+            : "Enter your master password to decrypt your local vault on this device."}
+        </p>
+        <form onSubmit={submit}>
+          <label htmlFor="master-password">Master password</label>
+          <input
+            autoComplete={creating ? "new-password" : "current-password"}
+            id="master-password"
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            type="password"
+            value={password}
+          />
+          {creating && (
+            <>
+              <label htmlFor="master-password-confirmation">Confirm master password</label>
+              <input
+                autoComplete="new-password"
+                id="master-password-confirmation"
+                onChange={(event) => setConfirmation(event.target.value)}
+                required
+                type="password"
+                value={confirmation}
+              />
+            </>
+          )}
+          {error && <p className="form-error" role="alert">{error}</p>}
+          <button className="unlock-submit" disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Working…" : creating ? "Create encrypted vault" : "Unlock vault"}
+          </button>
+        </form>
+        <p className="unlock-footnote">Account OS does not use cloud sync in V1.</p>
+      </section>
+    </main>
+  );
+}
