@@ -44,4 +44,22 @@ describe("Account OS shell", () => {
     await user.click(screen.getByRole("button", { name: "Delete account" }));
     expect(screen.queryByText("Updated Account TEST")).not.toBeInTheDocument();
   });
+
+  it("filters synthetic accounts by search, category, and authentication method", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.type(screen.getByLabelText("Search accounts"), "Claude");
+    expect(screen.getByText("Claude Personal TEST")).toBeInTheDocument();
+    expect(screen.queryByText("Google Personal TEST")).not.toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText("Search accounts"));
+    await user.selectOptions(screen.getByLabelText("Filter by category"), "Development");
+    expect(screen.getByText("GitHub TEST")).toBeInTheDocument();
+    expect(screen.queryByText("Facebook TEST")).not.toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText("Filter by authentication method"), "GitHub OAuth");
+    expect(screen.getByText("Supabase TEST")).toBeInTheDocument();
+    expect(screen.queryByText("GitHub TEST")).not.toBeInTheDocument();
+  });
 });

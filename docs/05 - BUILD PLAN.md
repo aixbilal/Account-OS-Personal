@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 6 — Search / Filter / Categories
-STATUS: Milestone 5 verified
-NEXT TASK: Add local search plus category and authentication filters
-ESTIMATED REMAINING HOURS: 9 focused milestones
+CURRENT MILESTONE: 7 — Relationship Engine
+STATUS: Milestone 6 verified
+NEXT TASK: Add relationship create, edit, delete, and domain queries
+ESTIMATED REMAINING HOURS: 8 focused milestones
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```

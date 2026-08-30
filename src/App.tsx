@@ -12,7 +12,7 @@ import {
 import { AccountList } from "./components/AccountList";
 import { AccountEditor, type AccountDraft } from "./components/AccountEditor";
 import { fakeVault } from "./data/fakeVault";
-import type { Account, VaultData } from "./domain/types";
+import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountCategory, type AuthenticationMethod, type VaultData } from "./domain/types";
 import "./App.css";
 
 type View = "vault" | "map" | "settings";
@@ -62,10 +62,20 @@ function App() {
   const [vaultStatus, setVaultStatus] = useState<NativeVaultStatus | null>(null);
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
   const [editingAccount, setEditingAccount] = useState<Account | null | undefined>(undefined);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<AccountCategory | "all">("all");
+  const [authenticationFilter, setAuthenticationFilter] = useState<AuthenticationMethod | "all">("all");
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
   const displayedVault = vaultData ?? (isTauriRuntime ? null : fakeVault);
   const relationshipCount = displayedVault?.relationships.length ?? 0;
+  const visibleAccounts = (displayedVault?.accounts ?? []).filter((account) => {
+    const query = search.trim().toLowerCase();
+    const searchable = [account.serviceName, account.accountName, account.email, account.username, account.category].join(" ").toLowerCase();
+    return (!query || searchable.includes(query))
+      && (categoryFilter === "all" || account.category === categoryFilter)
+      && (authenticationFilter === "all" || account.authenticationMethod === authenticationFilter);
+  });
 
   useEffect(() => {
     if (!isTauriRuntime) {
@@ -225,7 +235,19 @@ function App() {
               <span>{displayedVault?.categories.length ?? 0} categories</span>
             </div>
             {displayedVault && displayedVault.accounts.length > 0 ? (
-              <AccountList accounts={displayedVault.accounts} onSelect={setEditingAccount} />
+              <>
+                <div className="vault-filters" aria-label="Account filters">
+                  <input aria-label="Search accounts" onChange={(event) => setSearch(event.target.value)} placeholder="Search accounts" type="search" value={search} />
+                  <select aria-label="Filter by category" onChange={(event) => setCategoryFilter(event.target.value as AccountCategory | "all")} value={categoryFilter}>
+                    <option value="all">All categories</option>{ACCOUNT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
+                  </select>
+                  <select aria-label="Filter by authentication method" onChange={(event) => setAuthenticationFilter(event.target.value as AuthenticationMethod | "all")} value={authenticationFilter}>
+                    <option value="all">All authentication methods</option>{AUTHENTICATION_METHODS.map((method) => <option key={method}>{method}</option>)}
+                  </select>
+                  <span>{visibleAccounts.length} shown</span>
+                </div>
+                {visibleAccounts.length > 0 ? <AccountList accounts={visibleAccounts} onSelect={setEditingAccount} /> : <div className="vault-empty"><h3>No matching accounts.</h3><p>Change the search or filters, or add a synthetic account.</p></div>}
+              </>
             ) : (
               <div className="vault-empty">
                 <h3>Your local vault is ready.</h3>

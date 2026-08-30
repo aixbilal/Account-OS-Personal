@@ -145,6 +145,10 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .synthetic-badge { flex: 0 0 auto; border: 1px solid rgba(113, 196, 154, 0.24); border-radius: 999px; padding: 7px 10px; color: var(--success); background: rgba(113, 196, 154, 0.08); font-size: 11px; font-weight: 650; }
 .vault-summary { display: flex; gap: 18px; margin: 27px 0 14px; color: var(--text-faint); font-size: 11px; }
 .vault-summary span + span { border-left: 1px solid var(--line); padding-left: 18px; }
+.vault-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
+.vault-filters input, .vault-filters select { border: 1px solid var(--line); border-radius: 7px; padding: 8px 9px; color: var(--text); background: var(--surface-1); font: inherit; font-size: 11px; }
+.vault-filters input { min-width: 210px; }
+.vault-filters span { margin-left: auto; color: var(--text-faint); font-size: 11px; }
 .account-list { display: grid; gap: 8px; }
 .account-card { display: flex; width: 100%; align-items: center; gap: 13px; border: 1px solid var(--line); border-radius: 12px; padding: 14px; color: inherit; background: var(--surface-1); cursor: pointer; text-align: left; }
 .account-card:hover { border-color: var(--line-strong); background: var(--surface-2); }
@@ -246,6 +250,8 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .screen-intro { align-items: flex-start; flex-direction: column; }
   .vault-intro-actions { flex-wrap: wrap; }
   .vault-summary, .account-metadata { flex-wrap: wrap; }
+  .vault-filters input { min-width: 0; }
+  .vault-filters span { width: 100%; margin-left: 0; }
   .form-grid { grid-template-columns: 1fr; }
   .editor-actions { align-items: flex-start; gap: 12px; flex-direction: column-reverse; }
 }
