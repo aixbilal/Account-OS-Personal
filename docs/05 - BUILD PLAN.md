@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 5 — Credential UX
-STATUS: Milestone 4 verified
-NEXT TASK: Add password reveal/hide, copy, and a local password generator without logging credentials
-ESTIMATED REMAINING HOURS: 10 focused milestones
+CURRENT MILESTONE: 6 — Search / Filter / Categories
+STATUS: Milestone 5 verified
+NEXT TASK: Add local search plus category and authentication filters
+ESTIMATED REMAINING HOURS: 9 focused milestones
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account } from "../domain/types";
+import { generatePassword } from "../domain/passwordGenerator";
 
 export type AccountDraft = Omit<Account, "id" | "createdAt" | "updatedAt">;
 
@@ -28,6 +29,7 @@ export function AccountEditor({ account, onClose, onDelete, onSave }: AccountEdi
   const [draft, setDraft] = useState<AccountDraft>(account ?? emptyDraft);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
 
   useEffect(() => setDraft(account ?? emptyDraft), [account]);
 
@@ -81,7 +83,12 @@ export function AccountEditor({ account, onClose, onDelete, onSave }: AccountEdi
             <SelectField label="Authentication" value={draft.authenticationMethod} values={AUTHENTICATION_METHODS} onChange={(value) => update("authenticationMethod", value as AccountDraft["authenticationMethod"])} />
             <Field label="Email" type="email" value={draft.email} onChange={(value) => update("email", value)} />
             <Field label="Username" value={draft.username} onChange={(value) => update("username", value)} />
-            <Field label="Password / sensitive value" type="password" value={draft.password} onChange={(value) => update("password", value)} />
+            <CredentialField
+              onChange={(value) => update("password", value)}
+              passwordVisible={passwordVisible}
+              setPasswordVisible={setPasswordVisible}
+              value={draft.password}
+            />
             <Field label="2FA metadata" value={draft.twoFactorInformation} onChange={(value) => update("twoFactorInformation", value)} />
           </div>
           <Field label="Recovery information" value={draft.recoveryInformation} onChange={(value) => update("recoveryInformation", value)} />
@@ -103,4 +110,48 @@ function Field({ label, onChange, required, type = "text", value }: { label: str
 
 function SelectField({ label, onChange, value, values }: { label: string; onChange: (value: string) => void; value: string; values: readonly string[] }) {
   return <label className="field-label">{label}<select onChange={(event) => onChange(event.target.value)} value={value}>{values.map((item) => <option key={item}>{item}</option>)}</select></label>;
+}
+
+function CredentialField({ onChange, passwordVisible, setPasswordVisible, value }: { onChange: (value: string) => void; passwordVisible: boolean; setPasswordVisible: (visible: boolean) => void; value: string }) {
+  const [length, setLength] = useState(20);
+  const [uppercase, setUppercase] = useState(true);
+  const [lowercase, setLowercase] = useState(true);
+  const [numbers, setNumbers] = useState(true);
+  const [symbols, setSymbols] = useState(true);
+  const [copyStatus, setCopyStatus] = useState("");
+
+  async function copyPassword() {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyStatus("Copied");
+    } catch {
+      setCopyStatus("Copy unavailable");
+    }
+  }
+
+  function generate() {
+    try {
+      onChange(generatePassword({ length, uppercase, lowercase, numbers, symbols }));
+      setPasswordVisible(true);
+    } catch (reason) {
+      setCopyStatus(reason instanceof Error ? reason.message : "Unable to generate a password.");
+    }
+  }
+
+  return <div className="credential-field">
+    <label className="field-label">Password / sensitive value
+      <div className="secret-input"><input onChange={(event) => onChange(event.target.value)} type={passwordVisible ? "text" : "password"} value={value} /><button onClick={() => setPasswordVisible(!passwordVisible)} type="button">{passwordVisible ? "Hide" : "Reveal"}</button></div>
+    </label>
+    <div className="credential-controls">
+      <label>Length <input aria-label="Password length" max="64" min="8" onChange={(event) => setLength(Number(event.target.value))} type="number" value={length} /></label>
+      <label><input checked={uppercase} onChange={(event) => setUppercase(event.target.checked)} type="checkbox" />Uppercase</label>
+      <label><input checked={lowercase} onChange={(event) => setLowercase(event.target.checked)} type="checkbox" />Lowercase</label>
+      <label><input checked={numbers} onChange={(event) => setNumbers(event.target.checked)} type="checkbox" />Numbers</label>
+      <label><input checked={symbols} onChange={(event) => setSymbols(event.target.checked)} type="checkbox" />Symbols</label>
+      <button className="secondary-button" onClick={generate} type="button">Generate</button>
+      <button className="secondary-button" disabled={!value} onClick={copyPassword} type="button">Copy</button>
+      {copyStatus && <span role="status">{copyStatus}</span>}
+    </div>
+  </div>;
 }
