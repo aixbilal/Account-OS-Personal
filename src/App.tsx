@@ -10,8 +10,9 @@ import {
   Vault,
 } from "lucide-react";
 import { AccountList } from "./components/AccountList";
+import { AccountEditor, type AccountDraft } from "./components/AccountEditor";
 import { fakeVault } from "./data/fakeVault";
-import type { VaultData } from "./domain/types";
+import type { Account, VaultData } from "./domain/types";
 import "./App.css";
 
 type View = "vault" | "map" | "settings";
@@ -60,6 +61,7 @@ function App() {
   const [activeView, setActiveView] = useState<View>("vault");
   const [vaultStatus, setVaultStatus] = useState<NativeVaultStatus | null>(null);
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
+  const [editingAccount, setEditingAccount] = useState<Account | null | undefined>(undefined);
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
   const displayedVault = vaultData ?? (isTauriRuntime ? null : fakeVault);
@@ -96,6 +98,39 @@ function App() {
     await invoke("lock_vault");
     setVaultData(null);
     setVaultStatus({ hasVault: true, unlocked: false });
+  }
+
+  async function persistVault(nextVault: VaultData) {
+    const persisted = isTauriRuntime
+      ? await invoke<VaultData>("save_vault", { vault: nextVault })
+      : nextVault;
+    setVaultData(persisted);
+  }
+
+  async function saveAccount(draft: AccountDraft) {
+    if (!displayedVault) return;
+    const now = new Date().toISOString();
+    const isEditing = Boolean(editingAccount);
+    const account: Account = isEditing
+      ? { ...editingAccount!, ...draft, updatedAt: now }
+      : { ...draft, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
+    await persistVault({
+      ...displayedVault,
+      accounts: isEditing
+        ? displayedVault.accounts.map((item) => item.id === account.id ? account : item)
+        : [account, ...displayedVault.accounts],
+    });
+  }
+
+  async function deleteAccount(account: Account) {
+    if (!displayedVault) return;
+    await persistVault({
+      ...displayedVault,
+      accounts: displayedVault.accounts.filter((item) => item.id !== account.id),
+      relationships: displayedVault.relationships.filter((relationship) =>
+        relationship.sourceAccountId !== account.id && relationship.targetAccountId !== account.id,
+      ),
+    });
   }
 
   if (!vaultStatus) {
@@ -179,7 +214,10 @@ function App() {
                 <h2 id="view-title">{content.title}</h2>
                 <p>{content.description}</p>
               </div>
-              {!isTauriRuntime && <span className="synthetic-badge">Synthetic preview only</span>}
+              <div className="vault-intro-actions">
+                {!isTauriRuntime && <span className="synthetic-badge">Synthetic preview only</span>}
+                <button className="add-account-button" onClick={() => setEditingAccount(null)} type="button">Add account</button>
+              </div>
             </div>
             <div className="vault-summary" aria-label="Synthetic vault summary">
               <span>{displayedVault?.accounts.length ?? 0} accounts</span>
@@ -187,11 +225,12 @@ function App() {
               <span>{displayedVault?.categories.length ?? 0} categories</span>
             </div>
             {displayedVault && displayedVault.accounts.length > 0 ? (
-              <AccountList accounts={displayedVault.accounts} />
+              <AccountList accounts={displayedVault.accounts} onSelect={setEditingAccount} />
             ) : (
               <div className="vault-empty">
                 <h3>Your local vault is ready.</h3>
-                <p>Add your first synthetic account in the next milestone.</p>
+                <p>Add a synthetic account to begin organizing your local vault.</p>
+                <button className="add-account-button" onClick={() => setEditingAccount(null)} type="button">Add account</button>
               </div>
             )}
           </section>
@@ -218,6 +257,14 @@ function App() {
           </section>
         )}
       </main>
+      {editingAccount !== undefined && (
+        <AccountEditor
+          account={editingAccount}
+          onClose={() => setEditingAccount(undefined)}
+          onDelete={deleteAccount}
+          onSave={saveAccount}
+        />
+      )}
     </div>
   );
 }

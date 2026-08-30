@@ -3,13 +3,14 @@ import type { Account } from "../domain/types";
 
 interface AccountListProps {
   accounts: Account[];
+  onSelect: (account: Account) => void;
 }
 
-export function AccountList({ accounts }: AccountListProps) {
+export function AccountList({ accounts, onSelect }: AccountListProps) {
   return (
     <section className="account-list" aria-label="Synthetic account list">
       {accounts.map((account) => (
-        <article className="account-card" key={account.id}>
+        <button className="account-card" key={account.id} onClick={() => onSelect(account)} type="button">
           <div className="account-avatar" aria-hidden="true">
             {account.serviceName.slice(0, 1)}
           </div>
@@ -30,7 +31,7 @@ export function AccountList({ accounts }: AccountListProps) {
               </span>
             </div>
           </div>
-        </article>
+        </button>
       ))}
     </section>
   );

@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 4 — Account CRUD
-STATUS: Milestone 3 verified
-NEXT TASK: Add, edit, delete, and persist accounts through the unlocked encrypted vault
-ESTIMATED REMAINING HOURS: 11 focused milestones
+CURRENT MILESTONE: 5 — Credential UX
+STATUS: Milestone 4 verified
+NEXT TASK: Add password reveal/hide, copy, and a local password generator without logging credentials
+ESTIMATED REMAINING HOURS: 10 focused milestones
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```

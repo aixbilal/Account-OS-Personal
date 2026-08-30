@@ -83,6 +83,29 @@ impl VaultData {
     }
 }
 
+pub fn validate_vault(vault: &VaultData) -> Result<(), VaultError> {
+    if vault.format_version != VAULT_FORMAT_VERSION
+        || vault.accounts.iter().any(|account| {
+            account.id.trim().is_empty()
+                || account.service_name.trim().is_empty()
+                || account.account_name.trim().is_empty()
+        })
+    {
+        return Err(VaultError::InvalidData);
+    }
+
+    let mut ids: Vec<&str> = vault
+        .accounts
+        .iter()
+        .map(|account| account.id.as_str())
+        .collect();
+    ids.sort_unstable();
+    if ids.windows(2).any(|pair| pair[0] == pair[1]) {
+        return Err(VaultError::InvalidData);
+    }
+    Ok(())
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VaultStatus {
@@ -122,6 +145,7 @@ pub enum VaultError {
     AlreadyExists,
     Missing,
     InvalidPasswordOrData,
+    InvalidData,
     Storage,
 }
 
@@ -141,6 +165,7 @@ impl VaultError {
             Self::InvalidPasswordOrData => {
                 "Unable to unlock the vault. Check the master password or vault file."
             }
+            Self::InvalidData => "The vault data could not be saved.",
             Self::Storage => "The local vault could not be saved safely.",
         }
     }
@@ -182,6 +207,7 @@ impl VaultService {
     }
 
     pub fn save_unlocked(&self, vault: &UnlockedVault) -> Result<(), VaultError> {
+        validate_vault(&vault.data)?;
         let encrypted = encrypt_vault(&vault.data, &vault.kdf, vault.key.as_ref())?;
         self.atomic_write(&encrypted)
     }

@@ -3,7 +3,7 @@ mod vault;
 use std::sync::Mutex;
 
 use tauri::{Manager, State};
-use vault::{UnlockedVault, VaultData, VaultService, VaultStatus};
+use vault::{validate_vault, UnlockedVault, VaultData, VaultService, VaultStatus};
 
 struct VaultState {
     service: VaultService,
@@ -62,6 +62,24 @@ fn lock_vault(state: State<'_, VaultState>) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn save_vault(vault: VaultData, state: State<'_, VaultState>) -> Result<VaultData, String> {
+    validate_vault(&vault).map_err(|error| error.public_message())?;
+    let mut unlocked = state
+        .unlocked_vault
+        .lock()
+        .map_err(|_| "The local vault is temporarily unavailable.".to_string())?;
+    let unlocked = unlocked
+        .as_mut()
+        .ok_or_else(|| "Unlock the local vault before saving changes.".to_string())?;
+    unlocked.data = vault;
+    state
+        .service
+        .save_unlocked(unlocked)
+        .map_err(|error| error.public_message())?;
+    Ok(unlocked.data.clone())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -77,7 +95,8 @@ pub fn run() {
             vault_status,
             create_vault,
             unlock_vault,
-            lock_vault
+            lock_vault,
+            save_vault
         ])
         .run(tauri::generate_context!())
         .expect("error while running Account OS");
