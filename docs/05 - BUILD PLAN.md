@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 2 — Domain Model + Fake Data
-STATUS: Milestone 1 verified
-NEXT TASK: Implement typed domain models and a synthetic dataset
-ESTIMATED REMAINING HOURS: 13 focused milestones
+CURRENT MILESTONE: 3 — Encrypted Local Vault
+STATUS: Milestone 2 verified
+NEXT TASK: Implement the Rust encrypted vault boundary and unlock flow
+ESTIMATED REMAINING HOURS: 12 focused milestones
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build, cargo check, Tauri dev launch
 ```

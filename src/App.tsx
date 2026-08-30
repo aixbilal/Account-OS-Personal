@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   Vault,
 } from "lucide-react";
+import { AccountList } from "./components/AccountList";
+import { fakeVault } from "./data/fakeVault";
 import "./App.css";
 
 type View = "vault" | "map" | "settings";
@@ -49,6 +51,7 @@ function App() {
   const [activeView, setActiveView] = useState<View>("vault");
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
+  const relationshipCount = fakeVault.relationships.length;
 
   return (
     <div className="app-shell">
@@ -104,18 +107,45 @@ function App() {
           </div>
         </header>
 
-        <section className="placeholder-panel" aria-labelledby="view-title">
-          <div className="placeholder-icon" aria-hidden="true">
-            <ContentIcon size={30} strokeWidth={1.6} />
-          </div>
-          <p className="eyebrow">{content.eyebrow}</p>
-          <h2 id="view-title">{content.title}</h2>
-          <p>{content.description}</p>
-          <div className="milestone-note">
-            <span>Foundation ready</span>
-            <p>Functional vault features begin in the next milestone.</p>
-          </div>
-        </section>
+        {activeView === "vault" ? (
+          <section className="vault-screen" aria-labelledby="view-title">
+            <div className="screen-intro">
+              <div>
+                <p className="eyebrow">{content.eyebrow}</p>
+                <h2 id="view-title">{content.title}</h2>
+                <p>{content.description}</p>
+              </div>
+              <span className="synthetic-badge">Synthetic data only</span>
+            </div>
+            <div className="vault-summary" aria-label="Synthetic vault summary">
+              <span>{fakeVault.accounts.length} accounts</span>
+              <span>{relationshipCount} relationships</span>
+              <span>{fakeVault.categories.length} categories</span>
+            </div>
+            <AccountList accounts={fakeVault.accounts} />
+          </section>
+        ) : (
+          <section className="placeholder-panel" aria-labelledby="view-title">
+            <div className="placeholder-icon" aria-hidden="true">
+              <ContentIcon size={30} strokeWidth={1.6} />
+            </div>
+            <p className="eyebrow">{content.eyebrow}</p>
+            <h2 id="view-title">{content.title}</h2>
+            <p>{content.description}</p>
+            {activeView === "map" && (
+              <div className="milestone-note">
+                <span>{relationshipCount} synthetic links ready</span>
+                <p>The interactive graph is planned for Milestone 8.</p>
+              </div>
+            )}
+            {activeView === "settings" && (
+              <div className="milestone-note">
+                <span>Foundation ready</span>
+                <p>Local vault preferences arrive with encrypted storage.</p>
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );
