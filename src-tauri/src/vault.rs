@@ -555,4 +555,26 @@ mod tests {
             Err(VaultError::InvalidData)
         ));
     }
+
+    #[test]
+    fn persists_relationships_after_reopen() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut unlocked = service.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        let mut second = unlocked.data.accounts[0].clone();
+        second.id = "second-account".into();
+        unlocked.data.accounts.push(second);
+        unlocked.data.relationships.push(AccountRelationship {
+            id: "relationship-one".into(),
+            source_account_id: "account-test".into(),
+            target_account_id: "second-account".into(),
+            relationship_type: "DEPENDS_ON".into(),
+            notes: "Synthetic dependency".into(),
+        });
+        service.save_unlocked(&unlocked).unwrap();
+
+        let reopened = service.unlock("test-master-password".into()).unwrap();
+        assert_eq!(reopened.data.relationships, unlocked.data.relationships);
+    }
 }

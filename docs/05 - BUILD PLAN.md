@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 9 — Relationship Editing UX
-STATUS: Milestones 7 and 8 verified
-NEXT TASK: Verify relationship editing persistence and immediate map updates, then begin encrypted backup/restore
-ESTIMATED REMAINING HOURS: 6 focused milestones
+CURRENT MILESTONE: 10 — Encrypted Backup / Restore
+STATUS: Milestone 9 verified
+NEXT TASK: Add versioned encrypted backup export and safe restore using Tauri file dialogs
+ESTIMATED REMAINING HOURS: 5 focused milestones
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```
