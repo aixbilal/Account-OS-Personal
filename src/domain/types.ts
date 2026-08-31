@@ -57,7 +57,7 @@ export interface AccountRelationship {
   id: string;
   sourceAccountId: string;
   targetAccountId: string;
-  type: RelationshipType;
+  relationshipType: RelationshipType;
   notes: string;
 }
 

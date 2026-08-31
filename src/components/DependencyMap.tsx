@@ -24,7 +24,7 @@ export function buildDependencyGraph(accounts: Account[], relationships: Account
       id: relationship.id,
       source: relationship.sourceAccountId,
       target: relationship.targetAccountId,
-      label: relationship.type,
+      label: relationship.relationshipType,
       type: "smoothstep",
       animated: false,
       markerEnd: { type: MarkerType.ArrowClosed },

@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   Boxes,
   CircleUserRound,
@@ -71,6 +71,7 @@ function App() {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<AccountCategory | "all">("all");
   const [authenticationFilter, setAuthenticationFilter] = useState<AuthenticationMethod | "all">("all");
+  const workspaceRef = useRef<HTMLElement>(null);
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
   const displayedVault = vaultData ?? (isTauriRuntime ? null : fakeVault);
@@ -93,6 +94,10 @@ function App() {
       .then(setVaultStatus)
       .catch(() => setVaultStatus({ hasVault: false, unlocked: false }));
   }, []);
+
+  useEffect(() => {
+    if (workspaceRef.current) workspaceRef.current.scrollTop = 0;
+  }, [activeView]);
 
   async function handleCreateVault(password: string) {
     const vault = await invoke<VaultData>("create_vault", { password });
@@ -195,7 +200,7 @@ function App() {
           </div>
           <div>
             <p className="brand-name">Account OS</p>
-            <p className="brand-edition">Local desktop vault</p>
+            <p className="brand-edition">Local-first connected vault</p>
           </div>
         </div>
 
@@ -228,10 +233,10 @@ function App() {
         </div>
       </aside>
 
-      <main className="workspace">
+      <main className="workspace" ref={workspaceRef}>
         <header className="topbar">
           <div>
-            <p className="section-kicker">Account OS / V1</p>
+            <p className="section-kicker">Account OS / V2 Connected</p>
             <h1>{navigation.find((item) => item.id === activeView)?.label}</h1>
           </div>
           <button
@@ -414,7 +419,7 @@ function UnlockScreen({ hasVault, onCreate, onUnlock }: UnlockScreenProps) {
             {isSubmitting ? "Working…" : creating ? "Create encrypted vault" : "Unlock vault"}
           </button>
         </form>
-        <p className="unlock-footnote">Account OS does not use cloud sync in V1.</p>
+        <p className="unlock-footnote">Optional cloud sync stores encrypted vault data only. Your master password remains on this device.</p>
       </section>
     </main>
   );

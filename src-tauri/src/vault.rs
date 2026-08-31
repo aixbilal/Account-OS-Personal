@@ -629,6 +629,20 @@ mod tests {
     }
 
     #[test]
+    fn deserializes_the_renderer_relationship_field_name() {
+        let relationship: AccountRelationship = serde_json::from_str(
+            r#"{"id":"relationship-one","sourceAccountId":"account-a","targetAccountId":"account-b","relationshipType":"DEPENDS_ON","notes":"Synthetic dependency"}"#,
+        )
+        .unwrap();
+
+        assert_eq!(relationship.relationship_type, "DEPENDS_ON");
+        assert!(serde_json::from_str::<AccountRelationship>(
+            r#"{"id":"relationship-one","sourceAccountId":"account-a","targetAccountId":"account-b","type":"DEPENDS_ON","notes":"Synthetic dependency"}"#,
+        )
+        .is_err());
+    }
+
+    #[test]
     fn exports_and_imports_an_encrypted_backup_without_plaintext() {
         let source_directory = tempdir().unwrap();
         let source = VaultService::new(source_directory.path().to_path_buf());

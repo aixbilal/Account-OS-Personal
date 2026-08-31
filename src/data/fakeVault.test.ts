@@ -19,7 +19,7 @@ describe("fakeVault", () => {
     for (const relationship of fakeVault.relationships) {
       expect(accountIds.has(relationship.sourceAccountId)).toBe(true);
       expect(accountIds.has(relationship.targetAccountId)).toBe(true);
-      expect(RELATIONSHIP_TYPES).toContain(relationship.type);
+      expect(RELATIONSHIP_TYPES).toContain(relationship.relationshipType);
     }
   });
 

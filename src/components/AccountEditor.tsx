@@ -128,7 +128,7 @@ function RelationshipManager({ account, accounts, relationships, onDelete, onSav
         id: editing ?? undefined,
         sourceAccountId: incoming ? targetAccountId : account.id,
         targetAccountId: incoming ? account.id : targetAccountId,
-        type: relationshipType,
+        relationshipType,
         notes,
       });
       setTargetAccountId(""); setRelationshipType("CONNECTED_TO"); setNotes(""); setEditing(null);
@@ -139,13 +139,13 @@ function RelationshipManager({ account, accounts, relationships, onDelete, onSav
   function edit(item: AccountRelationship) {
     setEditing(item.id);
     setTargetAccountId(item.sourceAccountId === account.id ? item.targetAccountId : item.sourceAccountId);
-    setRelationshipType(item.type); setNotes(item.notes);
+    setRelationshipType(item.relationshipType); setNotes(item.notes);
   }
   return <section className="relationship-manager" aria-label="Account relationships">
     <div><p className="eyebrow">Relationships</p><h3>Connected accounts</h3></div>
     {ownRelationships.length ? <ul className="relationship-list">{ownRelationships.map((item) => {
       const counterpart = accounts.find((candidate) => candidate.id === (item.sourceAccountId === account.id ? item.targetAccountId : item.sourceAccountId));
-      return <li key={item.id}><span><strong>{item.type}</strong>{counterpart?.accountName ?? "Missing account"}</span><div><button onClick={() => edit(item)} type="button">Edit</button><button onClick={() => { if (window.confirm("Remove this relationship?")) void onDelete(item); }} type="button">Remove</button></div></li>;
+      return <li key={item.id}><span><strong>{item.relationshipType}</strong>{counterpart?.accountName ?? "Missing account"}</span><div><button onClick={() => edit(item)} type="button">Edit</button><button onClick={() => { if (window.confirm("Remove this relationship?")) void onDelete(item); }} type="button">Remove</button></div></li>;
     })}</ul> : <p className="relationship-empty">No account relationships yet.</p>}
     {targets.length > 0 && <div className="relationship-form">
       <select aria-label="Related account" onChange={(event) => setTargetAccountId(event.target.value)} value={targetAccountId}><option value="">Choose account</option>{targets.map((target) => <option key={target.id} value={target.id}>{target.accountName}</option>)}</select>

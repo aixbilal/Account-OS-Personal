@@ -92,6 +92,7 @@ describe("Account OS shell", () => {
     expect(screen.getByRole("heading", { name: "Encrypted backup and restore" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Export encrypted backup" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Choose backup file" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Account OS Cloud" })).toBeInTheDocument();
   });
 
   it("reveals, hides, generates, and intentionally copies a synthetic credential", async () => {

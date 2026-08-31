@@ -24,5 +24,5 @@ export function isDuplicateRelationship(relationships: AccountRelationship[], re
   return relationships.some((item) => item.id !== relationship.id
     && item.sourceAccountId === relationship.sourceAccountId
     && item.targetAccountId === relationship.targetAccountId
-    && item.type === relationship.type);
+    && item.relationshipType === relationship.relationshipType);
 }
