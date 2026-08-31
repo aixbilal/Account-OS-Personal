@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+/.wdio-audit-temp/
 
 # Account OS sensitive/runtime data
 .env

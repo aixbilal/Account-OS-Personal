@@ -74,6 +74,19 @@ The product must **evolve between versions instead of being rebuilt from zero**.
 
 ---
 
+## Current Release Status
+
+```text
+CURRENT VERSION: V1 COMPLETE
+V1 STATUS: Ready for cautious staged personal use.
+NATIVE E2E: Deferred due to current upstream testing-tool dependency-security findings.
+NEXT MAJOR VERSION: V2 — Connected
+```
+
+V1 remains local-first and offline-capable. Its deferred native E2E harness is a development-tooling limitation, not a runtime security finding. The application has not received an independent professional security audit.
+
+---
+
 ## Current Build Strategy
 
 ### V1 target
