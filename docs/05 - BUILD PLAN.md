@@ -2,11 +2,11 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: V1 release gate complete
-STATUS: V1 verified with fake data only
-NEXT TASK: Manual real-account migration requires explicit user approval after reviewing the final report
-ESTIMATED REMAINING HOURS: V1 complete
-BLOCKERS: None
+CURRENT MILESTONE: M14 release verification
+STATUS: Core V1 feature and security checks verified with fake data only; native WebdriverIO smoke test deferred
+NEXT TASK: Re-evaluate the official @wdio/tauri-service after its dependency audit findings are remediated upstream, then complete the native smoke test before any real-data migration
+ESTIMATED REMAINING HOURS: No application feature work; external test-tooling remediation pending
+BLOCKERS: The current official @wdio/tauri-service dependency tree reports unresolved high-severity npm audit findings, so it is not retained in this security-sensitive repository
 LAST VERIFIED BUILD: 2026-08-31 — frontend build/tests, Rust tests/check, cargo audit, npm audit, production Tauri MSI/NSIS build
 ```
 
