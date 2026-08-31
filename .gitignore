@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 /.wdio-audit-temp/
+/.supabase/
 
 # Account OS sensitive/runtime data
 .env
