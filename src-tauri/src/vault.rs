@@ -251,13 +251,40 @@ impl VaultService {
         self.atomic_write(&encrypted)
     }
 
+    pub fn export_backup(&self, destination: PathBuf) -> Result<(), VaultError> {
+        if !self.exists() || destination == self.vault_path() {
+            return Err(VaultError::InvalidData);
+        }
+        let encrypted = fs::read(self.vault_path()).map_err(|_| VaultError::Storage)?;
+        self.atomic_write_to(&destination, &encrypted)
+    }
+
+    pub fn import_backup(
+        &self,
+        source: PathBuf,
+        password: String,
+    ) -> Result<UnlockedVault, VaultError> {
+        if source == self.vault_path() {
+            return Err(VaultError::InvalidData);
+        }
+        let encrypted = fs::read(source).map_err(|_| VaultError::InvalidPasswordOrData)?;
+        let unlocked = decrypt_vault(password, &encrypted)?;
+        self.save_unlocked(&unlocked)?;
+        Ok(unlocked)
+    }
+
     fn vault_path(&self) -> PathBuf {
         self.storage_dir.join(VAULT_FILE_NAME)
     }
 
     fn atomic_write(&self, contents: &[u8]) -> Result<(), VaultError> {
-        fs::create_dir_all(&self.storage_dir).map_err(|_| VaultError::Storage)?;
         let destination = self.vault_path();
+        self.atomic_write_to(&destination, contents)
+    }
+
+    fn atomic_write_to(&self, destination: &Path, contents: &[u8]) -> Result<(), VaultError> {
+        let parent = destination.parent().ok_or(VaultError::Storage)?;
+        fs::create_dir_all(parent).map_err(|_| VaultError::Storage)?;
         let temp_path = unique_temp_path(&destination);
 
         let result = (|| {
@@ -270,7 +297,7 @@ impl VaultService {
             file.sync_all().map_err(|_| VaultError::Storage)?;
             drop(file);
             fs::rename(&temp_path, &destination).map_err(|_| VaultError::Storage)?;
-            sync_parent_directory(&self.storage_dir);
+            sync_parent_directory(parent);
             Ok(())
         })();
 
@@ -576,5 +603,49 @@ mod tests {
 
         let reopened = service.unlock("test-master-password".into()).unwrap();
         assert_eq!(reopened.data.relationships, unlocked.data.relationships);
+    }
+
+    #[test]
+    fn exports_and_imports_an_encrypted_backup_without_plaintext() {
+        let source_directory = tempdir().unwrap();
+        let source = VaultService::new(source_directory.path().to_path_buf());
+        let mut unlocked = source.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        source.save_unlocked(&unlocked).unwrap();
+        let backup_path = source_directory.path().join("backup.aosbackup");
+        source.export_backup(backup_path.clone()).unwrap();
+        let backup_text = String::from_utf8_lossy(&fs::read(&backup_path).unwrap()).to_string();
+        assert!(!backup_text.contains("FAKE-PASSWORD-ONLY"));
+
+        let target_directory = tempdir().unwrap();
+        let target = VaultService::new(target_directory.path().to_path_buf());
+        let imported = target
+            .import_backup(backup_path, "test-master-password".into())
+            .unwrap();
+        assert_eq!(imported.data, unlocked.data);
+        assert_eq!(
+            target.unlock("test-master-password".into()).unwrap().data,
+            unlocked.data
+        );
+    }
+
+    #[test]
+    fn rejects_bad_backups_without_replacing_a_good_vault() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut unlocked = service.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+        let bad_backup = directory.path().join("bad.aosbackup");
+        fs::write(&bad_backup, b"not an account os backup").unwrap();
+
+        assert!(matches!(
+            service.import_backup(bad_backup, "test-master-password".into()),
+            Err(VaultError::InvalidPasswordOrData)
+        ));
+        assert_eq!(
+            service.unlock("test-master-password".into()).unwrap().data,
+            unlocked.data
+        );
     }
 }

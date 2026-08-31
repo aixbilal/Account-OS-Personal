@@ -141,3 +141,9 @@ Application dependencies are local to the repository and selected for compatibil
 **Decision:** The V1 vault uses Argon2id (64 MiB memory, 3 iterations, parallelism 1) to derive a 32-byte vault key from the master password and a random 16-byte salt. Vault payloads use XChaCha20-Poly1305 authenticated encryption with a fresh random 24-byte nonce for every write.
 
 The master password is used only during create/unlock and is not retained. The derived vault key stays only in locked-process memory while the vault is unlocked, then is zeroized on lock. The versioned encrypted envelope and its KDF/encryption metadata are stored in Tauri's app-data directory; writes use an encrypted, same-directory temporary file followed by replacement. No plaintext vault or backup file is written.
+
+---
+
+## D019 — V1 Encrypted Backups
+
+**Decision:** V1 backup files use the existing versioned encrypted vault envelope with the `.aosbackup` extension. Export copies encrypted bytes atomically to a user-selected new path. Import decrypts and validates the selected backup with its master password before replacing the current local vault; failures leave the existing vault unchanged. Plaintext JSON and CSV credential exports are out of scope.

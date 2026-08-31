@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import {
   Boxes,
@@ -286,6 +287,11 @@ function App() {
             <p className="map-explainer">Arrows point from the dependent/source account toward the account it relies on.</p>
             <DependencyMap accounts={displayedVault?.accounts ?? []} onSelectAccount={setEditingAccount} relationships={displayedVault?.relationships ?? []} />
           </section>
+        ) : activeView === "settings" ? (
+          <SettingsScreen
+            isNative={isTauriRuntime}
+            onImport={(vault) => setVaultData(vault)}
+          />
         ) : (
           <section className="placeholder-panel" aria-labelledby="view-title">
             <div className="placeholder-icon" aria-hidden="true">
@@ -408,4 +414,47 @@ function UnlockScreen({ hasVault, onCreate, onUnlock }: UnlockScreenProps) {
       </section>
     </main>
   );
+}
+
+function SettingsScreen({ isNative, onImport }: { isNative: boolean; onImport: (vault: VaultData) => void }) {
+  const [importPath, setImportPath] = useState("");
+  const [masterPassword, setMasterPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [isWorking, setIsWorking] = useState(false);
+
+  async function exportBackup() {
+    setMessage("");
+    if (!isNative) { setMessage("Encrypted backup export is available in the desktop application."); return; }
+    const path = await saveDialog({ defaultPath: "account-os-backup.aosbackup", filters: [{ name: "Account OS encrypted backup", extensions: ["aosbackup"] }] });
+    if (!path) return;
+    setIsWorking(true);
+    try { await invoke("export_backup", { path }); setMessage("Encrypted backup exported."); }
+    catch (reason) { setMessage(reason instanceof Error ? reason.message : "Unable to export the backup."); }
+    finally { setIsWorking(false); }
+  }
+
+  async function chooseBackup() {
+    setMessage("");
+    if (!isNative) { setMessage("Encrypted backup import is available in the desktop application."); return; }
+    const path = await openDialog({ directory: false, multiple: false, filters: [{ name: "Account OS encrypted backup", extensions: ["aosbackup"] }] });
+    if (typeof path === "string") setImportPath(path);
+  }
+
+  async function importBackup(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!importPath || !masterPassword) return;
+    setMessage(""); setIsWorking(true);
+    try {
+      const vault = await invoke<VaultData>("import_backup", { path: importPath, password: masterPassword });
+      onImport(vault); setMessage("Encrypted backup restored. The previous local vault was replaced only after validation."); setImportPath("");
+    } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Unable to restore the backup."); }
+    finally { setMasterPassword(""); setIsWorking(false); }
+  }
+
+  return <section className="settings-screen" aria-labelledby="view-title">
+    <div className="screen-intro"><div><p className="eyebrow">Preferences</p><h2 id="view-title">Encrypted backup and restore</h2><p>Backups use the same versioned encrypted vault format. Account OS never creates a plaintext credential export.</p></div></div>
+    <div className="settings-card"><h3>Export encrypted backup</h3><p>Choose a new <code>.aosbackup</code> file location. Existing files are not silently overwritten.</p><button className="add-account-button" disabled={isWorking} onClick={exportBackup} type="button">Export encrypted backup</button></div>
+    <div className="settings-card"><h3>Restore encrypted backup</h3><p>Select a backup, then enter its master password. Invalid or corrupted files leave the current local vault unchanged.</p><form onSubmit={importBackup}><button className="secondary-button" disabled={isWorking} onClick={chooseBackup} type="button">Choose backup file</button>{importPath && <p className="selected-file">Backup selected</p>}<label className="field-label">Backup master password<input autoComplete="current-password" onChange={(event) => setMasterPassword(event.target.value)} required type="password" value={masterPassword} /></label><button className="unlock-submit" disabled={!importPath || !masterPassword || isWorking} type="submit">{isWorking ? "Restoring…" : "Restore encrypted backup"}</button></form></div>
+    {message && <p className="backup-status" role="status">{message}</p>}
+  </section>;
 }

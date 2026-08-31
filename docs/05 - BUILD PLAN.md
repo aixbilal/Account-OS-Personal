@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 10 — Encrypted Backup / Restore
-STATUS: Milestone 9 verified
-NEXT TASK: Add versioned encrypted backup export and safe restore using Tauri file dialogs
-ESTIMATED REMAINING HOURS: 5 focused milestones
+CURRENT MILESTONE: 11 — UI / UX Polish
+STATUS: Milestone 10 verified
+NEXT TASK: Review and refine all functional V1 screens without adding product scope
+ESTIMATED REMAINING HOURS: 4 focused milestones
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```

@@ -80,9 +80,44 @@ fn save_vault(vault: VaultData, state: State<'_, VaultState>) -> Result<VaultDat
     Ok(unlocked.data.clone())
 }
 
+#[tauri::command]
+fn export_backup(path: String, state: State<'_, VaultState>) -> Result<(), String> {
+    let unlocked = state
+        .unlocked_vault
+        .lock()
+        .map_err(|_| "The local vault is temporarily unavailable.".to_string())?;
+    if unlocked.is_none() {
+        return Err("Unlock the local vault before exporting a backup.".to_string());
+    }
+    state
+        .service
+        .export_backup(path.into())
+        .map_err(|error| error.public_message().to_string())
+}
+
+#[tauri::command]
+fn import_backup(
+    path: String,
+    password: String,
+    state: State<'_, VaultState>,
+) -> Result<VaultData, String> {
+    let imported = state
+        .service
+        .import_backup(path.into(), password)
+        .map_err(|error| error.public_message())?;
+    let vault = imported.data.clone();
+    let mut unlocked = state
+        .unlocked_vault
+        .lock()
+        .map_err(|_| "The local vault is temporarily unavailable.".to_string())?;
+    *unlocked = Some(imported);
+    Ok(vault)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let storage_dir = app.path().app_data_dir()?;
             app.manage(VaultState {
@@ -96,7 +131,9 @@ pub fn run() {
             create_vault,
             unlock_vault,
             lock_vault,
-            save_vault
+            save_vault,
+            export_backup,
+            import_backup
         ])
         .run(tauri::generate_context!())
         .expect("error while running Account OS");

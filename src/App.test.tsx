@@ -83,4 +83,13 @@ describe("Account OS shell", () => {
     await user.click(removeButtons[removeButtons.length - 1]);
     expect(screen.queryAllByText("CONNECTED_TO").some((element) => element.tagName === "STRONG")).toBe(false);
   });
+
+  it("shows encrypted backup controls in Settings", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByRole("heading", { name: "Encrypted backup and restore" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Export encrypted backup" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Choose backup file" })).toBeInTheDocument();
+  });
 });
