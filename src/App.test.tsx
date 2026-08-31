@@ -93,4 +93,22 @@ describe("Account OS shell", () => {
     expect(screen.getByRole("button", { name: "Export encrypted backup" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Choose backup file" })).toBeInTheDocument();
   });
+
+  it("reveals, hides, generates, and intentionally copies a synthetic credential", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /Google Personal TEST/ }));
+    await user.click(screen.getByRole("button", { name: "Reveal" }));
+    expect(screen.getByDisplayValue("FAKE-PASSWORD-ONLY")).toHaveAttribute("type", "text");
+    await user.click(screen.getByRole("button", { name: "Hide" }));
+    expect(screen.getByDisplayValue("FAKE-PASSWORD-ONLY")).toHaveAttribute("type", "password");
+    await user.click(screen.getByRole("button", { name: "Generate" }));
+    const password = screen.getByLabelText(/Password \/ sensitive value/) as HTMLInputElement;
+    expect(password.value).toHaveLength(20);
+    await user.click(screen.getByRole("button", { name: "Copy" }));
+    expect(writeText).toHaveBeenCalledWith(password.value);
+  });
 });

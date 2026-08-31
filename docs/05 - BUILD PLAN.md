@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 12 — Functional / Destruction Testing
-STATUS: Milestone 11 verified
-NEXT TASK: Exercise fake-data vault, account, credential, relationship, map, backup, and offline failure paths
-ESTIMATED REMAINING HOURS: 3 focused milestones
+CURRENT MILESTONE: 13 — Security Review
+STATUS: Milestone 12 verified
+NEXT TASK: Review cryptographic, storage, command, clipboard, backup, dependency, and repository safety boundaries
+ESTIMATED REMAINING HOURS: 2 focused milestones
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```
