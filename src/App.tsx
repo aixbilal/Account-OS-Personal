@@ -11,8 +11,10 @@ import {
 } from "lucide-react";
 import { AccountList } from "./components/AccountList";
 import { AccountEditor, type AccountDraft } from "./components/AccountEditor";
+import { DependencyMap } from "./components/DependencyMap";
 import { fakeVault } from "./data/fakeVault";
-import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountCategory, type AuthenticationMethod, type VaultData } from "./domain/types";
+import { isDuplicateRelationship, isValidRelationship } from "./domain/relationships";
+import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountCategory, type AccountRelationship, type AuthenticationMethod, type VaultData } from "./domain/types";
 import "./App.css";
 
 type View = "vault" | "map" | "settings";
@@ -143,6 +145,28 @@ function App() {
     });
   }
 
+  async function saveRelationship(draft: Omit<AccountRelationship, "id"> & { id?: string }) {
+    if (!displayedVault) return;
+    const relationship: AccountRelationship = { ...draft, id: draft.id ?? crypto.randomUUID() };
+    if (!isValidRelationship(displayedVault.accounts, relationship)) {
+      throw new Error("Choose two different accounts that still exist in this vault.");
+    }
+    if (isDuplicateRelationship(displayedVault.relationships, relationship)) {
+      throw new Error("That relationship already exists.");
+    }
+    await persistVault({
+      ...displayedVault,
+      relationships: draft.id
+        ? displayedVault.relationships.map((item) => item.id === draft.id ? relationship : item)
+        : [...displayedVault.relationships, relationship],
+    });
+  }
+
+  async function deleteRelationship(relationship: AccountRelationship) {
+    if (!displayedVault) return;
+    await persistVault({ ...displayedVault, relationships: displayedVault.relationships.filter((item) => item.id !== relationship.id) });
+  }
+
   if (!vaultStatus) {
     return <main className="unlock-screen">Preparing the local vault…</main>;
   }
@@ -256,6 +280,12 @@ function App() {
               </div>
             )}
           </section>
+        ) : activeView === "map" ? (
+          <section className="map-screen" aria-labelledby="view-title">
+            <div className="screen-intro"><div><p className="eyebrow">{content.eyebrow}</p><h2 id="view-title">{content.title}</h2><p>{content.description}</p></div></div>
+            <p className="map-explainer">Arrows point from the dependent/source account toward the account it relies on.</p>
+            <DependencyMap accounts={displayedVault?.accounts ?? []} onSelectAccount={setEditingAccount} relationships={displayedVault?.relationships ?? []} />
+          </section>
         ) : (
           <section className="placeholder-panel" aria-labelledby="view-title">
             <div className="placeholder-icon" aria-hidden="true">
@@ -264,12 +294,6 @@ function App() {
             <p className="eyebrow">{content.eyebrow}</p>
             <h2 id="view-title">{content.title}</h2>
             <p>{content.description}</p>
-            {activeView === "map" && (
-              <div className="milestone-note">
-                <span>{relationshipCount} synthetic links ready</span>
-                <p>The interactive graph is planned for Milestone 8.</p>
-              </div>
-            )}
             {activeView === "settings" && (
               <div className="milestone-note">
                 <span>Foundation ready</span>
@@ -282,9 +306,13 @@ function App() {
       {editingAccount !== undefined && (
         <AccountEditor
           account={editingAccount}
+          accounts={displayedVault?.accounts ?? []}
+          relationships={displayedVault?.relationships ?? []}
           onClose={() => setEditingAccount(undefined)}
           onDelete={deleteAccount}
           onSave={saveAccount}
+          onDeleteRelationship={deleteRelationship}
+          onSaveRelationship={saveRelationship}
         />
       )}
     </div>

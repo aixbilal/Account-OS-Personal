@@ -103,6 +103,45 @@ pub fn validate_vault(vault: &VaultData) -> Result<(), VaultError> {
     if ids.windows(2).any(|pair| pair[0] == pair[1]) {
         return Err(VaultError::InvalidData);
     }
+    if vault.relationships.iter().any(|relationship| {
+        relationship.id.trim().is_empty()
+            || relationship.source_account_id == relationship.target_account_id
+            || !matches!(
+                relationship.relationship_type.as_str(),
+                "LOGIN_WITH"
+                    | "GOOGLE_SSO"
+                    | "GITHUB_SSO"
+                    | "RECOVERY_EMAIL"
+                    | "CONNECTED_TO"
+                    | "OWNS"
+                    | "DEPENDS_ON"
+                    | "LINKED_ACCOUNT"
+                    | "2FA_DEVICE"
+            )
+            || ids
+                .binary_search(&relationship.source_account_id.as_str())
+                .is_err()
+            || ids
+                .binary_search(&relationship.target_account_id.as_str())
+                .is_err()
+    }) {
+        return Err(VaultError::InvalidData);
+    }
+    let mut relationship_keys: Vec<(&str, &str, &str)> = vault
+        .relationships
+        .iter()
+        .map(|relationship| {
+            (
+                relationship.source_account_id.as_str(),
+                relationship.target_account_id.as_str(),
+                relationship.relationship_type.as_str(),
+            )
+        })
+        .collect();
+    relationship_keys.sort_unstable();
+    if relationship_keys.windows(2).any(|pair| pair[0] == pair[1]) {
+        return Err(VaultError::InvalidData);
+    }
     Ok(())
 }
 
@@ -470,5 +509,50 @@ mod tests {
             service.unlock("test-master-password".into()).unwrap().data,
             unlocked.data
         );
+    }
+
+    #[test]
+    fn rejects_dangling_and_self_referencing_relationships() {
+        let mut vault = fake_vault();
+        vault.relationships.push(AccountRelationship {
+            id: "relationship-one".into(),
+            source_account_id: "account-test".into(),
+            target_account_id: "missing-account".into(),
+            relationship_type: "DEPENDS_ON".into(),
+            notes: String::new(),
+        });
+        assert!(matches!(
+            validate_vault(&vault),
+            Err(VaultError::InvalidData)
+        ));
+
+        vault.relationships[0].target_account_id = "account-test".into();
+        assert!(matches!(
+            validate_vault(&vault),
+            Err(VaultError::InvalidData)
+        ));
+    }
+
+    #[test]
+    fn rejects_duplicate_relationships() {
+        let mut vault = fake_vault();
+        let mut second = vault.accounts[0].clone();
+        second.id = "second-account".into();
+        vault.accounts.push(second);
+        let relationship = AccountRelationship {
+            id: "relationship-one".into(),
+            source_account_id: "account-test".into(),
+            target_account_id: "second-account".into(),
+            relationship_type: "DEPENDS_ON".into(),
+            notes: String::new(),
+        };
+        vault.relationships.push(relationship.clone());
+        let mut duplicate = relationship;
+        duplicate.id = "relationship-two".into();
+        vault.relationships.push(duplicate);
+        assert!(matches!(
+            validate_vault(&vault),
+            Err(VaultError::InvalidData)
+        ));
     }
 }

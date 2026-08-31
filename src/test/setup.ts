@@ -5,3 +5,11 @@ import { afterEach } from "vitest";
 afterEach(() => {
   cleanup();
 });
+
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+Object.defineProperty(globalThis, "ResizeObserver", { value: ResizeObserverMock, writable: true });

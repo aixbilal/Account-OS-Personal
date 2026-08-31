@@ -12,14 +12,14 @@ describe("Account OS shell", () => {
     expect(screen.queryByText("FAKE-PASSWORD-ONLY")).not.toBeInTheDocument();
   });
 
-  it("navigates to the map and reports synthetic relationships", async () => {
+  it("navigates to the interactive map", async () => {
     const user = userEvent.setup();
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "Map" }));
 
     expect(screen.getByRole("heading", { name: "Map" })).toBeInTheDocument();
-    expect(screen.getByText("5 synthetic links ready")).toBeInTheDocument();
+    expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
   });
 
   it("adds, edits, and deletes a synthetic account in preview mode", async () => {
@@ -38,7 +38,7 @@ describe("Account OS shell", () => {
     await user.clear(title);
     await user.type(title, "Updated Account TEST");
     await user.click(screen.getByRole("button", { name: "Save account" }));
-    expect(screen.getByText("Updated Account TEST")).toBeInTheDocument();
+    expect(await screen.findByText("Updated Account TEST")).toBeInTheDocument();
     vi.spyOn(window, "confirm").mockReturnValue(true);
     await user.click(screen.getByRole("button", { name: /Updated Account TEST/ }));
     await user.click(screen.getByRole("button", { name: "Delete account" }));
@@ -61,5 +61,26 @@ describe("Account OS shell", () => {
     await user.selectOptions(screen.getByLabelText("Filter by authentication method"), "GitHub OAuth");
     expect(screen.getByText("Supabase TEST")).toBeInTheDocument();
     expect(screen.queryByText("GitHub TEST")).not.toBeInTheDocument();
+  });
+
+  it("creates, edits, and removes a relationship from account details", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /GitHub TEST/ }));
+    await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
+    await user.selectOptions(screen.getByLabelText("Relationship type"), "DEPENDS_ON");
+    await user.click(screen.getByRole("button", { name: "Add relationship" }));
+    expect(screen.getAllByText("DEPENDS_ON").some((element) => element.tagName === "STRONG")).toBe(true);
+
+    const editButtons = screen.getAllByRole("button", { name: "Edit" });
+    await user.click(editButtons[editButtons.length - 1]);
+    await user.selectOptions(screen.getByLabelText("Relationship type"), "CONNECTED_TO");
+    await user.click(screen.getByRole("button", { name: "Update relationship" }));
+    expect(screen.getAllByText("CONNECTED_TO").some((element) => element.tagName === "STRONG")).toBe(true);
+
+    const removeButtons = screen.getAllByRole("button", { name: "Remove" });
+    await user.click(removeButtons[removeButtons.length - 1]);
+    expect(screen.queryAllByText("CONNECTED_TO").some((element) => element.tagName === "STRONG")).toBe(false);
   });
 });
