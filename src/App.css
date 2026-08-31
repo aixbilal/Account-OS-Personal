@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: dark;
   color: #e7eaf0;
   background: #090b0f;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -14,8 +15,8 @@
   --line: #252b37;
   --line-strong: #323a49;
   --text: #e7eaf0;
-  --text-muted: #929aa8;
-  --text-faint: #687181;
+  --text-muted: #adb7c8;
+  --text-faint: #8b97aa;
   --accent: #7f9cf5;
   --accent-soft: rgba(127, 156, 245, 0.12);
   --success: #71c49a;
@@ -24,7 +25,7 @@
 * { box-sizing: border-box; }
 html, body, #root { min-width: 320px; min-height: 100%; margin: 0; }
 body { min-height: 100vh; overflow: hidden; }
-button { font: inherit; }
+button { font: inherit; touch-action: manipulation; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .app-shell {
@@ -159,7 +160,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .selected-file, .backup-status { color: var(--success) !important; font-size: 11px !important; }
 .screen-intro { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
 .vault-intro-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 9px; }
-.screen-intro h2 { margin: 10px 0 8px; color: var(--text); font-size: 30px; font-weight: 580; letter-spacing: -0.03em; }
+.screen-intro h2 { margin: 10px 0 8px; color: var(--text); font-size: 30px; font-weight: 580; letter-spacing: -0.03em; text-wrap: balance; }
 .screen-intro > div > p:not(.eyebrow) { max-width: 600px; margin: 0; color: var(--text-muted); font-size: 14px; line-height: 1.65; }
 .synthetic-badge { flex: 0 0 auto; border: 1px solid rgba(113, 196, 154, 0.24); border-radius: 999px; padding: 7px 10px; color: var(--success); background: rgba(113, 196, 154, 0.08); font-size: 11px; font-weight: 650; }
 .vault-summary { display: flex; gap: 18px; margin: 27px 0 14px; color: var(--text-faint); font-size: 11px; }
@@ -184,12 +185,12 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .vault-empty p { margin: 7px 0 0; font-size: 12px; }
 .vault-empty .add-account-button { margin-top: 18px; }
 .add-account-button, .secondary-button, .danger-button { border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 10px; color: var(--text); background: var(--surface-2); cursor: pointer; font-size: 11px; font-weight: 650; }
-.add-account-button { border-color: rgba(127, 156, 245, 0.4); color: #eef1ff; background: #536fc1; }
-.add-account-button:hover, .unlock-submit:hover:not(:disabled) { background: #607ed6; }
+.add-account-button { border-color: rgba(127, 156, 245, 0.55); color: #ffffff; background: #405aa9; }
+.add-account-button:hover, .unlock-submit:hover:not(:disabled) { background: #4b67ba; }
 .secondary-button:hover { background: var(--surface-3); }
 .danger-button { color: #f3aaaa; }
 .danger-button:hover { border-color: rgba(239, 154, 154, 0.45); background: rgba(185, 63, 63, 0.12); }
-.editor-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(0, 0, 0, 0.52); }
+.editor-backdrop { position: fixed; z-index: 10; inset: 0; display: grid; place-items: center; overscroll-behavior: contain; padding: 24px; background: rgba(0, 0, 0, 0.52); }
 .account-editor { width: min(760px, 100%); max-height: calc(100vh - 48px); overflow: auto; border: 1px solid var(--line-strong); border-radius: 15px; background: var(--surface-1); box-shadow: 0 28px 80px rgba(0, 0, 0, 0.4); }
 .editor-header { display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 1px solid var(--line); padding: 22px 24px 18px; }
 .editor-header h2 { margin: 7px 0 0; font-size: 20px; font-weight: 620; }
@@ -199,7 +200,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .field-label { display: grid; gap: 6px; color: var(--text-muted); font-size: 11px; font-weight: 600; }
 .field-label input, .field-label select, .field-label textarea { width: 100%; border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 10px; color: var(--text); background: var(--surface-0); font: inherit; font-size: 12px; }
 .field-label textarea { min-height: 78px; resize: vertical; }
-.field-label input:focus, .field-label select:focus, .field-label textarea:focus { border-color: var(--accent); outline: none; }
+.field-label input:focus-visible, .field-label select:focus-visible, .field-label textarea:focus-visible { border-color: var(--accent); outline: 2px solid rgba(127, 156, 245, 0.35); outline-offset: 1px; }
 .editor-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 3px; border-top: 1px solid var(--line); padding-top: 17px; }
 .editor-actions > div { display: flex; gap: 8px; }
 .editor-actions .unlock-submit { margin: 0; }
@@ -232,7 +233,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .unlock-card form { display: grid; gap: 8px; margin-top: 24px; }
 .unlock-card label { margin-top: 6px; color: var(--text-muted); font-size: 11px; font-weight: 600; }
 .unlock-card input { width: 100%; border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 11px; color: var(--text); background: var(--surface-0); }
-.unlock-card input:focus { border-color: var(--accent); outline: none; }
+.unlock-card input:focus-visible { border-color: var(--accent); outline: 2px solid rgba(127, 156, 245, 0.35); outline-offset: 1px; }
 .unlock-submit { margin-top: 12px; border: 1px solid rgba(127, 156, 245, 0.4); border-radius: 8px; padding: 10px 12px; color: #eef1ff; background: #536fc1; cursor: pointer; font-size: 12px; font-weight: 650; }
 .unlock-submit:hover:not(:disabled) { background: #607ed6; }
 .unlock-submit:disabled { cursor: wait; opacity: 0.72; }

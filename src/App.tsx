@@ -254,14 +254,14 @@ function App() {
                 <button className="add-account-button" onClick={() => setEditingAccount(null)} type="button">Add account</button>
               </div>
             </div>
-            <div className="vault-summary" aria-label="Synthetic vault summary">
+            <div className="vault-summary">
               <span>{displayedVault?.accounts.length ?? 0} accounts</span>
               <span>{relationshipCount} relationships</span>
               <span>{displayedVault?.categories.length ?? 0} categories</span>
             </div>
             {displayedVault && displayedVault.accounts.length > 0 ? (
               <>
-                <div className="vault-filters" aria-label="Account filters">
+                <div className="vault-filters">
                   <input aria-label="Search accounts" onChange={(event) => setSearch(event.target.value)} placeholder="Search accounts" type="search" value={search} />
                   <select aria-label="Filter by category" onChange={(event) => setCategoryFilter(event.target.value as AccountCategory | "all")} value={categoryFilter}>
                     <option value="all">All categories</option>{ACCOUNT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}

@@ -145,7 +145,7 @@ function RelationshipManager({ account, accounts, relationships, onDelete, onSav
     <div><p className="eyebrow">Relationships</p><h3>Connected accounts</h3></div>
     {ownRelationships.length ? <ul className="relationship-list">{ownRelationships.map((item) => {
       const counterpart = accounts.find((candidate) => candidate.id === (item.sourceAccountId === account.id ? item.targetAccountId : item.sourceAccountId));
-      return <li key={item.id}><span><strong>{item.type}</strong>{counterpart?.accountName ?? "Missing account"}</span><div><button onClick={() => edit(item)} type="button">Edit</button><button onClick={() => onDelete(item)} type="button">Remove</button></div></li>;
+      return <li key={item.id}><span><strong>{item.type}</strong>{counterpart?.accountName ?? "Missing account"}</span><div><button onClick={() => edit(item)} type="button">Edit</button><button onClick={() => { if (window.confirm("Remove this relationship?")) void onDelete(item); }} type="button">Remove</button></div></li>;
     })}</ul> : <p className="relationship-empty">No account relationships yet.</p>}
     {targets.length > 0 && <div className="relationship-form">
       <select aria-label="Related account" onChange={(event) => setTargetAccountId(event.target.value)} value={targetAccountId}><option value="">Choose account</option>{targets.map((target) => <option key={target.id} value={target.id}>{target.accountName}</option>)}</select>

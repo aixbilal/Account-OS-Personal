@@ -80,6 +80,7 @@ describe("Account OS shell", () => {
     expect(screen.getAllByText("CONNECTED_TO").some((element) => element.tagName === "STRONG")).toBe(true);
 
     const removeButtons = screen.getAllByRole("button", { name: "Remove" });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
     await user.click(removeButtons[removeButtons.length - 1]);
     expect(screen.queryAllByText("CONNECTED_TO").some((element) => element.tagName === "STRONG")).toBe(false);
   });
