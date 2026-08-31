@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 13 — Security Review
-STATUS: Milestone 12 verified
-NEXT TASK: Review cryptographic, storage, command, clipboard, backup, dependency, and repository safety boundaries
-ESTIMATED REMAINING HOURS: 2 focused milestones
+CURRENT MILESTONE: 14 — V1 Release Gate
+STATUS: Milestone 13 verified
+NEXT TASK: Run final fake-data workflow, production desktop build, and final repository verification
+ESTIMATED REMAINING HOURS: 1 focused milestone
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```

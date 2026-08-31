@@ -391,9 +391,12 @@ fn decrypt_vault(password: String, encrypted: &[u8]) -> Result<UnlockedVault, Va
             },
         )
         .map_err(|_| VaultError::InvalidPasswordOrData)?;
-    let parsed = serde_json::from_slice(&plaintext).map_err(|_| VaultError::InvalidPasswordOrData);
+    let parsed: Result<VaultData, VaultError> =
+        serde_json::from_slice(&plaintext).map_err(|_| VaultError::InvalidPasswordOrData);
     plaintext.zeroize();
-    parsed.map(|data| UnlockedVault {
+    let data = parsed?;
+    validate_vault(&data)?;
+    Ok(UnlockedVault {
         data,
         key,
         kdf: envelope.kdf,
@@ -647,5 +650,29 @@ mod tests {
             service.unlock("test-master-password".into()).unwrap().data,
             unlocked.data
         );
+    }
+
+    #[test]
+    fn rejects_authenticated_but_invalid_vault_data_on_unlock() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut vault = fake_vault();
+        vault.relationships.push(AccountRelationship {
+            id: "invalid-link".into(),
+            source_account_id: "account-test".into(),
+            target_account_id: "account-test".into(),
+            relationship_type: "DEPENDS_ON".into(),
+            notes: String::new(),
+        });
+        let kdf = new_kdf_metadata();
+        let key = derive_key("test-master-password", &decode_salt(&kdf).unwrap()).unwrap();
+        let encrypted = encrypt_vault(&vault, &kdf, key.as_ref()).unwrap();
+        fs::create_dir_all(directory.path()).unwrap();
+        fs::write(service.vault_path(), encrypted).unwrap();
+
+        assert!(matches!(
+            service.unlock("test-master-password".into()),
+            Err(VaultError::InvalidData)
+        ));
     }
 }
