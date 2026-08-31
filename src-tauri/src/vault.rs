@@ -273,6 +273,26 @@ impl VaultService {
         Ok(unlocked)
     }
 
+    pub fn export_sync_payload(&self) -> Result<String, VaultError> {
+        let encrypted = fs::read(self.vault_path()).map_err(|_| VaultError::Missing)?;
+        let _: EncryptedVaultEnvelope = serde_json::from_slice(&encrypted)
+            .map_err(|_| VaultError::InvalidPasswordOrData)?;
+        Ok(BASE64.encode(encrypted))
+    }
+
+    pub fn import_sync_payload(
+        &self,
+        payload: String,
+        password: String,
+    ) -> Result<UnlockedVault, VaultError> {
+        let encrypted = BASE64
+            .decode(payload)
+            .map_err(|_| VaultError::InvalidPasswordOrData)?;
+        let unlocked = decrypt_vault(password, &encrypted)?;
+        self.save_unlocked(&unlocked)?;
+        Ok(unlocked)
+    }
+
     fn vault_path(&self) -> PathBuf {
         self.storage_dir.join(VAULT_FILE_NAME)
     }
@@ -650,6 +670,25 @@ mod tests {
             service.unlock("test-master-password".into()).unwrap().data,
             unlocked.data
         );
+    }
+
+    #[test]
+    fn sync_payload_is_encrypted_and_can_be_safely_imported() {
+        let source_directory = tempdir().unwrap();
+        let source = VaultService::new(source_directory.path().to_path_buf());
+        let mut unlocked = source.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        source.save_unlocked(&unlocked).unwrap();
+
+        let payload = source.export_sync_payload().unwrap();
+        assert!(!payload.contains("FAKE-PASSWORD-ONLY"));
+
+        let target_directory = tempdir().unwrap();
+        let target = VaultService::new(target_directory.path().to_path_buf());
+        let imported = target
+            .import_sync_payload(payload, "test-master-password".into())
+            .unwrap();
+        assert_eq!(imported.data, unlocked.data);
     }
 
     #[test]

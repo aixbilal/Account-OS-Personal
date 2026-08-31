@@ -114,6 +114,40 @@ fn import_backup(
     Ok(vault)
 }
 
+#[tauri::command]
+fn export_sync_payload(state: State<'_, VaultState>) -> Result<String, String> {
+    let unlocked = state
+        .unlocked_vault
+        .lock()
+        .map_err(|_| "The local vault is temporarily unavailable.".to_string())?;
+    if unlocked.is_none() {
+        return Err("Unlock the local vault before syncing.".to_string());
+    }
+    state
+        .service
+        .export_sync_payload()
+        .map_err(|error| error.public_message().to_string())
+}
+
+#[tauri::command]
+fn import_sync_payload(
+    payload: String,
+    password: String,
+    state: State<'_, VaultState>,
+) -> Result<VaultData, String> {
+    let imported = state
+        .service
+        .import_sync_payload(payload, password)
+        .map_err(|error| error.public_message())?;
+    let vault = imported.data.clone();
+    let mut unlocked = state
+        .unlocked_vault
+        .lock()
+        .map_err(|_| "The local vault is temporarily unavailable.".to_string())?;
+    *unlocked = Some(imported);
+    Ok(vault)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -133,7 +167,9 @@ pub fn run() {
             lock_vault,
             save_vault,
             export_backup,
-            import_backup
+            import_backup,
+            export_sync_payload,
+            import_sync_payload
         ])
         .run(tauri::generate_context!())
         .expect("error while running Account OS");

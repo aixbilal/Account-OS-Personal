@@ -158,6 +158,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .settings-card p { margin: 0; color: var(--text-muted); font-size: 12px; line-height: 1.6; }
 .settings-card code { color: var(--accent); }
 .settings-card form { display: grid; justify-items: start; gap: 10px; margin-top: 2px; }
+.settings-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .settings-card .field-label { width: min(100%, 360px); }
 .settings-card .unlock-submit { margin: 0; }
 .selected-file, .backup-status { color: var(--success) !important; font-size: 11px !important; }
