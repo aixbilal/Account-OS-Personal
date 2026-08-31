@@ -2,10 +2,10 @@
 
 ```text
 CURRENT VERSION: V1 Desktop
-CURRENT MILESTONE: 14 — V1 Release Gate
-STATUS: Milestone 13 verified
-NEXT TASK: Run final fake-data workflow, production desktop build, and final repository verification
-ESTIMATED REMAINING HOURS: 1 focused milestone
+CURRENT MILESTONE: V1 release gate complete
+STATUS: V1 verified with fake data only
+NEXT TASK: Manual real-account migration requires explicit user approval after reviewing the final report
+ESTIMATED REMAINING HOURS: V1 complete
 BLOCKERS: None
 LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
 ```
