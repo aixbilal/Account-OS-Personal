@@ -22,6 +22,19 @@ describe("Account OS shell", () => {
     expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
   });
 
+  it("keeps Map and Settings rendered when the browser reports offline", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Map" }));
+    expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByRole("heading", { name: "Encrypted backup and restore" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Account OS Cloud" })).toBeInTheDocument();
+  });
+
   it("adds, edits, and deletes a synthetic account in preview mode", async () => {
     const user = userEvent.setup();
     render(<App />);
@@ -83,6 +96,22 @@ describe("Account OS shell", () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
     await user.click(removeButtons[removeButtons.length - 1]);
     expect(screen.queryAllByText("CONNECTED_TO").some((element) => element.tagName === "STRONG")).toBe(false);
+  });
+
+  it("creates a relationship locally while offline and reflects it on the Map", async () => {
+    const user = userEvent.setup();
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: /GitHub TEST/ }));
+    await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
+    await user.selectOptions(screen.getByLabelText("Relationship type"), "DEPENDS_ON");
+    await user.click(screen.getByRole("button", { name: "Add relationship" }));
+    expect(screen.getAllByText("DEPENDS_ON").some((element) => element.tagName === "STRONG")).toBe(true);
+
+    await user.click(screen.getByRole("button", { name: "Close account editor" }));
+    await user.click(screen.getByRole("button", { name: "Map" }));
+    expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
   });
 
   it("shows encrypted backup controls in Settings", async () => {

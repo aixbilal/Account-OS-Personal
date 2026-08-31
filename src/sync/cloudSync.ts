@@ -15,6 +15,7 @@ export type SyncDecision = "upload" | "download" | "conflict" | "up-to-date";
 const metadataKey = (ownerId: string) => `account-os:sync:${ownerId}`;
 const deviceKey = "account-os:device-id";
 const localChangesKey = "account-os:sync:local-changes";
+const freshVaultKey = "account-os:sync:fresh-local-vault";
 
 export function isSupabaseConfigured() {
   return Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
@@ -42,10 +43,22 @@ export function readSyncMetadata(ownerId: string): SyncMetadata {
 
 export function writeSyncMetadata(ownerId: string, metadata: SyncMetadata) {
   localStorage.setItem(metadataKey(ownerId), JSON.stringify(metadata));
-  if (!metadata.localChanges) localStorage.removeItem(localChangesKey);
+  if (!metadata.localChanges) {
+    localStorage.removeItem(localChangesKey);
+    localStorage.removeItem(freshVaultKey);
+  }
+}
+
+export function markFreshLocalVault() {
+  localStorage.setItem(freshVaultKey, "true");
+}
+
+export function isFreshLocalVault() {
+  return localStorage.getItem(freshVaultKey) === "true";
 }
 
 export function markLocalVaultChange() {
+  localStorage.removeItem(freshVaultKey);
   localStorage.setItem(localChangesKey, "true");
 }
 
@@ -61,6 +74,10 @@ export function decideSync(metadata: SyncMetadata, remote: Pick<RemoteVaultRecor
   if (!remote) return metadata.localChanges ? "upload" : "up-to-date";
   if (remote.revision === metadata.remoteRevision) return metadata.localChanges ? "upload" : "up-to-date";
   return metadata.localChanges ? "conflict" : "download";
+}
+
+export function canRestoreRemote(metadata: SyncMetadata, remoteRevision: number) {
+  return !metadata.localChanges && remoteRevision >= metadata.remoteRevision;
 }
 
 export async function ensureDevice(client: SupabaseClient, session: Session) {

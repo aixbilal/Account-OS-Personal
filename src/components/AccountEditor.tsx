@@ -119,7 +119,10 @@ function RelationshipManager({ account, accounts, relationships, onDelete, onSav
   const targets = accounts.filter((item) => item.id !== account.id);
 
   async function submit() {
-    if (!targetAccountId) return;
+    if (!targetAccountId) {
+      setError("Choose a related account before saving this relationship.");
+      return;
+    }
     setError("");
     try {
       const existing = editing ? relationships.find((item) => item.id === editing) : undefined;

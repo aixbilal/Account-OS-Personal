@@ -746,6 +746,47 @@ mod tests {
     }
 
     #[test]
+    fn rejects_wrong_password_or_unsupported_sync_format_without_replacing_the_local_vault() {
+        let source_directory = tempdir().unwrap();
+        let source = VaultService::new(source_directory.path().to_path_buf());
+        let mut source_unlocked = source.create("source-test-master-password".into()).unwrap();
+        source_unlocked.data = fake_vault();
+        source.save_unlocked(&source_unlocked).unwrap();
+        let known_good_payload = source.export_sync_payload().unwrap();
+
+        let target_directory = tempdir().unwrap();
+        let target = VaultService::new(target_directory.path().to_path_buf());
+        let mut target_unlocked = target.create("target-test-master-password".into()).unwrap();
+        target_unlocked.data = fake_vault();
+        target_unlocked.data.accounts[0].account_name = "Existing local TEST account".into();
+        target.save_unlocked(&target_unlocked).unwrap();
+
+        assert!(matches!(
+            target.import_sync_payload(known_good_payload.clone(), "wrong-password".into()),
+            Err(VaultError::InvalidPasswordOrData)
+        ));
+        assert_eq!(
+            target.unlock("target-test-master-password".into()).unwrap().data,
+            target_unlocked.data
+        );
+
+        let mut envelope: EncryptedVaultEnvelope = serde_json::from_slice(
+            &BASE64.decode(known_good_payload).unwrap(),
+        )
+        .unwrap();
+        envelope.format_version = VAULT_FORMAT_VERSION + 1;
+        let unsupported_payload = BASE64.encode(serde_json::to_vec(&envelope).unwrap());
+        assert!(matches!(
+            target.import_sync_payload(unsupported_payload, "source-test-master-password".into()),
+            Err(VaultError::InvalidPasswordOrData)
+        ));
+        assert_eq!(
+            target.unlock("target-test-master-password".into()).unwrap().data,
+            target_unlocked.data
+        );
+    }
+
+    #[test]
     fn rejects_authenticated_but_invalid_vault_data_on_unlock() {
         let directory = tempdir().unwrap();
         let service = VaultService::new(directory.path().to_path_buf());
