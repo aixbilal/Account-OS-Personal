@@ -7,7 +7,7 @@ STATUS: V1 verified with fake data only
 NEXT TASK: Manual real-account migration requires explicit user approval after reviewing the final report
 ESTIMATED REMAINING HOURS: V1 complete
 BLOCKERS: None
-LAST VERIFIED BUILD: 2026-08-30 — frontend build/tests, Rust tests/check, cargo audit, npm audit
+LAST VERIFIED BUILD: 2026-08-31 — frontend build/tests, Rust tests/check, cargo audit, npm audit, production Tauri MSI/NSIS build
 ```
 
 ## Current Strategy
