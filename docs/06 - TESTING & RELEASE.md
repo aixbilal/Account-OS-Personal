@@ -134,6 +134,20 @@ Test:
 - auth/RLS scoping
 - local data survival if cloud is unavailable
 
+## V2 Connected Foundation Verification
+
+Established evidence as of 2026-09-01, using synthetic vault data only:
+
+- encrypted local vault and backup import preservation: PASS
+- ciphertext-only hosted storage, authenticated restore, wrong-password rejection, and tamper rejection: PASS
+- Supabase RLS, owner-derived RPC writes, and cross-owner writer-device isolation: PASS
+- stale-revision conflict rejection and preservation of local edits: PASS
+- offline Vault CRUD, Settings rendering, Map rendering, and reconnect conflict behavior: PASS
+- offline relationship creation: automated local/native persistence coverage PASS; final interactive native create → lock → unlock proof PENDING
+- cloud session/sign-in/sign-out failure containment: automated PASS
+
+Do not migrate real credentials until the pending native offline relationship proof and final release decision are complete. The application has not received an independent professional security audit.
+
 ---
 
 # Final Testing

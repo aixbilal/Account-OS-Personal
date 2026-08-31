@@ -5,7 +5,13 @@ import { canRestoreRemote, createCloudClient, decideSync, ensureDevice, isFreshL
 import type { VaultData } from "../domain/types";
 
 export function CloudSyncPanel({ isNative, onVaultRestored }: { isNative: boolean; onVaultRestored: (vault: VaultData) => void }) {
-  const client = useMemo(() => createCloudClient(), []);
+  const client = useMemo(() => {
+    try {
+      return createCloudClient();
+    } catch {
+      return null;
+    }
+  }, []);
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -131,7 +137,7 @@ export function CloudSyncPanel({ isNative, onVaultRestored }: { isNative: boolea
     } finally { setWorking(false); }
   }
 
-  if (!isSupabaseConfigured()) return <div className="settings-card"><h3>Account OS Cloud</h3><p>Not connected. Add a Supabase project URL and publishable key to an untracked <code>.env.local</code> file to enable optional ciphertext-only sync.</p><p className="selected-file">Your local vault remains fully available offline.</p></div>;
+  if (!isSupabaseConfigured() || !client) return <div className="settings-card"><h3>Account OS Cloud</h3><p>{isSupabaseConfigured() ? "Cloud is unavailable. Check the optional local configuration and connection." : <>Not connected. Add a Supabase project URL and publishable key to an untracked <code>.env.local</code> file to enable optional ciphertext-only sync.</>}</p><p className="selected-file">Your local vault remains fully available offline.</p></div>;
 
   return <div className="settings-card"><h3>Account OS Cloud</h3><p>Cloud account: <strong>{session ? "Connected" : "Not connected"}</strong></p>{session && <p>Sync status: <strong>{syncStatus}</strong></p>}{!session ? <form onSubmit={connect}><label className="field-label">Cloud email<input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label><label className="field-label">Cloud password<input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label><button className="unlock-submit" disabled={working} type="submit">{working ? "Connecting…" : "Connect cloud identity"}</button></form> : <><p>Device: {navigator.platform || "Desktop"}</p><label className="field-label">Local vault password (required to restore an encrypted remote vault)<input autoComplete="current-password" onChange={(event) => setVaultPassword(event.target.value)} type="password" value={vaultPassword} /></label><div className="settings-actions"><button className="add-account-button" disabled={working || !isNative} onClick={() => void syncNow()} type="button">{working ? "Syncing…" : "Sync now"}</button><button className="secondary-button" disabled={working || !isNative} onClick={() => void restoreRemoteVault()} type="button">Restore remote vault</button><button className="secondary-button" disabled={working} onClick={() => void signOut()} type="button">Sign out cloud identity</button></div></>}{message && <p className="backup-status" role="status">{message}</p>}</div>;
 }

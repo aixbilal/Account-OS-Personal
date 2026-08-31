@@ -246,13 +246,20 @@ impl VaultService {
     }
 
     pub fn save_unlocked(&self, vault: &UnlockedVault) -> Result<(), VaultError> {
-        validate_vault(&vault.data)?;
-        let encrypted = encrypt_vault(&vault.data, &vault.kdf, vault.key.as_ref())?;
+        self.save_data(&vault.data, vault)
+    }
+
+    /// Persists candidate data with an already-unlocked vault's encryption material.
+    /// The caller retains responsibility for updating in-memory state only after this
+    /// succeeds, so an I/O failure cannot make a rejected mutation authoritative later.
+    pub fn save_data(&self, data: &VaultData, unlocked: &UnlockedVault) -> Result<(), VaultError> {
+        validate_vault(data)?;
+        let encrypted = encrypt_vault(data, &unlocked.kdf, unlocked.key.as_ref())?;
         self.atomic_write(&encrypted)
     }
 
     pub fn export_backup(&self, destination: PathBuf) -> Result<(), VaultError> {
-        if !self.exists() || destination == self.vault_path() {
+        if !self.exists() || destination == self.vault_path() || destination.exists() {
             return Err(VaultError::InvalidData);
         }
         let encrypted = fs::read(self.vault_path()).map_err(|_| VaultError::Storage)?;
@@ -562,6 +569,25 @@ mod tests {
     }
 
     #[test]
+    fn failed_candidate_save_does_not_mutate_the_unlocked_vault() {
+        let directory = tempdir().unwrap();
+        let storage_dir = directory.path().join("vault-storage");
+        let service = VaultService::new(storage_dir.clone());
+        let mut unlocked = service.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+        let before = unlocked.data.clone();
+
+        let mut candidate = before.clone();
+        candidate.accounts[0].account_name = "Rejected local TEST account".into();
+        fs::remove_dir_all(&storage_dir).unwrap();
+        fs::write(&storage_dir, b"not a vault directory").unwrap();
+
+        assert!(matches!(service.save_data(&candidate, &unlocked), Err(VaultError::Storage)));
+        assert_eq!(unlocked.data, before);
+    }
+
+    #[test]
     fn rejects_dangling_and_self_referencing_relationships() {
         let mut vault = fake_vault();
         vault.relationships.push(AccountRelationship {
@@ -664,6 +690,21 @@ mod tests {
             target.unlock("test-master-password".into()).unwrap().data,
             unlocked.data
         );
+    }
+
+    #[test]
+    fn refuses_to_overwrite_an_existing_encrypted_backup() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut unlocked = service.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+        let backup_path = directory.path().join("existing.aosbackup");
+        let original = b"existing encrypted backup bytes";
+        fs::write(&backup_path, original).unwrap();
+
+        assert!(matches!(service.export_backup(backup_path.clone()), Err(VaultError::InvalidData)));
+        assert_eq!(fs::read(backup_path).unwrap(), original);
     }
 
     #[test]

@@ -72,11 +72,11 @@ fn save_vault(vault: VaultData, state: State<'_, VaultState>) -> Result<VaultDat
     let unlocked = unlocked
         .as_mut()
         .ok_or_else(|| "Unlock the local vault before saving changes.".to_string())?;
-    unlocked.data = vault;
     state
         .service
-        .save_unlocked(unlocked)
+        .save_data(&vault, unlocked)
         .map_err(|error| error.public_message())?;
+    unlocked.data = vault;
     Ok(unlocked.data.clone())
 }
 

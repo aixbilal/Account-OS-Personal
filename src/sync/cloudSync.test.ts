@@ -1,8 +1,9 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { canRestoreRemote, decideSync, isFreshLocalVault, markFreshLocalVault, markLocalVaultChange, writeSyncMetadata } from "./cloudSync";
 
 describe("conservative encrypted sync decisions", () => {
   beforeEach(() => localStorage.clear());
+  afterEach(() => vi.restoreAllMocks());
 
   it("uploads a locally changed vault when no remote exists", () => {
     expect(decideSync({ remoteRevision: 0, localChanges: true }, null)).toBe("upload");
@@ -47,6 +48,15 @@ describe("conservative encrypted sync decisions", () => {
     markFreshLocalVault();
     writeSyncMetadata("owner-test", { remoteRevision: 1, localChanges: false });
     expect(isFreshLocalVault()).toBe(false);
+  });
+
+  it("does not let unavailable web storage block a local vault mutation marker", () => {
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("storage unavailable"); });
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new Error("storage unavailable"); });
+
+    expect(() => markFreshLocalVault()).not.toThrow();
+    expect(() => markLocalVaultChange()).not.toThrow();
+    expect(() => writeSyncMetadata("owner-test", { remoteRevision: 1, localChanges: false })).not.toThrow();
   });
 
 });

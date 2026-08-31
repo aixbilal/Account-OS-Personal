@@ -42,24 +42,28 @@ export function readSyncMetadata(ownerId: string): SyncMetadata {
 }
 
 export function writeSyncMetadata(ownerId: string, metadata: SyncMetadata) {
-  localStorage.setItem(metadataKey(ownerId), JSON.stringify(metadata));
-  if (!metadata.localChanges) {
-    localStorage.removeItem(localChangesKey);
-    localStorage.removeItem(freshVaultKey);
-  }
+  try {
+    localStorage.setItem(metadataKey(ownerId), JSON.stringify(metadata));
+    if (!metadata.localChanges) {
+      localStorage.removeItem(localChangesKey);
+      localStorage.removeItem(freshVaultKey);
+    }
+  } catch { /* Metadata is optional; missing metadata falls back to safe conflict behavior. */ }
 }
 
 export function markFreshLocalVault() {
-  localStorage.setItem(freshVaultKey, "true");
+  try { localStorage.setItem(freshVaultKey, "true"); } catch { /* Local vault creation must not depend on web storage. */ }
 }
 
 export function isFreshLocalVault() {
-  return localStorage.getItem(freshVaultKey) === "true";
+  try { return localStorage.getItem(freshVaultKey) === "true"; } catch { return false; }
 }
 
 export function markLocalVaultChange() {
-  localStorage.removeItem(freshVaultKey);
-  localStorage.setItem(localChangesKey, "true");
+  try {
+    localStorage.removeItem(freshVaultKey);
+    localStorage.setItem(localChangesKey, "true");
+  } catch { /* Native vault persistence remains authoritative when web storage is unavailable. */ }
 }
 
 export function getDeviceId() {

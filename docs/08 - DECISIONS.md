@@ -147,3 +147,9 @@ The master password is used only during create/unlock and is not retained. The d
 ## D019 — V1 Encrypted Backups
 
 **Decision:** V1 backup files use the existing versioned encrypted vault envelope with the `.aosbackup` extension. Export copies encrypted bytes atomically to a user-selected new path. Import decrypts and validates the selected backup with its master password before replacing the current local vault; failures leave the existing vault unchanged. Plaintext JSON and CSV credential exports are out of scope.
+
+---
+
+## D020 — V2 Connected Foundation Sync Boundary
+
+**Decision:** Supabase Auth identifies the cloud owner and Supabase stores only one encrypted vault envelope plus revision and device metadata per owner. The desktop client derives the owner from the authenticated session, keeps local master-password decryption separate, and uses revision-checked RPC writes. Cloud/session failures must degrade only cloud controls; local vault, relationships, Map, and backups remain available.

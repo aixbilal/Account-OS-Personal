@@ -77,10 +77,11 @@ The product must **evolve between versions instead of being rebuilt from zero**.
 ## Current Release Status
 
 ```text
-CURRENT VERSION: V1 COMPLETE
-V1 STATUS: Ready for cautious staged personal use.
+CURRENT VERSION: V2 CONNECTED FOUNDATION
+V1 STATUS: Frozen at v0.1.0; ready for cautious staged personal use.
+V2 STATUS: Release hardening in progress; do not migrate real credentials until the remaining native offline persistence gate passes.
 NATIVE E2E: Deferred due to current upstream testing-tool dependency-security findings.
-NEXT MAJOR VERSION: V2 — Connected
+NEXT MAJOR VERSION: FINAL — Mature Account OS (after V2 freeze)
 ```
 
 V1 remains local-first and offline-capable. Its deferred native E2E harness is a development-tooling limitation, not a runtime security finding. The application has not received an independent professional security audit.

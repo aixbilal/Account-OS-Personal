@@ -1,17 +1,18 @@
 # Account OS — Build Plan
 
 ```text
-CURRENT VERSION: V1 COMPLETE
-V1 STATUS: Ready for cautious staged personal use.
+CURRENT VERSION: V2 CONNECTED FOUNDATION
+V1 STATUS: Frozen at v0.1.0; ready for cautious staged personal use.
+V2 STATUS: Release hardening; one native offline relationship persistence proof remains before real-data migration.
 NATIVE E2E: Deferred due to current upstream testing-tool dependency-security findings.
-NEXT MAJOR VERSION: V2 — Connected
-CURRENT MILESTONE: V1 frozen release checkpoint
-NEXT TASK: Preserve V1; begin V2 planning only when intentionally authorized. Re-evaluate the official @wdio/tauri-service upstream and rerun MSI bundling where the Windows Installer service is available.
-ESTIMATED REMAINING HOURS: No application feature work; external test-tooling remediation pending
-BLOCKERS: The current official @wdio/tauri-service dependency tree reports unresolved high-severity npm audit findings, so it is not retained in this security-sensitive repository
+NEXT MAJOR VERSION: FINAL — Mature Account OS
+CURRENT MILESTONE: V2 Connected Foundation release hardening
+NEXT TASK: Complete the isolated native offline relationship create → lock → unlock proof, then make the V2 release decision. Re-evaluate the official @wdio/tauri-service upstream and rerun MSI bundling where the Windows Installer service is available.
+ESTIMATED REMAINING HOURS: One human-native verification gate plus release decision
+BLOCKERS: The V2 native offline relationship persistence gate is pending. The current official @wdio/tauri-service dependency tree also reports unresolved high-severity npm audit findings, so it is not retained in this security-sensitive repository
 ENVIRONMENT NOTE: On 2026-08-31, the production executable and NSIS bundle completed again. MSI bundling reached WiX ICE validation but could not complete because the Windows Installer service was unavailable in this environment.
 FROZEN CHECKPOINT: 2026-08-31 — frontend tests/build, Rust tests/check, npm audit, cargo audit, and the production NSIS bundle pass.
-LAST VERIFIED BUILD: 2026-08-31 — frontend build/tests, Rust tests/check, cargo audit, npm audit, production Tauri MSI/NSIS build
+LAST VERIFIED BUILD: 2026-09-01 — frontend build/tests, Rust tests/check, cargo audit, npm audit, production Tauri NSIS build
 ```
 
 ## Current Strategy
