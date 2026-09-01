@@ -1,0 +1,102 @@
+{
+  "schemaVersion": "1.0",
+  "policy": "Research sources provide evidence only; final Account OS design decisions require ChatGPT / Design Intelligence review.",
+  "sources": [
+    {
+      "id": "mobbin",
+      "name": "Mobbin MCP",
+      "role": "curated shipped-product screen and flow references",
+      "status": "BLOCKED_PAID",
+      "accessMode": "official MCP with OAuth",
+      "preferredFor": ["curated product flows", "screen references"],
+      "avoidFor": ["bypassing paid access", "design authority", "pixel copying"],
+      "visualVerificationRequired": true,
+      "privacyNotes": "Do not record credentials, private URLs, or paid content.",
+      "currentAvailability": "Official endpoint registered and OAuth verified; current plan blocks probes."
+    },
+    {
+      "id": "firecrawl",
+      "name": "Firecrawl",
+      "role": "public-web discovery and structured extraction",
+      "status": "HUMAN_CONFIGURATION_REQUIRED",
+      "accessMode": "official API, MCP, or CLI with human-managed credential",
+      "preferredFor": ["search", "scrape", "map", "limited crawl", "dynamic pages", "structured comparison"],
+      "avoidFor": ["paywalls", "private content", "large unjustified crawls", "automatic dataset persistence"],
+      "visualVerificationRequired": true,
+      "privacyNotes": "Keep credentials outside the repository and never scrape private user data.",
+      "currentAvailability": "No configured MCP, CLI, or environment credential found."
+    },
+    {
+      "id": "jina",
+      "name": "Jina AI Reader / Search",
+      "role": "lightweight text extraction and reading",
+      "status": "AVAILABLE",
+      "accessMode": "public Reader path; local CLI/MCP optional",
+      "preferredFor": ["simple pages", "text-heavy docs", "concise multi-page reading"],
+      "avoidFor": ["visual design proof", "appearance-dependent conclusions"],
+      "visualVerificationRequired": true,
+      "privacyNotes": "Use public URLs only; do not send private Account OS or vault content.",
+      "currentAvailability": "Public Reader is documented; no local CLI/MCP is configured."
+    },
+    {
+      "id": "agent-browser",
+      "name": "Vercel Labs agent-browser",
+      "role": "visual verification and interaction evidence",
+      "status": "ACTIVE",
+      "accessMode": "isolated browser session",
+      "preferredFor": ["visual appearance", "screenshots", "interaction verification", "final visual evidence"],
+      "avoidFor": ["personal browser profiles", "private content without authorization"],
+      "visualVerificationRequired": false,
+      "privacyNotes": "Use a named isolated session and do not connect a personal Chrome profile.",
+      "currentAvailability": "Available: version 0.35.1."
+    },
+    {
+      "id": "crawl4ai",
+      "name": "Crawl4AI",
+      "role": "optional future local or self-hosted deep research",
+      "status": "OPTIONAL_FUTURE",
+      "accessMode": "local/self-hosted only if later justified",
+      "preferredFor": ["repeated research", "private local corpus", "persistent reference library"],
+      "avoidFor": ["ordinary single-area research", "unjustified installation"],
+      "visualVerificationRequired": true,
+      "privacyNotes": "Keep any future corpus private and avoid credentials or vault data.",
+      "currentAvailability": "Not installed."
+    },
+    {
+      "id": "unlumen",
+      "name": "Unlumen UI",
+      "role": "desktop interaction and component reference",
+      "status": "REFERENCE_ONLY",
+      "accessMode": "public reference",
+      "preferredFor": ["desktop controls", "sidebar", "restrained motion"],
+      "avoidFor": ["unreviewed copy or dependency adoption"],
+      "visualVerificationRequired": true,
+      "privacyNotes": "Verify license and offline/network behavior before any implementation.",
+      "currentAvailability": "Provisional reference in Component Registry."
+    },
+    {
+      "id": "magic-ui",
+      "name": "Magic UI",
+      "role": "selective polish reference",
+      "status": "REFERENCE_ONLY",
+      "accessMode": "public reference",
+      "preferredFor": ["restrained non-sensitive polish"],
+      "avoidFor": ["core security UI", "decorative motion"],
+      "visualVerificationRequired": true,
+      "privacyNotes": "Verify license, accessibility, and local/offline behavior before use.",
+      "currentAvailability": "Provisional reference in Component Registry."
+    },
+    {
+      "id": "vengeance-ui",
+      "name": "Vengeance UI",
+      "role": "special interaction and search reference",
+      "status": "REFERENCE_ONLY",
+      "accessMode": "public reference",
+      "preferredFor": ["future command/search interaction patterns"],
+      "avoidFor": ["network-dependent core search", "unreviewed dependency adoption"],
+      "visualVerificationRequired": true,
+      "privacyNotes": "Verify license, accessibility, and offline behavior before use.",
+      "currentAvailability": "Provisional reference in Component Registry."
+    }
+  ]
+}

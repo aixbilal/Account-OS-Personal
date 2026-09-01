@@ -1,6 +1,6 @@
 # Mobbin MCP Playbook
 
-**LOCKED PRINCIPLE:** Mobbin is research evidence, not Account OS's designer, a pixel-copy source, or product-decision authority. MCP connection is **UNDECIDED / Step 3**; do not claim it is connected.
+**LOCKED PRINCIPLE:** Mobbin is research evidence, not Account OS's designer, a pixel-copy source, or product-decision authority. The official MCP is connected and OAuth-verified, but the current account is **BLOCKED_PAID**; do not bypass the access restriction.
 
 ## Required research flow
 
