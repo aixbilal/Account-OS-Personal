@@ -79,7 +79,7 @@ The product must **evolve between versions instead of being rebuilt from zero**.
 ```text
 CURRENT VERSION: V2 CONNECTED FOUNDATION
 V1 STATUS: Frozen at v0.1.0; ready for cautious staged personal use.
-V2 STATUS: Release hardening in progress; do not migrate real credentials until the remaining native offline persistence gate passes.
+V2 STATUS: RELEASE READY / FROZEN as of 2026-09-01. The final native offline relationship-persistence gate passed using synthetic data.
 NATIVE E2E: Deferred due to current upstream testing-tool dependency-security findings.
 NEXT MAJOR VERSION: FINAL — Mature Account OS (after V2 freeze)
 ```

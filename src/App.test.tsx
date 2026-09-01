@@ -2,10 +2,15 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { fakeVault } from "./data/fakeVault";
+
+function renderApp() {
+  return render(<App previewVault={fakeVault} />);
+}
 
 describe("Account OS shell", () => {
   it("renders the synthetic vault dataset without exposing passwords", () => {
-    render(<App />);
+    renderApp();
 
     expect(screen.getByText("Google Personal TEST")).toBeInTheDocument();
     expect(screen.getByText("6 accounts")).toBeInTheDocument();
@@ -14,7 +19,7 @@ describe("Account OS shell", () => {
 
   it("navigates to the interactive map", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Map" }));
 
@@ -25,7 +30,7 @@ describe("Account OS shell", () => {
   it("keeps Map and Settings rendered when the browser reports offline", async () => {
     const user = userEvent.setup();
     Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
-    render(<App />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Map" }));
     expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
@@ -37,7 +42,7 @@ describe("Account OS shell", () => {
 
   it("adds, edits, and deletes a synthetic account in preview mode", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: "Add account" }));
     await user.type(screen.getByLabelText("Service"), "Example Service TEST");
@@ -60,7 +65,7 @@ describe("Account OS shell", () => {
 
   it("filters synthetic accounts by search, category, and authentication method", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    renderApp();
 
     await user.type(screen.getByLabelText("Search accounts"), "Claude");
     expect(screen.getByText("Claude Personal TEST")).toBeInTheDocument();
@@ -78,7 +83,7 @@ describe("Account OS shell", () => {
 
   it("creates, edits, and removes a relationship from account details", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: /GitHub TEST/ }));
     await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
@@ -101,7 +106,7 @@ describe("Account OS shell", () => {
   it("creates a relationship locally while offline and reflects it on the Map", async () => {
     const user = userEvent.setup();
     Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
-    render(<App />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: /GitHub TEST/ }));
     await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
@@ -116,7 +121,7 @@ describe("Account OS shell", () => {
 
   it("shows encrypted backup controls in Settings", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    renderApp();
     await user.click(screen.getByRole("button", { name: "Settings" }));
     expect(screen.getByRole("heading", { name: "Encrypted backup and restore" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Export encrypted backup" })).toBeInTheDocument();
@@ -128,7 +133,7 @@ describe("Account OS shell", () => {
     const user = userEvent.setup();
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
-    render(<App />);
+    renderApp();
 
     await user.click(screen.getByRole("button", { name: /Google Personal TEST/ }));
     await user.click(screen.getByRole("button", { name: "Reveal" }));

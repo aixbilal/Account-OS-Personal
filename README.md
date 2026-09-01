@@ -2,7 +2,7 @@
 
 Account OS is a local-first encrypted desktop vault for understanding accounts, authentication identities, recovery paths, and dependencies.
 
-The project is currently building **V1 Desktop** with Tauri 2, React, TypeScript, and Rust. Development uses synthetic credentials only.
+The project is **V2 Connected Foundation — release ready / frozen** with Tauri 2, React, TypeScript, and Rust. Development and release verification use synthetic credentials only.
 
 Start with [`docs/00 - START HERE.md`](docs/00%20-%20START%20HERE.md) and follow `AGENTS.md` before making changes.
 

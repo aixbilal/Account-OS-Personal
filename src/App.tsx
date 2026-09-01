@@ -14,7 +14,6 @@ import { AccountList } from "./components/AccountList";
 import { AccountEditor, type AccountDraft } from "./components/AccountEditor";
 import { DependencyMap } from "./components/DependencyMap";
 import { CloudSyncPanel } from "./components/CloudSyncPanel";
-import { fakeVault } from "./data/fakeVault";
 import { isDuplicateRelationship, isValidRelationship } from "./domain/relationships";
 import { markFreshLocalVault, markLocalVaultChange } from "./sync/cloudSync";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountCategory, type AccountRelationship, type AuthenticationMethod, type VaultData } from "./domain/types";
@@ -28,6 +27,13 @@ interface NativeVaultStatus {
 }
 
 const isTauriRuntime = "__TAURI_INTERNALS__" in window;
+
+const emptyPreviewVault: VaultData = {
+  formatVersion: 1,
+  categories: [...ACCOUNT_CATEGORIES],
+  accounts: [],
+  relationships: [],
+};
 
 const navigation: Array<{ id: View; label: string; icon: typeof Vault }> = [
   { id: "vault", label: "Vault", icon: Vault },
@@ -62,7 +68,7 @@ const viewContent: Record<
   },
 };
 
-function App() {
+function App({ previewVault = emptyPreviewVault }: { previewVault?: VaultData }) {
   const [activeView, setActiveView] = useState<View>("vault");
   const [vaultStatus, setVaultStatus] = useState<NativeVaultStatus | null>(null);
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
@@ -73,7 +79,7 @@ function App() {
   const workspaceRef = useRef<HTMLElement>(null);
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
-  const displayedVault = vaultData ?? (isTauriRuntime ? null : fakeVault);
+  const displayedVault = vaultData ?? (isTauriRuntime ? null : previewVault);
   const relationshipCount = displayedVault?.relationships.length ?? 0;
   const visibleAccounts = (displayedVault?.accounts ?? []).filter((account) => {
     const query = search.trim().toLowerCase();

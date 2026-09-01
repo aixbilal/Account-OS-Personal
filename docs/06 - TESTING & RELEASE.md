@@ -143,10 +143,22 @@ Established evidence as of 2026-09-01, using synthetic vault data only:
 - Supabase RLS, owner-derived RPC writes, and cross-owner writer-device isolation: PASS
 - stale-revision conflict rejection and preservation of local edits: PASS
 - offline Vault CRUD, Settings rendering, Map rendering, and reconnect conflict behavior: PASS
-- offline relationship creation: automated local/native persistence coverage PASS; final interactive native create → lock → unlock proof PENDING
+- offline relationship creation: automated local/native persistence coverage PASS; final interactive native create → lock → unlock proof PASS
 - cloud session/sign-in/sign-out failure containment: automated PASS
 
-Do not migrate real credentials until the pending native offline relationship proof and final release decision are complete. The application has not received an independent professional security audit.
+### Final Manual Offline Relationship Persistence Gate — PASS (2026-09-01)
+
+Evidence, using synthetic test data only:
+
+- device/profile: `ACCOUNT OS — STALE PEER DEVICE`
+- offline relationship remove/add succeeded through the normal relationship controls
+- the relationship edge appeared locally
+- vault lock and unlock both succeeded while offline
+- after unlock, reopening Map showed the newly created relationship still present
+
+**Account OS V2 Connected Foundation: RELEASE READY / FROZEN.** The application has not received an independent professional security audit.
+
+Retained synthetic release evidence: `NORMAL USER A`, `CONFLICT TEST DEVICE`, and `STALE PEER DEVICE` profiles remain preserved for future regression checks. They were not deleted, synchronized, restored, or otherwise normalized during release finalization.
 
 ---
 
