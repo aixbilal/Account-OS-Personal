@@ -1,9 +1,12 @@
 {
   "schemaVersion": "1.0",
-  "resolverPolicy": {"remoteFetching": "forbidden-by-default", "resolutionOrder": ["normalize-domain-locally", "local-registry", "local-bundled-asset", "user-provided-local-asset", "generic-monogram"]},
+  "resolverPolicy": {"status": "locked", "remoteFetching": "forbidden", "resolutionOrder": ["normalize-domain-locally", "local-registry", "local-bundled-asset", "user-provided-local-asset-future", "generic-monogram"]},
   "fallback": {"id": "generic-monogram", "iconStrategy": "local-generated-monogram", "status": "approved"},
   "identities": [
     {"id": "google", "displayName": "Google", "domains": ["google.com"], "iconStrategy": "no-asset-in-step-2", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "provisional"},
-    {"id": "github", "displayName": "GitHub", "domains": ["github.com"], "iconStrategy": "no-asset-in-step-2", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "provisional"}
+    {"id": "github", "displayName": "GitHub", "domains": ["github.com"], "iconStrategy": "no-asset-in-step-2", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "provisional"},
+    {"id": "instagram", "displayName": "Instagram", "domains": ["instagram.com"], "iconStrategy": "no-asset-in-step-7", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "planning-only"},
+    {"id": "microsoft", "displayName": "Microsoft", "domains": ["microsoft.com"], "iconStrategy": "no-asset-in-step-7", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "planning-only"},
+    {"id": "apple", "displayName": "Apple", "domains": ["apple.com"], "iconStrategy": "no-asset-in-step-7", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "planning-only"}
   ]
 }

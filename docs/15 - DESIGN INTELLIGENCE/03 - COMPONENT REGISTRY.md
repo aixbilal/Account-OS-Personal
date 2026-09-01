@@ -1,20 +1,17 @@
 # Component Registry
 
-Only an approved entry may be implemented. Every entry records: Component; Source; URL/reference; Purpose; approved and forbidden use; theme support; keyboard accessibility; reduced-motion status; offline/network behavior; license status; adaptation notes; and approval status.
+Account OS internal components are first priority. No registry entry alone authorizes a dependency or implementation.
 
-## Source roles
-
-- **Account OS native/internal:** default for security-critical controls.
-- **Unlumen UI:** provisional reference for desktop interactions, sidebar, controls, inputs, and restrained motion.
-- **Magic UI:** provisional, selective polish only.
-- **Vengeance UI:** provisional special interactions/search experiences.
-- **Mobbin:** shipped-product UX reference only.
-
-| Component | Source | Purpose | Status | Forbidden use |
+| Component/pattern | Source | Locked use | Forbidden use | Required checks |
 | --- | --- | --- | --- | --- |
-| Refined sidebar | internal / Unlumen reference | desktop navigation | PROVISIONAL | replacing audited flow without evidence |
-| Command search modal | internal / Vengeance reference | future global search | PROVISIONAL | network-dependent search |
-| Animated number | Magic reference | restrained non-sensitive metrics | PROVISIONAL | credential values or urgent security states |
-| Card, toggle, input, tooltip | internal / selected reference | routine controls | PROVISIONAL | unreviewed licensing/accessibility |
+| Desktop sidebar | internal / Unlumen reference | persistent labels, restrained selection, compact density | dock, bouncing/hover-only navigation | keyboard, focus, contrast, resize |
+| Vault list + inspector | internal | primary desktop architecture | immediate edit on selection; card wall | keyboard, selection, narrow-window behavior, privacy |
+| Account view/edit | internal | distinct view and edit states | giant edit modal as primary view | save/cancel, focus, destructive separation |
+| Service identity | local resolver / internal | local icon/accent/monogram recognition | remote favicon lookup, advertising wall | offline, privacy, licensing metadata |
+| Relationship summary | internal | inspector summary + Map coherence | obscure advanced-only form control | direction, navigation, keyboard |
+| Map selection | internal / XYFlow adaptation | strong selected/related/unrelated states | particles, credential-heavy nodes | focus, reduced motion, graph usability |
+| Settings grouping | internal | desktop-preferences information architecture | developer-control stack | accessibility, existing-function preservation |
+| Command palette | internal / Vengeance reference | planned local keyboard-first capability | network-dependent core search | keyboard, local-first, privacy |
+| Subtle polish | Magic UI reference | non-sensitive, restrained feedback | secrets, urgent security state, decorative loops | reduced motion, offline behavior |
 
-**DISCOURAGED for core security UI:** particles, cursor trails, 3D carousels, liquid-metal effects, constant glow, giant animated backgrounds, excessive glass, bouncing navigation, and decorative motion that reduces usability.
+All external inspiration needs license, compatibility, accessibility, offline/network/privacy, theme, and security review before adoption.

@@ -1,9 +1,9 @@
 # Service Identity System
 
-## Service Identity Resolver
+**LOCKED:** local recognition only.
 
-Goal: recognizable identity without privacy leakage. Resolution is local: `URL/domain → normalize locally → local service registry → local bundled icon when available → user-provided/local icon when supported → generic monogram`.
+`domain/url -> normalize locally -> local service registry -> local approved icon/identity -> future user-provided local icon -> stable monogram fallback`
 
-**LOCKED PRIVACY RULE:** Account OS must not silently contact third-party favicon services when a domain is entered. Future remote retrieval is explicit, opt-in, privacy reviewed, and never required for basic operation.
+Supported identity may include a local icon, canonical name, restrained approved accent, and subtle tile. Its purpose is scanning and orientation, not decoration or advertising. Unknown services use a stable high-quality monogram/generic identity.
 
-Visual treatment is provisional: service name, restrained accent, optional subtle tile, and generic fallback. `service-identities.json` contains conservative metadata only; this step downloads no trademark/copyright assets and makes no icon network requests.
+No silent third-party favicon or asset request occurs when a domain is entered. Common-service planning metadata may cover Google, Instagram, GitHub, Microsoft, and Apple; this lock downloads no assets. Licensing/trademark state remains explicit in registry metadata.

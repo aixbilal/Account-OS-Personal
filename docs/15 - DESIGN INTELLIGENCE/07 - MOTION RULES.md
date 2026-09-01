@@ -1,7 +1,7 @@
 # Motion Rules
 
-**LOCKED:** Motion is calm, precise, responsive, premium, and security-oriented—not gaming, cyberpunk, flashy, or distracting.
+**LOCKED:** calm, precise, responsive, premium, and security-oriented motion communicates hierarchy, selection, state change, and continuity.
 
-**PROVISIONAL default:** short micro-motion around 120–250 ms for hover, press, selection, panel/dialog transition, account/relationship changes, theme changes, number changes, and success/error states. Native interaction and accessibility may require less or none.
+Use quick hover response, restrained selection/panel/dialog continuity, meaningful account/relationship feedback, and meaningful number/state transitions, typically 120-250ms. Require `prefers-reduced-motion` and preserve clear instantaneous states.
 
-Require `prefers-reduced-motion`; preserve clear instantaneous state changes. Avoid continuous decorative animation, attention loops, meaningless bounce/spring, excessive glow, and motion around sensitive credential values.
+Never use continuous decorative loops, particles, decorative background animation, ordinary-control bounce, animated secrets, excessive springs, constant glow, or distracting gradients.

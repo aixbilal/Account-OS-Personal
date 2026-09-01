@@ -1,18 +1,16 @@
 # Screen Recipes
 
-## Recipe format
+All recipes are **V3 LOCKED DIRECTION; IMPLEMENTATION NOT STARTED**. Exact pixels, breakpoints, micro-copy, and final color tuning are implementation-tested through approved reference frames.
 
-Every recipe contains: **PURPOSE; PRIMARY USER TASK; INFORMATION HIERARCHY; CURRENT IMPLEMENTATION; MOBBIN SEARCHES; APPROVED COMPONENTS; THEME BEHAVIOR; SERVICE IDENTITY BEHAVIOR; MOTION; KEYBOARD BEHAVIOR; SECURITY / PRIVACY CONSIDERATIONS; ACCEPTANCE CRITERIA; STATUS.**
-
-## Audit-pending recipe stubs
-
-| Screen | Purpose / primary task | Current implementation | Status |
+| Area | Purpose / primary task | Locked hierarchy and behavior | Security/privacy acceptance |
 | --- | --- | --- | --- |
-| Unlock / create vault | create or unlock local vault | `UnlockScreen` | NOT AUDITED |
-| Vault | inspect, filter, and open accounts | `vault` view + `AccountList` | NOT AUDITED |
-| Account editor/details | edit account and relationships | `AccountEditor` modal | NOT AUDITED |
-| Map | understand/select relationships | `DependencyMap` in `map` view | NOT AUDITED |
-| Settings/backup | encrypted export/import | `SettingsScreen` | NOT AUDITED |
-| Connected cloud panel | view/connect/sync/restore cloud state | `CloudSyncPanel` | NOT AUDITED |
+| Unlock | unlock the local vault | centered single task; keyboard-first; restrained dark material | local/cloud messaging clear; no marketing/security theatre |
+| Vault | find and inspect accounts | Nav -> searchable dense List -> selected Inspector; selection means View | secrets hidden; Reveal/Copy explicit; narrow layout tested |
+| Account view/edit | inspect then intentionally change an account | calm View, explicit Edit, Save/Cancel, safe destructive separation | no accidental save or default secret exposure |
+| Add Account | create an account efficiently | identity, login, organization, optional details, optional relationships | local identity recognition; generator remains reachable |
+| Relationships | understand/manage dependencies | inspector summary; Map as full management surface | direction/type/related identity coherent across views |
+| Map | understand relationship graph | dark central canvas; readable direction/type; selection/focus hierarchy | no credential-heavy nodes; natural keyboard/pan/zoom behavior |
+| Settings/Backup | manage preferences and encrypted data | General/Security/Data/Connected/System; backup as first-class Data/Security | backup/restore distinction and destructive confirmation clear |
+| Connected | understand cloud state and devices | Status, Sync, future Devices, Identity | cloud identity visibly distinct from vault unlock |
 
-No layout is final until a current screenshot audit and a completed ledger record exist.
+Theme behavior: Hybrid default, with Dark, Light, and System modes; dark-dominant chrome/Map/Unlock and softer work surfaces. Motion: purposeful 120-250ms with reduced-motion support. Service identity: local-only resolver and monogram fallback.
