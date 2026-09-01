@@ -14,3 +14,5 @@ All recipes are **V3 LOCKED DIRECTION; IMPLEMENTATION NOT STARTED**. Exact pixel
 | Connected | understand cloud state and devices | Status, Sync, future Devices, Identity | cloud identity visibly distinct from vault unlock |
 
 Theme behavior: Hybrid default, with Dark, Light, and System modes; dark-dominant chrome/Map/Unlock and softer work surfaces. Motion: purposeful 120-250ms with reduced-motion support. Service identity: local-only resolver and monogram fallback.
+
+**Vault R2 status:** approved implementation reference preserved at `design/references/v3/vault/`; implementation is **PENDING FINAL VISUAL REVIEW**.

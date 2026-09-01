@@ -14,4 +14,6 @@ V3 classifications are locked from the 2026-09-01 sanitized evidence pack. Refer
 | Settings / Backup | `settings` | RESTRUCTURE | desktop preferences grouping; Data/Backup first-class | `08-settings-backup-connected.png` | not started |
 | Cloud panel | Settings subpanel | RESTRUCTURE | Status/Sync/Devices/Identity; distinct cloud and vault credentials | `09-connected-cloud-panel.png` | not started |
 
+**Vault implementation reference:** `design/references/v3/vault/` contains the approved R2 Hybrid populated/empty, Dark populated, and Light populated frames. **Status: IMPLEMENTED - PENDING FINAL VISUAL REVIEW.**
+
 **REBUILD:** none. Devices, dedicated Security, and global search are planned only; they are not current screens.

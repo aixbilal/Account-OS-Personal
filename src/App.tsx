@@ -11,9 +11,11 @@ import {
   Vault,
 } from "lucide-react";
 import { AccountList } from "./components/AccountList";
+import { AccountInspector } from "./components/AccountInspector";
 import { AccountEditor, type AccountDraft } from "./components/AccountEditor";
 import { DependencyMap } from "./components/DependencyMap";
 import { CloudSyncPanel } from "./components/CloudSyncPanel";
+import { fakeVault } from "./data/fakeVault";
 import { isDuplicateRelationship, isValidRelationship } from "./domain/relationships";
 import { markFreshLocalVault, markLocalVaultChange } from "./sync/cloudSync";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountCategory, type AccountRelationship, type AuthenticationMethod, type VaultData } from "./domain/types";
@@ -68,18 +70,20 @@ const viewContent: Record<
   },
 };
 
-function App({ previewVault = emptyPreviewVault }: { previewVault?: VaultData }) {
+function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
   const [activeView, setActiveView] = useState<View>("vault");
   const [vaultStatus, setVaultStatus] = useState<NativeVaultStatus | null>(null);
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
   const [editingAccount, setEditingAccount] = useState<Account | null | undefined>(undefined);
+  const [selectedAccount, setSelectedAccount] = useState<Account | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<AccountCategory | "all">("all");
   const [authenticationFilter, setAuthenticationFilter] = useState<AuthenticationMethod | "all">("all");
+  const [theme, setTheme] = useState<"hybrid" | "dark" | "light" | "system">("hybrid");
   const workspaceRef = useRef<HTMLElement>(null);
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
-  const displayedVault = vaultData ?? (isTauriRuntime ? null : previewVault);
+  const displayedVault = vaultData ?? (isTauriRuntime ? null : (new URLSearchParams(window.location.search).has("empty") ? emptyPreviewVault : previewVault));
   const relationshipCount = displayedVault?.relationships.length ?? 0;
   const visibleAccounts = (displayedVault?.accounts ?? []).filter((account) => {
     const query = search.trim().toLowerCase();
@@ -142,12 +146,14 @@ function App({ previewVault = emptyPreviewVault }: { previewVault?: VaultData })
     const account: Account = isEditing
       ? { ...editingAccount!, ...draft, updatedAt: now }
       : { ...draft, id: crypto.randomUUID(), createdAt: now, updatedAt: now };
-    await persistVault({
+    const nextVault = {
       ...displayedVault,
       accounts: isEditing
         ? displayedVault.accounts.map((item) => item.id === account.id ? account : item)
         : [account, ...displayedVault.accounts],
-    });
+    };
+    await persistVault(nextVault);
+    setSelectedAccount(account);
   }
 
   async function deleteAccount(account: Account) {
@@ -159,6 +165,7 @@ function App({ previewVault = emptyPreviewVault }: { previewVault?: VaultData })
         relationship.sourceAccountId !== account.id && relationship.targetAccountId !== account.id,
       ),
     });
+    if (selectedAccount?.id === account.id) setSelectedAccount(undefined);
   }
 
   async function saveRelationship(draft: Omit<AccountRelationship, "id"> & { id?: string }) {
@@ -198,7 +205,7 @@ function App({ previewVault = emptyPreviewVault }: { previewVault?: VaultData })
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-theme={theme === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : theme}>
       <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand">
           <div className="brand-mark" aria-hidden="true">
@@ -258,43 +265,17 @@ function App({ previewVault = emptyPreviewVault }: { previewVault?: VaultData })
 
         {activeView === "vault" ? (
           <section className="vault-screen" aria-labelledby="view-title">
-            <div className="screen-intro">
-              <div>
-                <p className="eyebrow">{content.eyebrow}</p>
-                <h2 id="view-title">{content.title}</h2>
-                <p>{content.description}</p>
+            <div className="vault-list-pane">
+              <div className="vault-list-header"><div><h2 id="view-title">Vault</h2><p>{displayedVault?.accounts.length ?? 0} accounts · {relationshipCount} relationships</p></div><button className="add-account-button" onClick={() => setEditingAccount(null)} type="button">+ Add account</button></div>
+              <div className="vault-filters">
+                <input aria-label="Search accounts" onChange={(event) => setSearch(event.target.value)} placeholder="Search accounts…" type="search" value={search} />
+                <select aria-label="Filter by category" onChange={(event) => setCategoryFilter(event.target.value as AccountCategory | "all")} value={categoryFilter}><option value="all">All categories</option>{ACCOUNT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select>
+                <select aria-label="Filter by authentication method" onChange={(event) => setAuthenticationFilter(event.target.value as AuthenticationMethod | "all")} value={authenticationFilter}><option value="all">All authentication methods</option>{AUTHENTICATION_METHODS.map((method) => <option key={method}>{method}</option>)}</select>
+                <select aria-label="Vault theme" onChange={(event) => setTheme(event.target.value as typeof theme)} value={theme}><option value="hybrid">Hybrid</option><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select>
               </div>
-              <div className="vault-intro-actions">
-                {!isTauriRuntime && <span className="synthetic-badge">Synthetic preview only</span>}
-                <button className="add-account-button" onClick={() => setEditingAccount(null)} type="button">Add account</button>
-              </div>
+              {displayedVault && displayedVault.accounts.length > 0 ? (visibleAccounts.length > 0 ? <AccountList accounts={visibleAccounts} onSelect={setSelectedAccount} selectedAccountId={selectedAccount?.id} /> : <div className="vault-empty"><h3>No matching accounts.</h3><p>Change the search or filters, or add an account.</p></div>) : <div className="vault-empty"><h3>Vault</h3><p>0 accounts</p><p>Start with one account. Your vault stays clear, local, and ready to grow with you.</p><button className="add-account-button" onClick={() => setEditingAccount(null)} type="button">+ Add account</button></div>}
             </div>
-            <div className="vault-summary">
-              <span>{displayedVault?.accounts.length ?? 0} accounts</span>
-              <span>{relationshipCount} relationships</span>
-              <span>{displayedVault?.categories.length ?? 0} categories</span>
-            </div>
-            {displayedVault && displayedVault.accounts.length > 0 ? (
-              <>
-                <div className="vault-filters">
-                  <input aria-label="Search accounts" onChange={(event) => setSearch(event.target.value)} placeholder="Search accounts" type="search" value={search} />
-                  <select aria-label="Filter by category" onChange={(event) => setCategoryFilter(event.target.value as AccountCategory | "all")} value={categoryFilter}>
-                    <option value="all">All categories</option>{ACCOUNT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}
-                  </select>
-                  <select aria-label="Filter by authentication method" onChange={(event) => setAuthenticationFilter(event.target.value as AuthenticationMethod | "all")} value={authenticationFilter}>
-                    <option value="all">All authentication methods</option>{AUTHENTICATION_METHODS.map((method) => <option key={method}>{method}</option>)}
-                  </select>
-                  <span>{visibleAccounts.length} shown</span>
-                </div>
-                {visibleAccounts.length > 0 ? <AccountList accounts={visibleAccounts} onSelect={setEditingAccount} /> : <div className="vault-empty"><h3>No matching accounts.</h3><p>Change the search or filters, or add a synthetic account.</p></div>}
-              </>
-            ) : (
-              <div className="vault-empty">
-                <h3>Your local vault is ready.</h3>
-                <p>Add a synthetic account to begin organizing your local vault.</p>
-                <button className="add-account-button" onClick={() => setEditingAccount(null)} type="button">Add account</button>
-              </div>
-            )}
+            <AccountInspector account={selectedAccount} accounts={displayedVault?.accounts ?? []} relationships={displayedVault?.relationships ?? []} onEdit={setEditingAccount} onManageRelationships={setEditingAccount} />
           </section>
         ) : activeView === "map" ? (
           <section className="map-screen" aria-labelledby="view-title">

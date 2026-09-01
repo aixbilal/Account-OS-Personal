@@ -13,7 +13,7 @@ describe("Account OS shell", () => {
     renderApp();
 
     expect(screen.getByText("Google Personal TEST")).toBeInTheDocument();
-    expect(screen.getByText("6 accounts")).toBeInTheDocument();
+    expect(screen.getByText(/6 accounts/)).toBeInTheDocument();
     expect(screen.queryByText("FAKE-PASSWORD-ONLY")).not.toBeInTheDocument();
   });
 
@@ -44,21 +44,23 @@ describe("Account OS shell", () => {
     const user = userEvent.setup();
     renderApp();
 
-    await user.click(screen.getByRole("button", { name: "Add account" }));
+    await user.click(screen.getByRole("button", { name: /Add account/ }));
     await user.type(screen.getByLabelText("Service"), "Example Service TEST");
     await user.type(screen.getByLabelText("Account title"), "Example Account TEST");
     await user.type(screen.getByLabelText("Email"), "example@test.invalid");
     await user.click(screen.getByRole("button", { name: "Save account" }));
 
-    expect(screen.getByText("Example Account TEST")).toBeInTheDocument();
+    expect(screen.getAllByText("Example Account TEST").length).toBeGreaterThan(0);
     await user.click(screen.getByRole("button", { name: /Example Account TEST/ }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
     const title = screen.getByLabelText("Account title");
     await user.clear(title);
     await user.type(title, "Updated Account TEST");
     await user.click(screen.getByRole("button", { name: "Save account" }));
-    expect(await screen.findByText("Updated Account TEST")).toBeInTheDocument();
+    expect((await screen.findAllByText("Updated Account TEST")).length).toBeGreaterThan(0);
     vi.spyOn(window, "confirm").mockReturnValue(true);
     await user.click(screen.getByRole("button", { name: /Updated Account TEST/ }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
     await user.click(screen.getByRole("button", { name: "Delete account" }));
     expect(screen.queryByText("Updated Account TEST")).not.toBeInTheDocument();
   });
@@ -86,6 +88,7 @@ describe("Account OS shell", () => {
     renderApp();
 
     await user.click(screen.getByRole("button", { name: /GitHub TEST/ }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
     await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
     await user.selectOptions(screen.getByLabelText("Relationship type"), "DEPENDS_ON");
     await user.click(screen.getByRole("button", { name: "Add relationship" }));
@@ -109,6 +112,7 @@ describe("Account OS shell", () => {
     renderApp();
 
     await user.click(screen.getByRole("button", { name: /GitHub TEST/ }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
     await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
     await user.selectOptions(screen.getByLabelText("Relationship type"), "DEPENDS_ON");
     await user.click(screen.getByRole("button", { name: "Add relationship" }));
@@ -136,6 +140,7 @@ describe("Account OS shell", () => {
     renderApp();
 
     await user.click(screen.getByRole("button", { name: /Google Personal TEST/ }));
+    await user.click(screen.getByRole("button", { name: "Edit" }));
     await user.click(screen.getByRole("button", { name: "Reveal" }));
     expect(screen.getByDisplayValue("FAKE-PASSWORD-ONLY")).toHaveAttribute("type", "text");
     await user.click(screen.getByRole("button", { name: "Hide" }));

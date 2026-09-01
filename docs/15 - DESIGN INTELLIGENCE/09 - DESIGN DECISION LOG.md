@@ -17,3 +17,4 @@ Append-only format: **ID, Date, Area, Decision, Status, Reason, Evidence, Altern
 | DI-011 | 2026-09-01 | Identity/relationships | Local-only service identity and first-class coherent inspector/Map relationships. | LOCKED |
 | DI-012 | 2026-09-01 | Map/settings | Map is Keep + Polish; Settings is grouped preferences with Data/Backup and Connected architecture. | LOCKED |
 | DI-013 | 2026-09-01 | Interaction | Unlock is Keep + Polish; motion is restrained and reduced-motion aware. | LOCKED |
+| DI-014 | 2026-09-01 | Vault implementation | Approved R2 Vault reference is implemented as a view-first Nav/List/Inspector shell with local service identity; final reviewer evidence remains required. | IMPLEMENTED - PENDING FINAL VISUAL REVIEW |
