@@ -1,4 +1,5 @@
 import type { Account } from "../domain/types";
+import { resolveCatalogService } from "../domain/serviceCatalog";
 
 type IdentityKind = "google" | "instagram" | "github" | "microsoft" | "apple" | "generic";
 
@@ -18,6 +19,8 @@ const knownServices: Array<{ kind: Exclude<IdentityKind, "generic">; names: stri
 
 /** Local-only identity resolver. It never fetches favicons, domains, or external assets. */
 export function resolveServiceIdentity(serviceName: string, email = ""): ServiceIdentity {
+  const catalog = resolveCatalogService(serviceName, email);
+  if (catalog) return { kind: (["google", "instagram", "github", "microsoft", "apple"].includes(catalog.id) ? catalog.id : "generic") as IdentityKind, label: catalog.displayName, monogram: catalog.displayName.split(/\s+/).map((word) => word[0]).join("").slice(0, 2).toUpperCase() };
   const candidate = `${serviceName} ${email}`.toLowerCase();
   const found = knownServices.find((service) => service.names.some((name) => candidate.includes(name)));
   if (found) return { kind: found.kind, label: found.label, monogram: found.monogram };
