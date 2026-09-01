@@ -13,7 +13,7 @@ describe("Account OS shell", () => {
     renderApp();
 
     expect(screen.getByText("Google Personal TEST")).toBeInTheDocument();
-    expect(screen.getByText(/6 accounts/)).toBeInTheDocument();
+    expect(screen.getByText(/13 accounts/)).toBeInTheDocument();
     expect(screen.queryByText("FAKE-PASSWORD-ONLY")).not.toBeInTheDocument();
   });
 

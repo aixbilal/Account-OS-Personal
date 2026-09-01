@@ -15,7 +15,6 @@ import { AccountInspector } from "./components/AccountInspector";
 import { AccountEditor, type AccountDraft } from "./components/AccountEditor";
 import { DependencyMap } from "./components/DependencyMap";
 import { CloudSyncPanel } from "./components/CloudSyncPanel";
-import { fakeVault } from "./data/fakeVault";
 import { isDuplicateRelationship, isValidRelationship } from "./domain/relationships";
 import { markFreshLocalVault, markLocalVaultChange } from "./sync/cloudSync";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountCategory, type AccountRelationship, type AuthenticationMethod, type VaultData } from "./domain/types";
@@ -70,7 +69,7 @@ const viewContent: Record<
   },
 };
 
-function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
+function App({ previewVault }: { previewVault?: VaultData }) {
   const [activeView, setActiveView] = useState<View>("vault");
   const [vaultStatus, setVaultStatus] = useState<NativeVaultStatus | null>(null);
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
@@ -83,7 +82,7 @@ function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
   const workspaceRef = useRef<HTMLElement>(null);
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
-  const displayedVault = vaultData ?? (isTauriRuntime ? null : (new URLSearchParams(window.location.search).has("empty") ? emptyPreviewVault : previewVault));
+  const displayedVault = vaultData ?? (isTauriRuntime ? null : (new URLSearchParams(window.location.search).has("empty") ? emptyPreviewVault : previewVault ?? emptyPreviewVault));
   const relationshipCount = displayedVault?.relationships.length ?? 0;
   const visibleAccounts = (displayedVault?.accounts ?? []).filter((account) => {
     const query = search.trim().toLowerCase();
@@ -252,8 +251,8 @@ function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
       <main className="workspace" ref={workspaceRef}>
         <header className="topbar">
           <div>
-            <p className="section-kicker">Account OS / V2 Connected</p>
-            <h1>{navigation.find((item) => item.id === activeView)?.label}</h1>
+            <p className="section-kicker">Account OS</p>
+            <h1>{activeView === "map" ? "Account OS" : navigation.find((item) => item.id === activeView)?.label}</h1>
           </div>
         </header>
 
@@ -272,9 +271,8 @@ function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
           </section>
         ) : activeView === "map" ? (
           <section className="map-screen" aria-labelledby="view-title">
-            <div className="screen-intro"><div><p className="eyebrow">{content.eyebrow}</p><h2 id="view-title">{content.title}</h2><p>{content.description}</p></div></div>
-            <p className="map-explainer">Arrows point from the dependent/source account toward the account it relies on. Select an account node to manage its local relationships.</p>
-            <DependencyMap accounts={displayedVault?.accounts ?? []} onSelectAccount={setSelectedAccount} relationships={displayedVault?.relationships ?? []} />
+            <div className="screen-intro map-heading"><div><h2 id="view-title">Map</h2><p>{displayedVault?.accounts.length ?? 0} accounts · {relationshipCount} relationships</p><p>Explore how your identities depend on one another.</p></div></div>
+            <DependencyMap accounts={displayedVault?.accounts ?? []} onCreateRelationship={saveRelationship} onOpenAccount={(account) => { setSelectedAccount(account); setActiveView("vault"); }} onSelectAccount={setSelectedAccount} relationships={displayedVault?.relationships ?? []} />
           </section>
         ) : activeView === "settings" ? (
           <SettingsScreen

@@ -97,6 +97,13 @@ export const fakeVault: VaultData = {
       createdAt,
       updatedAt: createdAt,
     },
+    { id: "account-apple-test", serviceName: "Apple", accountName: "Apple ID TEST", category: "Personal", username: "apple-test", email: "apple@example.invalid", password: "FAKE-PASSWORD-ONLY", authenticationMethod: "Apple SSO", recoveryInformation: "Synthetic recovery identity", twoFactorInformation: "Passkey TEST", notes: "Synthetic Apple identity.", createdAt, updatedAt: createdAt },
+    { id: "account-microsoft-test", serviceName: "Microsoft", accountName: "Microsoft TEST", category: "Work", username: "microsoft-test", email: "work@example.invalid", password: "FAKE-PASSWORD-ONLY", authenticationMethod: "Microsoft SSO", recoveryInformation: "Synthetic recovery identity", twoFactorInformation: "Authenticator TEST", notes: "Synthetic Microsoft identity.", createdAt, updatedAt: createdAt },
+    { id: "account-openai-test", serviceName: "OpenAI", accountName: "OpenAI TEST", category: "Personal", username: "openai-test", email: "ai@example.invalid", password: "FAKE-PASSWORD-ONLY", authenticationMethod: "Google SSO", recoveryInformation: "Google Personal TEST", twoFactorInformation: "Inherited TEST", notes: "Synthetic AI account.", createdAt, updatedAt: createdAt },
+    { id: "account-spotify-test", serviceName: "Spotify", accountName: "Spotify TEST", category: "Personal", username: "spotify-test", email: "music@example.invalid", password: "FAKE-PASSWORD-ONLY", authenticationMethod: "Password", recoveryInformation: "Synthetic recovery identity", twoFactorInformation: "No 2FA metadata", notes: "Synthetic media account.", createdAt, updatedAt: createdAt },
+    { id: "account-amazon-test", serviceName: "Amazon", accountName: "Amazon TEST", category: "Personal", username: "amazon-test", email: "shop@example.invalid", password: "FAKE-PASSWORD-ONLY", authenticationMethod: "Password", recoveryInformation: "Synthetic recovery identity", twoFactorInformation: "Authenticator TEST", notes: "Synthetic shopping account.", createdAt, updatedAt: createdAt },
+    { id: "account-university-test", serviceName: "University Portal", accountName: "University Portal TEST", category: "University", username: "student-test", email: "student@example.invalid", password: "FAKE-PASSWORD-ONLY", authenticationMethod: "Google SSO", recoveryInformation: "Google Personal TEST", twoFactorInformation: "Student portal TEST", notes: "Synthetic university identity.", createdAt, updatedAt: createdAt },
+    { id: "account-custom-test", serviceName: "Northern Star Archive", accountName: "Unknown Custom Service TEST", category: "Other", username: "custom-test", email: "custom@example.invalid", password: "FAKE-PASSWORD-ONLY", authenticationMethod: "Other", recoveryInformation: "Synthetic local record", twoFactorInformation: "No 2FA metadata", notes: "Intentional unknown-service fallback.", createdAt, updatedAt: createdAt },
   ],
   relationships: [
     {
@@ -134,5 +141,8 @@ export const fakeVault: VaultData = {
       relationshipType: "LINKED_ACCOUNT",
       notes: "Instagram TEST is linked to Facebook TEST.",
     },
+    { id: "relationship-google-openai-test", sourceAccountId: "account-openai-test", targetAccountId: "account-google-personal-test", relationshipType: "GOOGLE_SSO", notes: "Synthetic Google sign-in relationship." },
+    { id: "relationship-google-university-test", sourceAccountId: "account-university-test", targetAccountId: "account-google-personal-test", relationshipType: "RECOVERY_EMAIL", notes: "Synthetic university recovery relationship." },
+    { id: "relationship-github-vercel-test", sourceAccountId: "account-supabase-test", targetAccountId: "account-github-test", relationshipType: "DEPENDS_ON", notes: "Synthetic development dependency." },
   ],
 };

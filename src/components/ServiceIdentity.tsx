@@ -31,12 +31,15 @@ export function resolveServiceIdentity(serviceName: string, email = ""): Service
 
 export function ServiceIdentityMark({ account, size = "regular" }: { account: Pick<Account, "serviceName" | "email">; size?: "small" | "regular" | "large" }) {
   const identity = resolveServiceIdentity(account.serviceName, account.email);
+  const catalog = resolveCatalogService(account.serviceName, account.email);
+  const mark = catalog?.id ?? identity.kind;
   if (identity.kind === "microsoft") {
     return <span className={`service-identity service-identity-${size} service-microsoft`} aria-label={`${identity.label} local identity`}><i /><i /><i /><i /></span>;
   }
   if (identity.kind === "instagram") return <span className={`service-identity service-identity-${size} service-instagram`} aria-label={`${identity.label} local identity`}><i /></span>;
   if (identity.kind === "google") return <span className={`service-identity service-identity-${size} service-google`} aria-label={`${identity.label} local identity`}><b>G</b></span>;
-  return <span className={`service-identity service-identity-${size} service-${identity.kind}`} aria-label={`${identity.label} local identity`}>{identity.monogram}</span>;
+  const glyphs: Record<string, string> = { github: "<>", apple: "●", spotify: "≋", openai: "◎", amazon: "a", facebook: "f", linkedin: "in", discord: "◉", slack: "#", figma: "F", canva: "C", supabase: "S", vercel: "▲", cloudflare: "☁", paypal: "P", stripe: "S", jazzcash: "J", easypaisa: "E", sadapay: "S", nayapay: "N" };
+  return <span className={`service-identity service-identity-${size} service-${mark}`} aria-label={`${identity.label} local identity`}>{glyphs[mark] ?? identity.monogram}</span>;
 }
 
 export function ServiceIdentityHero({ account }: { account: Pick<Account, "serviceName" | "email" | "accountName" | "category"> }) {
