@@ -2,7 +2,7 @@ import { Copy, Eye, EyeOff, Pencil, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 import { relationshipsForAccount } from "../domain/relationships";
 import type { Account, AccountRelationship } from "../domain/types";
-import { ServiceIdentityMark } from "./ServiceIdentity";
+import { ServiceIdentityHero, ServiceIdentityMark } from "./ServiceIdentity";
 
 function relationshipLabel(relationship: AccountRelationship, accountId: string) {
   const incoming = relationship.targetAccountId === accountId;
@@ -33,7 +33,7 @@ export function AccountInspector({ account, accounts, relationships, onEdit, onM
   if (!account) return <aside className="account-inspector inspector-empty" aria-label="Account inspector"><div><p className="eyebrow">Account view</p><h2>No account selected</h2><p>Select an account from the Vault to inspect its details, credentials, and relationships.</p></div></aside>;
 
   return <aside className="account-inspector" aria-label="Account inspector">
-    <header className="inspector-header"><div><p className="eyebrow">Account view</p><div className="inspector-identity"><ServiceIdentityMark account={account} size="large" /><div><h2>{account.accountName}</h2><p>{account.email || account.username || account.serviceName}</p></div></div></div><button className="inspector-edit" onClick={() => onEdit(account)} type="button"><Pencil size={14} />Edit</button></header>
+    <header className="inspector-header"><ServiceIdentityHero account={account} /><button className="inspector-edit" onClick={() => onEdit(account)} type="button"><Pencil size={14} />Edit</button></header>
     <section className="inspector-fields" aria-label="Account credentials">
       <InspectorField label="Email" value={account.email || "Not recorded"} actionLabel="Copy email" onAction={() => void copy(account.email, "Email")} />
       <InspectorField label="Password" value={passwordVisible ? account.password : "••••••••••••••"} subvalue={passwordVisible ? "Visible until hidden" : "Hidden by default"} actions={<><button aria-label={passwordVisible ? "Hide password" : "Reveal password"} className="field-action" onClick={() => setPasswordVisible(!passwordVisible)} type="button">{passwordVisible ? <EyeOff size={14} /> : <Eye size={14} />}</button><button aria-label="Copy password" className="field-action" onClick={() => void copy(account.password, "Password")} type="button"><Copy size={14} /></button></>} />

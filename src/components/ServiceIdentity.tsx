@@ -38,3 +38,8 @@ export function ServiceIdentityMark({ account, size = "regular" }: { account: Pi
   if (identity.kind === "google") return <span className={`service-identity service-identity-${size} service-google`} aria-label={`${identity.label} local identity`}><b>G</b></span>;
   return <span className={`service-identity service-identity-${size} service-${identity.kind}`} aria-label={`${identity.label} local identity`}>{identity.monogram}</span>;
 }
+
+export function ServiceIdentityHero({ account }: { account: Pick<Account, "serviceName" | "email" | "accountName" | "category"> }) {
+  const identity = resolveServiceIdentity(account.serviceName, account.email);
+  return <div className="service-identity-hero"><ServiceIdentityMark account={account} size="large" /><div><p className="service-hero-name">{identity.label}</p><h2>{account.accountName}</h2><span>{account.category} · {account.email || account.serviceName}</span></div><strong aria-hidden="true">{identity.monogram}</strong></div>;
+}
