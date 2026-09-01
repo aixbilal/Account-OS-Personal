@@ -29,7 +29,7 @@ export function resolveServiceIdentity(serviceName: string, email = ""): Service
   return { kind: "generic", label: serviceName || "Unknown service", monogram: letters || "?" };
 }
 
-export function ServiceIdentityMark({ account, size = "regular" }: { account: Pick<Account, "serviceName" | "email">; size?: "small" | "regular" | "large" }) {
+export function ServiceIdentityMark({ account, size = "regular" }: { account: Pick<Account, "serviceName"> & Partial<Pick<Account, "email">>; size?: "small" | "regular" | "large" }) {
   const identity = resolveServiceIdentity(account.serviceName, account.email);
   const catalog = resolveCatalogService(account.serviceName, account.email);
   const mark = catalog?.id ?? identity.kind;

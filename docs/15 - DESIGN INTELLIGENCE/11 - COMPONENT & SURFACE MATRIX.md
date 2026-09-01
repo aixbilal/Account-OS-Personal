@@ -21,3 +21,15 @@
 - Primary actions are reserved for create/save; edit and management controls are secondary; reveal/copy are utility controls.
 - Hybrid is graphite navigation → cool-neutral list → slightly elevated inspector. Dark and Light preserve the same role hierarchy.
 - Motion is limited to opacity, transform, and color at 120–220ms and disabled for reduced motion.
+
+## R2 machine audit — 2026-09-02
+
+| Surface | Current component | Audit result | Required follow-up |
+| --- | --- | --- | --- |
+| App shell & sidebar | `App`, `App.css` | Semantic roles exist but legacy hard-coded declarations remain outside R2 scope. Lock remains a visible system action. | Consolidate legacy declarations only in an approved visual-polish pass. |
+| Vault / inspector / editor | `AccountList`, `AccountInspector`, `AccountEditor` | Existing semantic controls, labelled form fields, and view-first edit flow retained. | Native visual evidence remains required. |
+| Service identity | `ServiceIdentity`, `serviceCatalog` | Local-only resolver, deterministic marks and monogram fallback; 94 implemented catalog entries, not the previously claimed 99. | Add only evidence-backed catalog entries. |
+| Map | `DependencyMap` | Nodes now receive credential-free `id`, account name, service, and category view data; explicit dialog confirmation precedes relationship persistence. | Native interaction and visual review remains required. |
+| Settings / backup / connected | `SettingsScreen`, `CloudSyncPanel` | Existing controls retained; normal Vault chrome has no theme selector. | Native visual and keyboard review remains required. |
+
+Machine contrast audit covers sidebar, Vault list, inspector, selected rows, buttons, secondary metadata, and Map for Hybrid, Dark, and Light at WCAG AA (4.5:1). A Dark primary-action contrast failure and a near-threshold Hybrid metadata color were corrected. Status remains **IMPLEMENTED — PENDING HUMAN/CHATGPT FIXTURE R2 VISUAL APPROVAL**.

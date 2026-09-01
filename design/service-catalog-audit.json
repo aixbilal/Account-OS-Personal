@@ -1,0 +1,17 @@
+{
+  "auditVersion": "2026-09-02-r2",
+  "status": "PASS_WITH_SCOPE_DISCREPANCY",
+  "catalogServiceCount": 94,
+  "requestedServiceCount": 99,
+  "scopeDiscrepancy": "The catalog has 94 implemented local services. No unsupported entries were added solely to meet the requested count.",
+  "checks": {
+    "uniqueIds": "pass",
+    "uniqueDomains": "pass",
+    "uniqueAliases": "pass",
+    "normalizedDomains": "pass",
+    "validVisualMetadata": "pass",
+    "fallbackStrategy": "pass: neutral local mark and stable monogram fallback",
+    "runtimeNetworkLookup": "pass: covered by unit test"
+  },
+  "evidence": "src/domain/serviceCatalog.test.ts"
+}

@@ -29,4 +29,17 @@ describe("local service identity catalog", () => {
     resolveServiceIdentity("Unknown service");
     expect(fetch).not.toHaveBeenCalled();
   });
+
+  it("has unique, normalized local metadata for every catalog service", () => {
+    const ids = serviceCatalog.map((service) => service.id);
+    const domains = serviceCatalog.flatMap((service) => service.domains);
+    const aliases = serviceCatalog.flatMap((service) => service.aliases.map((alias) => alias.toLowerCase()));
+
+    expect(serviceCatalog).toHaveLength(94);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(new Set(domains).size).toBe(domains.length);
+    expect(new Set(aliases).size).toBe(aliases.length);
+    expect(domains.every((domain) => /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/.test(domain))).toBe(true);
+    expect(serviceCatalog.every((service) => service.iconStrategy === "neutral-local-mark" && service.licenseStatus === "no-trademark-asset" && service.status === "catalog-v1")).toBe(true);
+  });
 });

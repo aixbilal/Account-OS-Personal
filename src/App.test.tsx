@@ -27,6 +27,18 @@ describe("Account OS shell", () => {
     expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
   });
 
+  it("requires explicit confirmation before Map relationship creation", async () => {
+    const user = userEvent.setup();
+    renderApp();
+
+    await user.click(screen.getByRole("button", { name: "Map" }));
+    await user.click(screen.getByRole("button", { name: "Relationship" }));
+    expect(screen.getByRole("dialog", { name: "Create relationship" })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Target account"), "account-facebook-test");
+    await user.click(screen.getByRole("button", { name: "Create relationship" }));
+    expect(screen.queryByRole("dialog", { name: "Create relationship" })).not.toBeInTheDocument();
+  });
+
   it("keeps Map and Settings rendered when the browser reports offline", async () => {
     const user = userEvent.setup();
     Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
