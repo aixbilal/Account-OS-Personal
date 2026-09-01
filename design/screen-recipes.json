@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "auditStatusModel": ["not-audited", "in-review", "accepted"],
+  "screens": [
+    {"id": "unlock", "currentImplementation": "UnlockScreen", "auditStatus": "not-audited", "designStatus": "undecided", "mobbinQuerySeeds": ["desktop password manager unlock", "secure desktop app login"]},
+    {"id": "vault", "currentImplementation": "vault view", "auditStatus": "not-audited", "designStatus": "undecided", "mobbinQuerySeeds": ["desktop password manager vault", "three pane password manager"]},
+    {"id": "account-editor", "currentImplementation": "AccountEditor modal", "auditStatus": "not-audited", "designStatus": "undecided", "mobbinQuerySeeds": ["credential creation form", "account editor desktop"]},
+    {"id": "map", "currentImplementation": "DependencyMap", "auditStatus": "not-audited", "designStatus": "undecided", "mobbinQuerySeeds": ["dependency graph", "graph node inspector"]},
+    {"id": "settings-backup", "currentImplementation": "SettingsScreen", "auditStatus": "not-audited", "designStatus": "undecided", "mobbinQuerySeeds": ["secure backup", "recovery settings"]},
+    {"id": "cloud-panel", "currentImplementation": "CloudSyncPanel", "auditStatus": "not-audited", "designStatus": "undecided", "mobbinQuerySeeds": ["trusted devices", "security settings"]}
+  ]
+}

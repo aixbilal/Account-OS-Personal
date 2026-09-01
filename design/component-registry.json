@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "statusModel": ["approved", "provisional", "rejected"],
+  "policy": "No entry authorizes a dependency or implementation by itself.",
+  "components": [
+    {"id": "refined-sidebar", "category": "navigation", "source": "Account OS / Unlumen reference", "status": "provisional", "networkBehavior": "offline"},
+    {"id": "command-search", "category": "search", "source": "Account OS / Vengeance reference", "status": "provisional", "networkBehavior": "must remain offline-capable"},
+    {"id": "animated-number", "category": "feedback", "source": "Magic UI reference", "status": "provisional", "networkBehavior": "offline"}
+  ],
+  "rejectedForCoreSecurityUi": ["particle-background", "cursor-trail", "3d-carousel", "liquid-metal", "constant-glow", "decorative-motion"]
+}

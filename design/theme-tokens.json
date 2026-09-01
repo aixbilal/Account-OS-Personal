@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0",
+  "modes": ["hybrid", "dark", "light"],
+  "existingTokens": {"surface-0": "#090b0f", "surface-1": "#0f1218", "surface-2": "#151922", "surface-3": "#1b202b", "line": "#252b37", "line-strong": "#323a49", "text": "#e7eaf0", "text-muted": "#adb7c8", "text-faint": "#8b97aa", "accent": "#7f9cf5", "success": "#71c49a"},
+  "provisionalSemanticTokens": ["background", "surface", "elevatedSurface", "textPrimary", "textSecondary", "border", "focus", "warning", "danger", "securityState", "selection", "serviceAccent", "mapSurface"],
+  "themeDefinitions": {"hybrid": {"status": "provisional"}, "dark": {"status": "provisional", "inheritsExistingTokens": true}, "light": {"status": "provisional"}}
+}

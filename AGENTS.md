@@ -21,6 +21,10 @@ Core flow:
 
 Use the later Tauri-compatible WebdriverIO setup for Tauri-native end-to-end testing, not Playwright MCP.
 
+## Design gate
+
+Before implementing or significantly modifying a user-facing screen: read `docs/15 - DESIGN INTELLIGENCE/`, the applicable Screen Recipe, and current screenshot evidence; use Mobbin MCP research when available and record useful findings in the Screen Reference Ledger; check the Component Registry and external-component offline/network/privacy behavior; implement with Account OS tokens/patterns and applicable Hybrid/Dark/Light behavior; respect keyboard accessibility and reduced motion; capture application screenshots, obtain visual review, and run relevant security regressions. Never redesign an important screen purely from model intuition when established Account OS patterns or relevant research are available.
+
 ## UI system
 
 Base system:
