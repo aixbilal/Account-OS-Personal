@@ -6,37 +6,37 @@
       "id": "mobbin",
       "name": "Mobbin MCP",
       "role": "curated shipped-product screen and flow references",
-      "status": "BLOCKED_PAID",
+      "status": "DORMANT",
       "accessMode": "official MCP with OAuth",
       "preferredFor": ["curated product flows", "screen references"],
       "avoidFor": ["bypassing paid access", "design authority", "pixel copying"],
       "visualVerificationRequired": true,
       "privacyNotes": "Do not record credentials, private URLs, or paid content.",
-      "currentAvailability": "Official endpoint registered and OAuth verified; current plan blocks probes."
+      "currentAvailability": "Official endpoint registered and OAuth verified; paid access unavailable. Use automatically if access becomes available."
     },
     {
       "id": "firecrawl",
       "name": "Firecrawl",
       "role": "public-web discovery and structured extraction",
-      "status": "HUMAN_CONFIGURATION_REQUIRED",
+      "status": "NOT_REQUIRED_DEFAULT",
       "accessMode": "official API, MCP, or CLI with human-managed credential",
       "preferredFor": ["search", "scrape", "map", "limited crawl", "dynamic pages", "structured comparison"],
       "avoidFor": ["paywalls", "private content", "large unjustified crawls", "automatic dataset persistence"],
       "visualVerificationRequired": true,
       "privacyNotes": "Keep credentials outside the repository and never scrape private user data.",
-      "currentAvailability": "No configured MCP, CLI, or environment credential found."
+      "currentAvailability": "Not configured and not required for the default V3 UI workflow."
     },
     {
       "id": "jina",
       "name": "Jina AI Reader / Search",
       "role": "lightweight text extraction and reading",
-      "status": "AVAILABLE",
+      "status": "NOT_REQUIRED_DEFAULT",
       "accessMode": "public Reader path; local CLI/MCP optional",
       "preferredFor": ["simple pages", "text-heavy docs", "concise multi-page reading"],
       "avoidFor": ["visual design proof", "appearance-dependent conclusions"],
       "visualVerificationRequired": true,
       "privacyNotes": "Use public URLs only; do not send private Account OS or vault content.",
-      "currentAvailability": "Public Reader is documented; no local CLI/MCP is configured."
+      "currentAvailability": "Not part of the default V3 UI workflow."
     },
     {
       "id": "agent-browser",
@@ -54,13 +54,13 @@
       "id": "crawl4ai",
       "name": "Crawl4AI",
       "role": "optional future local or self-hosted deep research",
-      "status": "OPTIONAL_FUTURE",
+      "status": "NOT_REQUIRED",
       "accessMode": "local/self-hosted only if later justified",
       "preferredFor": ["repeated research", "private local corpus", "persistent reference library"],
       "avoidFor": ["ordinary single-area research", "unjustified installation"],
       "visualVerificationRequired": true,
       "privacyNotes": "Keep any future corpus private and avoid credentials or vault data.",
-      "currentAvailability": "Not installed."
+      "currentAvailability": "Not installed; optional future only for a concrete justified need."
     },
     {
       "id": "unlumen",

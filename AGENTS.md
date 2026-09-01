@@ -25,9 +25,9 @@ Use the later Tauri-compatible WebdriverIO setup for Tauri-native end-to-end tes
 
 Before implementing or significantly modifying a user-facing screen: read `docs/15 - DESIGN INTELLIGENCE/`, the applicable Screen Recipe, and current screenshot evidence; use Mobbin MCP research when available and record useful findings in the Screen Reference Ledger; check the Component Registry and external-component offline/network/privacy behavior; implement with Account OS tokens/patterns and applicable Hybrid/Dark/Light behavior; respect keyboard accessibility and reduced motion; capture application screenshots, obtain visual review, and run relevant security regressions. Never redesign an important screen purely from model intuition when established Account OS patterns or relevant research are available.
 
-## Web research gate
+## Final design router
 
-For meaningful UI reference research, use the approved tool router in `docs/15 - DESIGN INTELLIGENCE/10 - WEB RESEARCH TOOLCHAIN.md`: route discovery/extraction through approved tools, visually verify appearance-dependent conclusions, never bypass paid/private access, record evidence before implementation, and treat model intuition as a fallback rather than a design authority.
+For normal V3 UI work: read `DESIGN.md`, the applicable Design Intelligence/Screen Recipe, and the current real screenshot; apply approved direction; use Taste as a quality guardrail and Image-to-Code only with an approved reference frame; implement; capture with agent-browser; obtain visual review; run Web Design Guidelines and a security regression. Do not use scraper research by default. Never bypass paid/private access, and never let a tool override locked Account OS design or security/privacy rules.
 
 ## UI system
 
