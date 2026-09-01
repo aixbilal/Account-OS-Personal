@@ -36,3 +36,14 @@ PATTERNS REJECTED:
 ACCOUNT OS ADAPTATION:
 DECISION STATUS:
 ```
+
+## Tool verification — 2026-09-01
+
+- Official Mobbin MCP endpoint registered: `https://api.mobbin.com/mcp`
+- Client: Codex CLI
+- OAuth: verified
+- Controlled probes: password-manager Vault, security/settings, and trusted-devices/session management
+- Probe result: BLOCKED — no visual/reference results returned
+- Official server response: Mobbin MCP requires a paid plan.
+
+No design conclusions, Screen Reference Ledger entries, screenshots, assets, tokens, or credentials were recorded. Re-run the controlled probes after plan access is available.
