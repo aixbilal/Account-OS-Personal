@@ -237,6 +237,9 @@ function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
           })}
         </nav>
 
+        <button className="vault-state sidebar-lock" onClick={handleLockVault} type="button" aria-label={isTauriRuntime ? "Lock local vault" : "Web preview mode"}>
+          <LockKeyhole size={15} />{isTauriRuntime ? "Lock Vault" : "Preview mode"}
+        </button>
         <div className="sidebar-status">
           <span className="status-dot" aria-hidden="true" />
           <div>
@@ -252,15 +255,6 @@ function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
             <p className="section-kicker">Account OS / V2 Connected</p>
             <h1>{navigation.find((item) => item.id === activeView)?.label}</h1>
           </div>
-          <button
-            className="vault-state"
-            onClick={handleLockVault}
-            type="button"
-            aria-label={isTauriRuntime ? "Lock local vault" : "Web preview mode"}
-          >
-            <LockKeyhole size={15} />
-            {isTauriRuntime ? "Lock vault" : "Preview mode"}
-          </button>
         </header>
 
         {activeView === "vault" ? (
@@ -271,7 +265,6 @@ function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
                 <input aria-label="Search accounts" onChange={(event) => setSearch(event.target.value)} placeholder="Search accounts…" type="search" value={search} />
                 <select aria-label="Filter by category" onChange={(event) => setCategoryFilter(event.target.value as AccountCategory | "all")} value={categoryFilter}><option value="all">All categories</option>{ACCOUNT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select>
                 <select aria-label="Filter by authentication method" onChange={(event) => setAuthenticationFilter(event.target.value as AuthenticationMethod | "all")} value={authenticationFilter}><option value="all">All authentication methods</option>{AUTHENTICATION_METHODS.map((method) => <option key={method}>{method}</option>)}</select>
-                <select aria-label="Vault theme" onChange={(event) => setTheme(event.target.value as typeof theme)} value={theme}><option value="hybrid">Hybrid</option><option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option></select>
               </div>
               {displayedVault && displayedVault.accounts.length > 0 ? (visibleAccounts.length > 0 ? <AccountList accounts={visibleAccounts} onSelect={setSelectedAccount} selectedAccountId={selectedAccount?.id} /> : <div className="vault-empty"><h3>No matching accounts.</h3><p>Change the search or filters, or add an account.</p></div>) : <div className="vault-empty"><h3>Vault</h3><p>0 accounts</p><p>Start with one account. Your vault stays clear, local, and ready to grow with you.</p><button className="add-account-button" onClick={() => setEditingAccount(null)} type="button">+ Add account</button></div>}
             </div>
@@ -281,12 +274,14 @@ function App({ previewVault = fakeVault }: { previewVault?: VaultData }) {
           <section className="map-screen" aria-labelledby="view-title">
             <div className="screen-intro"><div><p className="eyebrow">{content.eyebrow}</p><h2 id="view-title">{content.title}</h2><p>{content.description}</p></div></div>
             <p className="map-explainer">Arrows point from the dependent/source account toward the account it relies on. Select an account node to manage its local relationships.</p>
-            <DependencyMap accounts={displayedVault?.accounts ?? []} onSelectAccount={setEditingAccount} relationships={displayedVault?.relationships ?? []} />
+            <DependencyMap accounts={displayedVault?.accounts ?? []} onSelectAccount={setSelectedAccount} relationships={displayedVault?.relationships ?? []} />
           </section>
         ) : activeView === "settings" ? (
           <SettingsScreen
             isNative={isTauriRuntime}
             onImport={(vault) => setVaultData(vault)}
+            theme={theme}
+            onThemeChange={setTheme}
           />
         ) : (
           <section className="placeholder-panel" aria-labelledby="view-title">
@@ -412,11 +407,12 @@ function UnlockScreen({ hasVault, onCreate, onUnlock }: UnlockScreenProps) {
   );
 }
 
-function SettingsScreen({ isNative, onImport }: { isNative: boolean; onImport: (vault: VaultData) => void }) {
+function SettingsScreen({ isNative, onImport, theme, onThemeChange }: { isNative: boolean; onImport: (vault: VaultData) => void; theme: "hybrid" | "dark" | "light" | "system"; onThemeChange: (theme: "hybrid" | "dark" | "light" | "system") => void }) {
   const [importPath, setImportPath] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
   const [message, setMessage] = useState("");
   const [isWorking, setIsWorking] = useState(false);
+  const [section, setSection] = useState<"appearance" | "security" | "data" | "connected">("data");
 
   async function exportBackup() {
     setMessage("");
@@ -448,10 +444,21 @@ function SettingsScreen({ isNative, onImport }: { isNative: boolean; onImport: (
   }
 
   return <section className="settings-screen" aria-labelledby="view-title">
+    <aside className="settings-nav" aria-label="Settings sections">
+      <p className="eyebrow">Preferences</p>
+      {(["appearance", "security", "data", "connected"] as const).map((item) => <button aria-pressed={section === item} data-active={section === item} key={item} onClick={() => setSection(item)} type="button">{item === "data" ? "Data & Recovery" : item === "appearance" ? "General / Appearance" : item === "security" ? "Security" : "Connected"}</button>)}
+    </aside>
+    <div className="settings-content">
+    {section === "appearance" && <div className="settings-row"><div><p className="eyebrow">General</p><h2 id="view-title">Appearance</h2><p>Choose the Account OS desktop surface hierarchy.</p></div><div className="theme-choice" role="group" aria-label="Appearance theme">{(["hybrid", "dark", "light", "system"] as const).map((option) => <button aria-pressed={theme === option} data-active={theme === option} key={option} onClick={() => onThemeChange(option)} type="button">{option}</button>)}</div></div>}
+    {section === "security" && <div className="settings-row"><div><p className="eyebrow">Security</p><h2 id="view-title">Local vault</h2><p>Your local master password remains separate from cloud authentication.</p></div><span className="settings-value">Manual lock</span></div>}
+    {section === "data" && <>
     <div className="screen-intro"><div><p className="eyebrow">Preferences</p><h2 id="view-title">Encrypted backup and restore</h2><p>Backups use the same versioned encrypted vault format. Account OS never creates a plaintext credential export.</p></div></div>
     <div className="settings-card"><h3>Export encrypted backup</h3><p>Choose a new <code>.aosbackup</code> file location. Existing files are not silently overwritten.</p><button className="add-account-button" disabled={isWorking} onClick={exportBackup} type="button">Export encrypted backup</button></div>
     <div className="settings-card"><h3>Restore encrypted backup</h3><p>Select a backup, then enter its master password. Invalid or corrupted files leave the current local vault unchanged.</p><form onSubmit={importBackup}><button className="secondary-button" disabled={isWorking} onClick={chooseBackup} type="button">Choose backup file</button>{importPath && <p className="selected-file">Backup selected</p>}<label className="field-label">Backup master password<input autoComplete="current-password" onChange={(event) => setMasterPassword(event.target.value)} required type="password" value={masterPassword} /></label><button className="unlock-submit" disabled={!importPath || !masterPassword || isWorking} type="submit">{isWorking ? "Restoring…" : "Restore encrypted backup"}</button></form></div>
     <CloudSyncPanel isNative={isNative} onVaultRestored={onImport} />
+    </>}
+    {section === "connected" && <><div className="screen-intro"><div><p className="eyebrow">Connected</p><h2 id="view-title">Cloud identity</h2><p>Cloud connection stores encrypted vault data only.</p></div></div><CloudSyncPanel isNative={isNative} onVaultRestored={onImport} /></>}
     {message && <p className="backup-status" role="status">{message}</p>}
+    </div>
   </section>;
 }

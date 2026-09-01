@@ -14,11 +14,8 @@ export function AccountList({ accounts, onSelect, selectedAccountId }: AccountLi
         <button aria-pressed={account.id === selectedAccountId} className="account-card" data-selected={account.id === selectedAccountId} key={account.id} onClick={() => onSelect(account)} type="button">
           <ServiceIdentityMark account={account} />
           <div className="account-summary">
-            <div className="account-heading">
-              <h2>{account.accountName}</h2>
-              <span>{account.category}</span>
-            </div>
-            <p>{account.email}</p>
+            <div className="account-heading"><h2>{account.accountName}</h2><span>{account.category}</span></div>
+            <p>{account.serviceName} · {account.email || account.username || "No sign-in identity"}</p>
           </div>
         </button>
       ))}

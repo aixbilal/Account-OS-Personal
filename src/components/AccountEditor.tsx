@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, RELATIONSHIP_TYPES, type Account, type AccountRelationship, type RelationshipType } from "../domain/types";
 import { generatePassword } from "../domain/passwordGenerator";
+import { serviceCatalog } from "../domain/serviceCatalog";
 
 export type AccountDraft = Omit<Account, "id" | "createdAt" | "updatedAt">;
 
@@ -81,7 +82,7 @@ export function AccountEditor({ account, accounts, relationships, onClose, onDel
         </header>
         <form className="editor-form" onSubmit={submit}>
           <div className="form-grid">
-            <Field label="Service" value={draft.serviceName} onChange={(value) => update("serviceName", value)} required />
+            <Field label="Service" list="local-service-catalog" value={draft.serviceName} onChange={(value) => update("serviceName", value)} required />
             <Field label="Account title" value={draft.accountName} onChange={(value) => update("accountName", value)} required />
             <SelectField label="Category" value={draft.category} values={ACCOUNT_CATEGORIES} onChange={(value) => update("category", value as AccountDraft["category"])} />
             <SelectField label="Authentication" value={draft.authenticationMethod} values={AUTHENTICATION_METHODS} onChange={(value) => update("authenticationMethod", value as AccountDraft["authenticationMethod"])} />
@@ -104,6 +105,7 @@ export function AccountEditor({ account, accounts, relationships, onClose, onDel
             <div><button className="secondary-button" onClick={onClose} type="button">Cancel</button><button className="unlock-submit" disabled={isSaving} type="submit">{isSaving ? "Saving…" : "Save account"}</button></div>
           </footer>
         </form>
+        <datalist id="local-service-catalog">{serviceCatalog.map((service) => <option key={service.id} value={service.displayName}>{service.domains[0]}</option>)}</datalist>
       </section>
     </div>
   );
@@ -160,8 +162,8 @@ function RelationshipManager({ account, accounts, relationships, onDelete, onSav
   </section>;
 }
 
-function Field({ label, onChange, required, type = "text", value }: { label: string; onChange: (value: string) => void; required?: boolean; type?: string; value: string }) {
-  return <label className="field-label">{label}<input onChange={(event) => onChange(event.target.value)} required={required} type={type} value={value} /></label>;
+function Field({ label, list, onChange, required, type = "text", value }: { label: string; list?: string; onChange: (value: string) => void; required?: boolean; type?: string; value: string }) {
+  return <label className="field-label">{label}<input list={list} onChange={(event) => onChange(event.target.value)} required={required} type={type} value={value} /></label>;
 }
 
 function SelectField({ label, onChange, value, values }: { label: string; onChange: (value: string) => void; value: string; values: readonly string[] }) {
