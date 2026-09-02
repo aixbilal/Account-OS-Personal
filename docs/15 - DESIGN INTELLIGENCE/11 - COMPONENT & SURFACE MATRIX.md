@@ -1,5 +1,15 @@
 # V3 Component & Surface Matrix
 
+## Resume Account OS R2 from here
+
+1. Launch the existing isolated R2 native profile and have the human unlock it manually.
+2. The human confirms: `R2 NATIVE REVIEW VAULT UNLOCKED`.
+3. Verify the ten-account synthetic fixture and Map-created relationship are intact, then prove Map and Vault-inspector persistence.
+4. Finish the native screenshot manifest and `C:\tmp\Account-OS-V3-Fixture-R2.pdf`, followed by human + ChatGPT visual review.
+5. Apply only evidence-based R2 fixes, rerun final tests/security scans, and reverify live dependency audits when environment access is available. Do not freeze V3 before visual approval.
+
+**R2 checkpoint:** IN PROGRESS â€” SAFE CHECKPOINT. Latest verified: frontend 57/57 PASS; Rust 16/16 PASS; production build PASS; targeted artifact scan PASS. Current npm audit: **ENVIRONMENT-BLOCKED â€” ADVISORY ENDPOINT UNREACHABLE**. Current cargo audit: **ENVIRONMENT-BLOCKED â€” ADVISORY DATABASE LOCKED/READ-ONLY**; last known baseline is 17 accepted upstream/Tauri warnings, not a current result.
+
 **Status:** IMPLEMENTED — PENDING HUMAN/CHATGPT CORE EXPERIENCE VISUAL APPROVAL
 
 | Surface | Structural primitive & interaction | Visual treatment | Accessibility & motion | Account OS adaptation / avoid |

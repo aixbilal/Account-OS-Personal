@@ -10,7 +10,7 @@ No silent third-party favicon or asset request occurs when a domain is entered. 
 
 ## V3 implementation evidence — 2026-09-01
 
-- Known local service identities: 99.
+- Known local service identities: 94 (the implemented, audited catalog count; no unsupported entries were added to inflate it).
 - Generic identity categories: 18.
 - Pakistan finance identities: 9.
 - Resolution is local-only: normalized service/domain input is matched against the in-repository catalog; known identities use neutral local marks and all other catalog entries or unknown services retain the stable monogram fallback.
