@@ -20,3 +20,7 @@ npm.cmd run build
 ```
 
 Never commit real vault data, backups, credentials, or secrets.
+
+## V3 release candidate
+
+The V3 Windows desktop release candidate has generated executable, MSI, and NSIS artifacts. Its final review status, installation boundaries, backup/recovery behavior, security model, and known limitations are recorded in [the V3 release-candidate report](docs/ACCOUNT-OS-V3-RELEASE-CANDIDATE.md).
