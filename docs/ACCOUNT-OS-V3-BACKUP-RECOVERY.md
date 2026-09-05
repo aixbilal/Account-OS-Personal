@@ -16,6 +16,6 @@ Account OS exports encrypted `.aosbackup` files. It does not provide plaintext J
 3. Enter the backup's local master password.
 4. Restore replaces the local vault only after decryption and validation succeed.
 
-A wrong password, corrupted file, unsupported format, or invalid vault data must leave the active vault unchanged. The Rust regression suite covers encrypted export/import, wrong-password rejection, tamper rejection, and non-mutating failed restore. The final native synthetic-backup walkthrough remains pending.
+A wrong password, corrupted file, unsupported format, or invalid vault data must leave the active vault unchanged. The Rust regression suite covers encrypted export/import, wrong-password rejection, tamper rejection, and non-mutating failed restore. On 2026-09-06, the same production vault service was exercised with separate disposable source and restore profiles: a real encrypted synthetic backup was exported, restored successfully, and then verified non-mutating after wrong-password and corrupt-backup attempts. The final visual native synthetic-backup walkthrough remains pending.
 
 Account OS cannot recover a forgotten master password. Keep encrypted backups and their passwords safely under the user's control.

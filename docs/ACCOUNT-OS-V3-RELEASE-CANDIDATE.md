@@ -28,7 +28,15 @@ Windows desktop release candidate for final human and ChatGPT review. No tag, pu
 
 ## Pending release evidence
 
-The isolated native review vault has been created, but its full synthetic fixture, native walkthrough, real native screenshots/PDF, backup/restore walkthrough, and safe installer execution still require completion before release readiness can be asserted. `cargo audit` remains environment-blocked while checking yanked-package status; it reported 17 established upstream Tauri/GTK warnings before the external timeout.
+The isolated native review vault has been created, but its full synthetic fixture, native walkthrough, real native screenshots/PDF, backup/restore walkthrough, and safe installer execution still require completion before release readiness can be asserted.
+
+## Isolated RC backup/restore checkpoint — 2026-09-06
+
+The dedicated source and restore executables were built with distinct Tauri identifiers and used only new disposable synthetic profiles. The production Rust vault service created the source vault, persisted a 10-account / 6-relationship fixture, reopened it, exported the encrypted backup, and restored it into the separate target profile. The backup at `C:\tmp\account-os-v3-final-review\aos-final-rc.aosbackup` exists (8,053 bytes; SHA-256 `0FC35172035AF329988B90F73996CB4D727ADF45737833B60009111184000592`).
+
+The same exercise verified correct-password restore, representative known and fallback service identities, relationship preservation, wrong-password rejection without a target-file mutation, and corrupt-backup rejection without a target-file mutation. The temporary test-only harness and its process-only credentials were removed before this checkpoint; source and production-build scans found no fixture trigger, seed control, review credential, or synthetic fixture string.
+
+The native success/error boxes are present in the production renderer and covered by the production build, but a visual unlocked-native walkthrough, focused screenshots/PDF, and disposable installer smoke test remain required for final release readiness. The 2026-09-06 `npm audit --omit=dev` request could not reach npm's audit endpoint, so its current status is environment-blocked rather than treated as a passing audit. `cargo audit` completed with 17 allowed upstream RustSec warnings.
 
 ## Build artifacts and hashes
 
@@ -45,12 +53,12 @@ The isolated native review vault has been created, but its full synthetic fixtur
 | Vault, unlock, lock, CRUD, search, filters, generator | PASS (automated coverage; final native walkthrough pending) |
 | Relationships and Map relationship creation | PASS (automated coverage; final native walkthrough pending) |
 | Settings, themes, service identity, offline/cloud boundary | PASS (automated coverage; final native walkthrough pending) |
-| Backup export, restore, wrong-password safety | PASS (Rust regression coverage; final native walkthrough pending) |
+| Backup export, restore, wrong-password safety | PASS (Rust regression plus isolated production-service exercise; final visual native walkthrough pending) |
 | Frontend tests, Rust tests, production build | PASS |
 | Windows executable, MSI, NSIS build | PASS |
 | Installer smoke | FAIL - not yet executed safely in a disposable install location |
 | Targeted secret scan | PASS |
 | Documentation | PASS |
 | Git clean | pending final commit |
-| npm audit | PASS |
-| cargo audit | ENVIRONMENT-BLOCKED |
+| npm audit | ENVIRONMENT-BLOCKED (npm audit endpoint unavailable on 2026-09-06) |
+| cargo audit | PASS with 17 allowed upstream warnings |
