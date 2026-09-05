@@ -24,3 +24,5 @@ Never commit real vault data, backups, credentials, or secrets.
 ## V3 release candidate
 
 The V3 Windows desktop release candidate has generated executable, MSI, and NSIS artifacts. Its final review status, installation boundaries, backup/recovery behavior, security model, and known limitations are recorded in [the V3 release-candidate report](docs/ACCOUNT-OS-V3-RELEASE-CANDIDATE.md).
+
+Automated native screenshot capture is environment-blocked by Windows virtual-desktop capture routing. Final visual approval is therefore a direct human review of the isolated synthetic native profile; this does not invalidate the completed encrypted backup/restore verification.

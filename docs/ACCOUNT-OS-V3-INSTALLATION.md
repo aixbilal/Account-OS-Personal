@@ -17,4 +17,4 @@ Use only a reviewed artifact whose SHA-256 is recorded in the release-candidate 
 3. Keep the master password private; it is not an Account OS cloud password.
 4. Use encrypted backups before moving any important data.
 
-The V3 installer was built, but a disposable end-to-end installer execution has not yet been recorded. Treat that smoke test as required before broad installation.
+The V3 installer has been built. A safe disposable installer launch remains a manual smoke-test requirement before broad installation; never point an unreviewed build at an important vault.

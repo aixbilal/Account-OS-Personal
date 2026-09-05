@@ -14,4 +14,4 @@ Passwords are hidden by default and Reveal/Copy require explicit action. Service
 
 ## Verification status
 
-The 2026-09-05 frontend and Rust suites pass, including wrong-password, tamper, encrypted-backup, relationship-persistence, sync-payload, and atomic-write regressions. The production targeted secret scan passed for application keys/tokens. This is not an independent security audit, and the final native backup/restore walkthrough remains pending.
+The frontend and Rust suites pass, including wrong-password, tamper, encrypted-backup, relationship-persistence, sync-payload, and atomic-write regressions. The isolated synthetic RC exercise also completed a real encrypted export, correct-password restore, wrong-password rejection, relationship restore, and non-mutating failed restore. The production targeted secret scan passed for application keys/tokens. This is not an independent security audit. Windows Hello, OS-secure key storage, and an updater remain deferred.

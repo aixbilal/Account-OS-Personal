@@ -38,6 +38,12 @@ The same exercise verified correct-password restore, representative known and fa
 
 The native success/error boxes are present in the production renderer and covered by the production build, but a visual unlocked-native walkthrough, focused screenshots/PDF, and disposable installer smoke test remain required for final release readiness. The 2026-09-06 `npm audit --omit=dev` request could not reach npm's audit endpoint, so its current status is environment-blocked rather than treated as a passing audit. `cargo audit` completed with 17 allowed upstream RustSec warnings.
 
+## Native visual evidence policy
+
+The isolated visual-review profile is `com.accountos.desktop.v3finalvisual20260906`; it contains only the approved synthetic fixture. Native screenshot automation is **ENVIRONMENT-BLOCKED**: the available Windows capture path repeatedly captured the wrong virtual-desktop/window. This is not a Vault, Map, Settings, or lock/unlock product failure. The Final Review PDF is therefore **MANUAL EVIDENCE REQUIRED**.
+
+For direct human review, inspect: Hybrid/Dark/Light Vault; known and fallback service selection; relationship summary; Add/Edit/Search; populated Map, selected node, edges, inspector and relationship state; Appearance, Security, Data & Recovery and Connected; lock/unlock; representative 1280px layout; and green restore-success/red restore-error validation boxes.
+
 ## Build artifacts and hashes
 
 | Artifact | Size | SHA-256 |
@@ -62,3 +68,7 @@ The native success/error boxes are present in the production renderer and covere
 | Git clean | pending final commit |
 | npm audit | ENVIRONMENT-BLOCKED (npm audit endpoint unavailable on 2026-09-06) |
 | cargo audit | PASS with 17 allowed upstream warnings |
+
+## Final RC handoff
+
+Post-cleanup Windows EXE, MSI, and NSIS artifacts were rebuilt on 2026-09-06. Frontend tests (57), Rust tests (16), typecheck, production build, targeted source/dist secret scan, and fixture/review-helper scan passed. `npm audit --omit=dev` is environment-blocked because npm's audit endpoint was unavailable; it is not reported as a passing audit. A direct human visual review and a disposable installer smoke launch remain manual evidence required before broad installation.
