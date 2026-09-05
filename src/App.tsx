@@ -409,11 +409,12 @@ function SettingsScreen({ isNative, onImport, theme, onThemeChange }: { isNative
   const [importPath, setImportPath] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [restoreError, setRestoreError] = useState("");
   const [isWorking, setIsWorking] = useState(false);
   const [section, setSection] = useState<"appearance" | "security" | "data" | "connected">("data");
 
   async function exportBackup() {
-    setMessage("");
+    setMessage(""); setRestoreError("");
     if (!isNative) { setMessage("Encrypted backup export is available in the desktop application."); return; }
     const path = await saveDialog({ defaultPath: "account-os-backup.aosbackup", filters: [{ name: "Account OS encrypted backup", extensions: ["aosbackup"] }] });
     if (!path) return;
@@ -432,12 +433,12 @@ function SettingsScreen({ isNative, onImport, theme, onThemeChange }: { isNative
 
   async function importBackup(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!importPath || !masterPassword) return;
-    setMessage(""); setIsWorking(true);
+    if (!importPath || !masterPassword) { setRestoreError("Choose an encrypted backup and enter its master password."); return; }
+    setMessage(""); setRestoreError(""); setIsWorking(true);
     try {
       const vault = await invoke<VaultData>("import_backup", { path: importPath, password: masterPassword });
       onImport(vault); setMessage("Encrypted backup restored. The previous local vault was replaced only after validation."); setImportPath("");
-    } catch (reason) { setMessage(reason instanceof Error ? reason.message : "Unable to restore the backup."); }
+    } catch (reason) { setRestoreError(reason instanceof Error ? reason.message : "Unable to restore the backup."); }
     finally { setMasterPassword(""); setIsWorking(false); }
   }
 
@@ -452,11 +453,10 @@ function SettingsScreen({ isNative, onImport, theme, onThemeChange }: { isNative
     {section === "data" && <>
     <div className="screen-intro"><div><p className="eyebrow">Preferences</p><h2 id="view-title">Encrypted backup and restore</h2><p>Backups use the same versioned encrypted vault format. Account OS never creates a plaintext credential export.</p></div></div>
     <div className="settings-card"><h3>Export encrypted backup</h3><p>Choose a new <code>.aosbackup</code> file location. Existing files are not silently overwritten.</p><button className="add-account-button" disabled={isWorking} onClick={exportBackup} type="button">Export encrypted backup</button></div>
-    <div className="settings-card"><h3>Restore encrypted backup</h3><p>Select a backup, then enter its master password. Invalid or corrupted files leave the current local vault unchanged.</p><form onSubmit={importBackup}><button className="secondary-button" disabled={isWorking} onClick={chooseBackup} type="button">Choose backup file</button>{importPath && <p className="selected-file">Backup selected</p>}<label className="field-label">Backup master password<input autoComplete="current-password" onChange={(event) => setMasterPassword(event.target.value)} required type="password" value={masterPassword} /></label><button className="unlock-submit" disabled={!importPath || !masterPassword || isWorking} type="submit">{isWorking ? "Restoring…" : "Restore encrypted backup"}</button></form></div>
+    <div className="settings-card"><h3>Restore encrypted backup</h3><p>Select a backup, then enter its master password. Invalid or corrupted files leave the current local vault unchanged.</p><form onSubmit={importBackup}><button className="secondary-button" disabled={isWorking} onClick={chooseBackup} type="button">Choose backup file</button>{importPath && <p className="selected-file">Backup selected</p>}<label className="field-label">Backup master password<input autoComplete="current-password" onChange={(event) => setMasterPassword(event.target.value)} required type="password" value={masterPassword} /></label><button className="unlock-submit" disabled={!importPath || !masterPassword || isWorking} type="submit">{isWorking ? "Restoring…" : "Restore encrypted backup"}</button>{restoreError && <p className="restore-validation" role="alert">Restore not completed: {restoreError}</p>}{message && <p className="restore-success" role="status">{message}</p>}</form></div>
     <CloudSyncPanel isNative={isNative} onVaultRestored={onImport} />
     </>}
     {section === "connected" && <><div className="screen-intro"><div><p className="eyebrow">Connected</p><h2 id="view-title">Cloud identity</h2><p>Cloud connection stores encrypted vault data only.</p></div></div><CloudSyncPanel isNative={isNative} onVaultRestored={onImport} /></>}
-    {message && <p className="backup-status" role="status">{message}</p>}
     </div>
   </section>;
 }
