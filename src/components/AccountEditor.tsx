@@ -35,8 +35,14 @@ export function AccountEditor({ account, accounts, relationships, onClose, onDel
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(Boolean(account));
 
   useEffect(() => setDraft(account ?? emptyDraft), [account]);
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [onClose]);
 
   function update<K extends keyof AccountDraft>(key: K, value: AccountDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -81,11 +87,9 @@ export function AccountEditor({ account, accounts, relationships, onClose, onDel
           <button aria-label="Close account editor" className="icon-button" onClick={onClose} type="button"><X size={18} /></button>
         </header>
         <form className="editor-form" onSubmit={submit}>
-          <div className="form-grid">
+          <div className="editor-essential">
             <Field label="Service" list="local-service-catalog" value={draft.serviceName} onChange={(value) => update("serviceName", value)} required />
             <Field label="Account title" value={draft.accountName} onChange={(value) => update("accountName", value)} required />
-            <SelectField label="Category" value={draft.category} values={ACCOUNT_CATEGORIES} onChange={(value) => update("category", value as AccountDraft["category"])} />
-            <SelectField label="Authentication" value={draft.authenticationMethod} values={AUTHENTICATION_METHODS} onChange={(value) => update("authenticationMethod", value as AccountDraft["authenticationMethod"])} />
             <Field label="Email" type="email" value={draft.email} onChange={(value) => update("email", value)} />
             <Field label="Username" value={draft.username} onChange={(value) => update("username", value)} />
             <CredentialField
@@ -94,11 +98,9 @@ export function AccountEditor({ account, accounts, relationships, onClose, onDel
               setPasswordVisible={setPasswordVisible}
               value={draft.password}
             />
-            <Field label="2FA metadata" value={draft.twoFactorInformation} onChange={(value) => update("twoFactorInformation", value)} />
           </div>
-          <Field label="Recovery information" value={draft.recoveryInformation} onChange={(value) => update("recoveryInformation", value)} />
-          <label className="field-label">Notes<textarea value={draft.notes} onChange={(event) => update("notes", event.target.value)} /></label>
-          {account && <RelationshipManager account={account} accounts={accounts} relationships={relationships} onDelete={onDeleteRelationship} onSave={onSaveRelationship} />}
+          <button aria-expanded={detailsOpen} className="details-toggle" onClick={() => setDetailsOpen((open) => !open)} type="button">{detailsOpen ? "Hide details" : "More details"}<span aria-hidden="true">{detailsOpen ? "−" : "+"}</span></button>
+          {detailsOpen && <div className="editor-details"><div className="form-grid"><SelectField label="Category" value={draft.category} values={ACCOUNT_CATEGORIES} onChange={(value) => update("category", value as AccountDraft["category"])} /><SelectField label="Authentication" value={draft.authenticationMethod} values={AUTHENTICATION_METHODS} onChange={(value) => update("authenticationMethod", value as AccountDraft["authenticationMethod"])} /><Field label="2FA metadata" value={draft.twoFactorInformation} onChange={(value) => update("twoFactorInformation", value)} /><Field label="Recovery information" value={draft.recoveryInformation} onChange={(value) => update("recoveryInformation", value)} /></div><label className="field-label">Notes<textarea value={draft.notes} onChange={(event) => update("notes", event.target.value)} /></label>{account && <RelationshipManager account={account} accounts={accounts} relationships={relationships} onDelete={onDeleteRelationship} onSave={onSaveRelationship} />}</div>}
           {error && <p className="form-error" role="alert">{error}</p>}
           <footer className="editor-actions">
             {account && <button className="danger-button" disabled={isSaving} onClick={remove} type="button">Delete account</button>}

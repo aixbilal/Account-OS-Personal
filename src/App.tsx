@@ -19,6 +19,7 @@ import { isDuplicateRelationship, isValidRelationship } from "./domain/relations
 import { markFreshLocalVault, markLocalVaultChange } from "./sync/cloudSync";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountCategory, type AccountRelationship, type AuthenticationMethod, type VaultData } from "./domain/types";
 import "./App.css";
+import "./ux-correction.css";
 
 type View = "vault" | "map" | "settings";
 
@@ -78,7 +79,7 @@ function App({ previewVault }: { previewVault?: VaultData }) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<AccountCategory | "all">("all");
   const [authenticationFilter, setAuthenticationFilter] = useState<AuthenticationMethod | "all">("all");
-  const [theme, setTheme] = useState<"hybrid" | "dark" | "light" | "system">("hybrid");
+  const [theme, setTheme] = useState<"adaptive" | "dark" | "light" | "system">("adaptive");
   const workspaceRef = useRef<HTMLElement>(null);
   const content = viewContent[activeView];
   const ContentIcon = content.icon;
@@ -405,7 +406,7 @@ function UnlockScreen({ hasVault, onCreate, onUnlock }: UnlockScreenProps) {
   );
 }
 
-function SettingsScreen({ isNative, onImport, theme, onThemeChange }: { isNative: boolean; onImport: (vault: VaultData) => void; theme: "hybrid" | "dark" | "light" | "system"; onThemeChange: (theme: "hybrid" | "dark" | "light" | "system") => void }) {
+function SettingsScreen({ isNative, onImport, theme, onThemeChange }: { isNative: boolean; onImport: (vault: VaultData) => void; theme: "adaptive" | "dark" | "light" | "system"; onThemeChange: (theme: "adaptive" | "dark" | "light" | "system") => void }) {
   const [importPath, setImportPath] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -448,7 +449,7 @@ function SettingsScreen({ isNative, onImport, theme, onThemeChange }: { isNative
       {(["appearance", "security", "data", "connected"] as const).map((item) => <button aria-pressed={section === item} data-active={section === item} key={item} onClick={() => setSection(item)} type="button">{item === "data" ? "Data & Recovery" : item === "appearance" ? "General / Appearance" : item === "security" ? "Security" : "Connected"}</button>)}
     </aside>
     <div className="settings-content">
-    {section === "appearance" && <div className="appearance-section"><div className="screen-intro"><div><h2 id="view-title">Appearance</h2><p>Choose how Account OS looks on this device.</p></div></div><div className="theme-choice" role="radiogroup" aria-label="Appearance theme">{(["hybrid", "dark", "light", "system"] as const).map((option) => <button aria-checked={theme === option} data-active={theme === option} key={option} onClick={() => onThemeChange(option)} role="radio" type="button"><i aria-hidden="true" /><strong>{option}</strong><span>{option === "hybrid" ? "Recommended · dark chrome and soft workspace" : option === "dark" ? "Focused low-light interface" : option === "light" ? "Bright neutral workspace" : "Follow operating system"}</span></button>)}</div></div>}
+    {section === "appearance" && <div className="appearance-section"><div className="screen-intro"><div><h2 id="view-title">Appearance</h2><p>Choose how Account OS looks on this device.</p></div></div><div className="theme-choice" role="radiogroup" aria-label="Appearance theme">{(["adaptive", "dark", "light", "system"] as const).map((option) => <button aria-checked={theme === option} data-active={theme === option} key={option} onClick={() => onThemeChange(option)} role="radio" type="button"><i aria-hidden="true" /><strong>{option}</strong><span>{option === "adaptive" ? "Recommended · service-aware workspace" : option === "dark" ? "Focused low-light interface" : option === "light" ? "Bright neutral workspace" : "Follow operating system"}</span></button>)}</div></div>}
     {section === "security" && <div className="settings-row"><div><p className="eyebrow">Security</p><h2 id="view-title">Local vault</h2><p>Your local master password remains separate from cloud authentication.</p></div><span className="settings-value">Manual lock</span></div>}
     {section === "data" && <>
     <div className="screen-intro"><div><p className="eyebrow">Preferences</p><h2 id="view-title">Encrypted backup and restore</h2><p>Backups use the same versioned encrypted vault format. Account OS never creates a plaintext credential export.</p></div></div>
