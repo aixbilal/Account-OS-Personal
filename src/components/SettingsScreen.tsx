@@ -160,6 +160,11 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
       window.requestAnimationFrame(() => (!currentMaster ? currentMasterRef : newMasterRef).current?.focus());
       return;
     }
+    if (newMaster.length < 12) {
+      setRekeyStatus({ tone: "error", message: "Use a master password with at least 12 characters." });
+      window.requestAnimationFrame(() => newMasterRef.current?.focus());
+      return;
+    }
     if (newMaster !== confirmMaster) {
       setRekeyStatus({ tone: "error", message: "The new master password entries do not match." });
       window.requestAnimationFrame(() => newMasterRef.current?.focus());
@@ -187,8 +192,8 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
       setRekeyStatus({ tone: "success", message: "Master password changed. The vault was re-encrypted; use the new password at the next unlock." });
       onMasterPasswordChanged();
     } catch (reason) {
+      resetRekeyFields();
       setRekeyStatus({ tone: "error", message: typeof reason === "string" ? reason : "The master password was not changed. Your vault is unchanged." });
-      setConfirmRekey(false);
     } finally {
       setRekeyWorking(false);
     }

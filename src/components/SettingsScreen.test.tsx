@@ -50,6 +50,20 @@ describe("SettingsScreen — change master password", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("blocks a new password shorter than the vault creation minimum", async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await openSecuritySection(user);
+
+    await user.type(screen.getByLabelText("Current master password"), "old-master-TEST");
+    await user.type(screen.getByLabelText("New master password"), "short-TEST");
+    await user.type(screen.getByLabelText("Confirm new master password"), "short-TEST");
+    await user.click(screen.getByRole("button", { name: "Change master password" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("at least 12 characters");
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
   it("blocks the change when the new password equals the current one", async () => {
     const user = userEvent.setup();
     renderSettings();
