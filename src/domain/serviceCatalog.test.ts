@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { genericIdentityCategories, normalizeServiceInput, resolveCatalogService, serviceCatalog } from "./serviceCatalog";
+import { genericIdentityCategories, normalizeServiceInput, priorityServiceIds, resolveCatalogService, serviceCatalog } from "./serviceCatalog";
 import { resolveServiceIdentity } from "../components/ServiceIdentity";
 
 describe("local service identity catalog", () => {
@@ -18,7 +18,7 @@ describe("local service identity catalog", () => {
   it("matches aliases and provides an intentional monogram fallback", () => {
     expect(resolveCatalogService("Claude", "")?.displayName).toBe("Anthropic");
     expect(resolveCatalogService("", "unknown.example.invalid")).toBeUndefined();
-    expect(resolveServiceIdentity("Le Grain Admin")).toMatchObject({ kind: "generic", monogram: "LG" });
+    expect(resolveServiceIdentity("Le Grain Admin")).toMatchObject({ id: "custom", iconSource: "monogram", monogram: "LG" });
     expect(normalizeServiceInput("HTTPS://WWW.GITHUB.COM/settings")).toBe("github.com");
   });
 
@@ -40,6 +40,8 @@ describe("local service identity catalog", () => {
     expect(new Set(domains).size).toBe(domains.length);
     expect(new Set(aliases).size).toBe(aliases.length);
     expect(domains.every((domain) => /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/.test(domain))).toBe(true);
-    expect(serviceCatalog.every((service) => service.iconStrategy === "neutral-local-mark" && service.licenseStatus === "no-trademark-asset" && service.status === "catalog-v1")).toBe(true);
+    expect(serviceCatalog.every((service) => service.status === "catalog-v1" && Boolean(service.visualIdentity.trademarkNotice))).toBe(true);
+    expect(priorityServiceIds.every((id) => serviceCatalog.some((service) => service.id === id && service.iconStrategy !== "neutral-local-mark"))).toBe(true);
+    expect(serviceCatalog.filter((service) => !priorityServiceIds.includes(service.id as typeof priorityServiceIds[number])).every((service) => service.iconStrategy === "neutral-local-mark" && service.licenseStatus === "no-trademark-asset")).toBe(true);
   });
 });

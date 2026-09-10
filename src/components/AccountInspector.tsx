@@ -1,51 +1,117 @@
-import { Copy, Eye, EyeOff, Pencil, SlidersHorizontal } from "lucide-react";
-import { useState } from "react";
+import { Copy, Eye, EyeOff, KeyRound, Link2, Pencil, Plus, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { relationshipsForAccount } from "../domain/relationships";
 import type { Account, AccountRelationship } from "../domain/types";
+import { relationshipDirectionLabel } from "./RelationshipDialog";
 import { ServiceIdentityHero, ServiceIdentityMark } from "./ServiceIdentity";
 
-function relationshipLabel(relationship: AccountRelationship, accountId: string) {
-  const incoming = relationship.targetAccountId === accountId;
-  const labels: Record<string, string> = {
-    DEPENDS_ON: incoming ? "Required by" : "Depends on",
-    RECOVERY_EMAIL: incoming ? "Recovery for" : "Uses recovery",
-    GOOGLE_SSO: incoming ? "Google sign-in for" : "Signs in with",
-    GITHUB_SSO: incoming ? "GitHub sign-in for" : "Signs in with",
-    OWNS: incoming ? "Owned by" : "Owns",
-    LINKED_ACCOUNT: "Linked account",
-    LOGIN_WITH: incoming ? "Login for" : "Logs in with",
-    CONNECTED_TO: "Connected to",
-    "2FA_DEVICE": incoming ? "2FA for" : "2FA device",
-  };
-  return labels[relationship.relationshipType] ?? relationship.relationshipType.replace(/_/g, " ");
+interface AccountInspectorProps {
+  account?: Account;
+  accounts: Account[];
+  onAddFirstAccount: () => void;
+  onEdit: (account: Account) => void;
+  onManageRelationships: (account: Account) => void;
+  onNotify?: (message: string, tone?: "success" | "error" | "info") => void;
+  onOpenAccount: (account: Account) => void;
+  relationships: AccountRelationship[];
 }
 
-export function AccountInspector({ account, accounts, relationships, onEdit, onManageRelationships }: { account?: Account; accounts: Account[]; relationships: AccountRelationship[]; onEdit: (account: Account) => void; onManageRelationships: (account: Account) => void }) {
+export function AccountInspector({ account, accounts, onAddFirstAccount, onEdit, onManageRelationships, onNotify, onOpenAccount, relationships }: AccountInspectorProps) {
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [copyStatus, setCopyStatus] = useState("");
   const ownRelationships = account ? relationshipsForAccount(relationships, account.id) : [];
 
+  useEffect(() => setPasswordVisible(false), [account?.id]);
+
   async function copy(value: string, label: string) {
-    try { await navigator.clipboard.writeText(value); setCopyStatus(`${label} copied`); }
-    catch { setCopyStatus("Copy unavailable"); }
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      onNotify?.(`${label} copied`, "success");
+    } catch {
+      onNotify?.(`${label} copy unavailable`, "error");
+    }
   }
 
-  if (!account) return <aside className="account-inspector inspector-empty" aria-label="Account inspector"><div><p className="eyebrow">Account view</p><h2>No account selected</h2><p>Select an account from the Vault to inspect its details, credentials, and relationships.</p></div></aside>;
+  if (!account) {
+    if (!accounts.length) {
+      return (
+        <section className="account-inspector inspector-onboarding" aria-label="Empty vault onboarding">
+          <div className="onboarding-card">
+            <div className="onboarding-icon" aria-hidden="true"><KeyRound size={31} /></div>
+            <h2>Your vault is empty</h2>
+            <p>Start with one account. Your vault stays clear, local, and ready to grow with you.</p>
+            <button className="primary-button onboarding-action" onClick={onAddFirstAccount} type="button"><Plus size={17} />Add first account</button>
+            <ul className="onboarding-benefits">
+              <li><span><KeyRound size={18} /></span><div><strong>Store credentials</strong><p>Keep sign-ins and sensitive details encrypted.</p></div></li>
+              <li><span><Link2 size={18} /></span><div><strong>Link related accounts</strong><p>See how your real accounts depend on each other.</p></div></li>
+              <li><span><ShieldCheck size={18} /></span><div><strong>Stay local-first</strong><p>Your vault remains useful without a cloud connection.</p></div></li>
+            </ul>
+          </div>
+        </section>
+      );
+    }
+    return <section className="account-inspector inspector-empty" aria-label="Account inspector"><div className="inspector-empty-icon" aria-hidden="true"><KeyRound size={27} /></div><p className="eyebrow">Account view</p><h2>No account selected</h2><p>Select an account from the Vault to inspect its details, credentials, and relationships.</p></section>;
+  }
 
-  return <aside className="account-inspector" aria-label="Account inspector">
-    <header className="inspector-header"><ServiceIdentityHero account={account} /><button className="inspector-edit" onClick={() => onEdit(account)} type="button"><Pencil size={14} />Edit</button></header>
-    <section className="inspector-fields" aria-label="Account credentials">
-      <InspectorField label="Email" value={account.email || "Not recorded"} actionLabel="Copy email" onAction={() => void copy(account.email, "Email")} />
-      <InspectorField label="Password" value={passwordVisible ? account.password : "••••••••••••••"} subvalue={passwordVisible ? "Visible until hidden" : "Hidden by default"} actions={<><button aria-label={passwordVisible ? "Hide password" : "Reveal password"} className="field-action" onClick={() => setPasswordVisible(!passwordVisible)} type="button">{passwordVisible ? <EyeOff size={14} /> : <Eye size={14} />}</button><button aria-label="Copy password" className="field-action" onClick={() => void copy(account.password, "Password")} type="button"><Copy size={14} /></button></>} />
-      <InspectorField label="Website" value={account.serviceName} subvalue={account.authenticationMethod} />
-      <InspectorField label="Category" value={account.category} subvalue={account.username || "No username recorded"} />
+  return (
+    <section className="account-inspector" aria-label={`${account.accountName} account details`}>
+      <header className="inspector-header">
+        <ServiceIdentityHero account={account} />
+        <button className="secondary-button inspector-edit" onClick={() => onEdit(account)} type="button"><Pencil size={15} />Edit</button>
+      </header>
+
+      <section className="inspector-fields" aria-label="Account credentials">
+        <InspectorField action={account.email ? <CopyButton label="Copy email" onClick={() => void copy(account.email, "Email")} /> : undefined} label="Email" value={account.email || "Not recorded"} />
+        <InspectorField action={account.username ? <CopyButton label="Copy username" onClick={() => void copy(account.username, "Username")} /> : undefined} label="Username" value={account.username || "Not recorded"} />
+        <InspectorField
+          action={account.password ? <span className="field-actions"><button aria-label={passwordVisible ? "Hide password" : "Reveal password"} className="icon-button field-icon-action" onClick={() => setPasswordVisible((visible) => !visible)} type="button">{passwordVisible ? <EyeOff size={16} /> : <Eye size={16} />}</button><CopyButton iconOnly label="Copy password" onClick={() => void copy(account.password, "Password")} /></span> : undefined}
+          label="Password"
+          subvalue={account.password ? (passwordVisible ? "Visible until hidden" : "Hidden by default") : undefined}
+          value={account.password ? (passwordVisible ? account.password : "••••••••••••••") : "Not recorded"}
+        />
+        <InspectorField action={account.website ? <CopyButton label="Copy website" onClick={() => void copy(account.website ?? "", "Website")} /> : undefined} label="Website" value={account.website || "Not recorded"} />
+        <InspectorField label="Authentication" subvalue={account.twoFactorInformation || "No 2FA metadata"} value={account.authenticationMethod} />
+        <InspectorField label="Category" subvalue={`Updated ${formatDate(account.updatedAt)}`} value={account.category} />
+      </section>
+
+      <section className="inspector-section inspector-relationships">
+        <div className="inspector-section-heading"><div><p className="eyebrow">Relationships</p><h3>{ownRelationships.length ? `${ownRelationships.length} connected account${ownRelationships.length === 1 ? "" : "s"}` : "No connected accounts"}</h3></div><button className="text-button" onClick={() => onManageRelationships(account)} type="button"><Plus size={15} />Manage</button></div>
+        {ownRelationships.length ? (
+          <div className="inspector-relationship-list">
+            {ownRelationships.map((relationship) => {
+              const relatedId = relationship.sourceAccountId === account.id ? relationship.targetAccountId : relationship.sourceAccountId;
+              const related = accounts.find((candidate) => candidate.id === relatedId);
+              return (
+                <button className="inspector-relationship" disabled={!related} key={relationship.id} onClick={() => related && onOpenAccount(related)} type="button">
+                  {related ? <ServiceIdentityMark account={related} size="small" /> : <span className="missing-identity">?</span>}
+                  <span><strong>{related?.accountName ?? "Missing account"}</strong><small>{relationshipDirectionLabel(relationship, account.id)}{relationship.notes ? ` · ${relationship.notes}` : ""}</small></span>
+                  <span aria-hidden="true">→</span>
+                </button>
+              );
+            })}
+          </div>
+        ) : <p className="inspector-muted">Add a relationship to show how this account connects to another account in your vault.</p>}
+      </section>
+
+      <section className="inspector-notes">
+        <div><p className="eyebrow">Notes</p><p>{account.notes || "No notes recorded."}</p></div>
+        <div><p className="eyebrow">Recovery information</p><p>{account.recoveryInformation || "No recovery information recorded."}</p></div>
+      </section>
+      <div className="local-encryption-note"><ShieldCheck aria-hidden="true" size={22} /><div><strong>Stored locally and encrypted</strong><span>Your master password protects this account with the rest of your vault.</span></div></div>
     </section>
-    <section className="inspector-relationships"><p className="eyebrow">Relationships</p>{ownRelationships.length ? <div className="inspector-relationship-list">{ownRelationships.map((relationship) => { const relatedId = relationship.sourceAccountId === account.id ? relationship.targetAccountId : relationship.sourceAccountId; const related = accounts.find((candidate) => candidate.id === relatedId); return <div className="inspector-relationship" key={relationship.id}>{related ? <ServiceIdentityMark account={related} size="small" /> : <span className="missing-identity">?</span>}<div><strong>{related?.accountName ?? "Missing account"}</strong><span>{relationshipLabel(relationship, account.id)} · {relationship.notes || relationship.relationshipType.replace(/_/g, " ")}</span></div></div>; })}</div> : <p className="inspector-muted">No account relationships yet.</p>}<button className="manage-relationships" onClick={() => onManageRelationships(account)} type="button"><SlidersHorizontal size={13} />Manage relationships</button></section>
-    <section className="inspector-notes"><div><p className="eyebrow">Notes</p><p>{account.notes || "No notes recorded."}</p></div><div><p className="eyebrow">Security</p><span className="inspector-tag">{account.twoFactorInformation || "No 2FA metadata"}</span></div></section>
-    {copyStatus && <p className="copy-status" role="status">{copyStatus}</p>}
-  </aside>;
+  );
 }
 
-function InspectorField({ label, value, subvalue, actionLabel, onAction, actions }: { label: string; value: string; subvalue?: string; actionLabel?: string; onAction?: () => void; actions?: React.ReactNode }) {
-  return <div className="inspector-field"><p className="eyebrow">{label}</p><div className="inspector-field-line"><strong>{value}</strong>{actions ?? (onAction && <button aria-label={actionLabel} className="field-copy" onClick={onAction} type="button">Copy</button>)}</div>{subvalue && <span>{subvalue}</span>}</div>;
+function CopyButton({ iconOnly = false, label, onClick }: { iconOnly?: boolean; label: string; onClick: () => void }) {
+  return <button aria-label={label} className={iconOnly ? "icon-button field-icon-action" : "field-copy"} onClick={onClick} type="button"><Copy size={15} />{!iconOnly && "Copy"}</button>;
+}
+
+function InspectorField({ action, label, subvalue, value }: { action?: React.ReactNode; label: string; subvalue?: string; value: string }) {
+  return <div className="inspector-field"><p className="eyebrow">{label}</p><div className="inspector-field-line"><strong>{value}</strong>{action}</div>{subvalue && <span>{subvalue}</span>}</div>;
+}
+
+function formatDate(value: string) {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.valueOf())) return "recently";
+  return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).format(parsed);
 }

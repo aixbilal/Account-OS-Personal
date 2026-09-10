@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { canRestoreRemote, createCloudClient, decideSync, ensureDevice, isFreshLocalVault, isSupabaseConfigured, readSyncMetadata, writeSyncMetadata, type RemoteVaultRecord } from "../sync/cloudSync";
 import type { VaultData } from "../domain/types";
 
-export function CloudSyncPanel({ isNative, onVaultRestored }: { isNative: boolean; onVaultRestored: (vault: VaultData) => void }) {
+export function CloudSyncPanel({ isNative, onBusyChange, onVaultRestored }: { isNative: boolean; onBusyChange?: (busy: boolean) => void; onVaultRestored: (vault: VaultData) => void }) {
   const client = useMemo(() => {
     try {
       return createCloudClient();
@@ -19,6 +19,11 @@ export function CloudSyncPanel({ isNative, onVaultRestored }: { isNative: boolea
   const [syncStatus, setSyncStatus] = useState("Not synced yet");
   const [message, setMessage] = useState("");
   const [working, setWorking] = useState(false);
+
+  useEffect(() => {
+    onBusyChange?.(working);
+    return () => onBusyChange?.(false);
+  }, [onBusyChange, working]);
 
   useEffect(() => {
     if (!client) return;
@@ -44,7 +49,8 @@ export function CloudSyncPanel({ isNative, onVaultRestored }: { isNative: boolea
     setWorking(true); setMessage("");
     try {
       const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) setMessage(error.message); else setMessage("Cloud identity connected. Unlocking the local vault remains separate.");
+      if (error) setMessage("Cloud sign-in was not accepted. Check the cloud email and password, then try again.");
+      else setMessage("Cloud identity connected. Unlocking the local vault remains separate.");
     } catch {
       setMessage("Cloud sign-in is unavailable. Your local vault remains available offline.");
     } finally {
@@ -73,12 +79,15 @@ export function CloudSyncPanel({ isNative, onVaultRestored }: { isNative: boolea
       setMessage("Enter the local vault password to validate and apply the remote encrypted vault.");
       return;
     }
-    const vault = await invoke<VaultData>("import_sync_payload", { payload: remote.encrypted_payload, password: vaultPassword });
-    onVaultRestored(vault);
-    writeSyncMetadata(session!.user.id, { remoteRevision: remote.revision, localChanges: false });
-    setVaultPassword("");
-    setSyncStatus("Synced");
-    setMessage("Remote encrypted vault validated and applied locally.");
+    try {
+      const vault = await invoke<VaultData>("import_sync_payload", { payload: remote.encrypted_payload, password: vaultPassword });
+      onVaultRestored(vault);
+      writeSyncMetadata(session!.user.id, { remoteRevision: remote.revision, localChanges: false });
+      setSyncStatus("Synced");
+      setMessage("Remote encrypted vault validated and applied locally.");
+    } finally {
+      setVaultPassword("");
+    }
   }
 
   async function syncNow() {
@@ -111,8 +120,8 @@ export function CloudSyncPanel({ isNative, onVaultRestored }: { isNative: boolea
       if (writeResult.status !== "synced") { setSyncStatus("Conflict"); setMessage("The remote revision changed during sync. Neither local vault nor remote payload was overwritten."); return; }
       writeSyncMetadata(session.user.id, { remoteRevision: writeResult.revision, localChanges: false });
       setSyncStatus("Synced"); setMessage("Encrypted vault payload synced. Cloud storage received no plaintext vault data.");
-    } catch (reason) {
-      setSyncStatus("Sync error"); setMessage(reason instanceof Error ? reason.message : "Sync failed safely; the local vault was not changed.");
+    } catch {
+      setSyncStatus("Sync error"); setMessage("Sync failed safely. The local vault and remote encrypted payload were not overwritten.");
     } finally { setWorking(false); }
   }
 
@@ -132,12 +141,12 @@ export function CloudSyncPanel({ isNative, onVaultRestored }: { isNative: boolea
       if (restoreMetadata.localChanges) { setSyncStatus("Conflict"); setMessage("Local changes are waiting to sync, so the remote vault was not applied."); return; }
       if (!canRestoreRemote(restoreMetadata, remote.revision)) { setSyncStatus("Sync error"); setMessage("The remote vault is older than this device's recorded revision, so it was not applied."); return; }
       await applyRemoteVault(remote);
-    } catch (reason) {
-      setSyncStatus("Sync error"); setMessage(reason instanceof Error ? reason.message : "Remote vault restore failed safely; the local vault was not changed.");
+    } catch {
+      setSyncStatus("Sync error"); setMessage("Remote vault restore failed validation. The local vault was not changed.");
     } finally { setWorking(false); }
   }
 
   if (!isSupabaseConfigured() || !client) return <div className="settings-card"><h3>Account OS Cloud</h3><p>{isSupabaseConfigured() ? "Cloud is unavailable. Check the optional local configuration and connection." : <>Not connected. Add a Supabase project URL and publishable key to an untracked <code>.env.local</code> file to enable optional ciphertext-only sync.</>}</p><p className="selected-file">Your local vault remains fully available offline.</p></div>;
 
-  return <div className="settings-card"><h3>Account OS Cloud</h3><p>Cloud account: <strong>{session ? "Connected" : "Not connected"}</strong></p>{session && <p>Sync status: <strong>{syncStatus}</strong></p>}{!session ? <form onSubmit={connect}><label className="field-label">Cloud email<input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label><label className="field-label">Cloud password<input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label><button className="unlock-submit" disabled={working} type="submit">{working ? "Connecting…" : "Connect cloud identity"}</button></form> : <><p>Device: {navigator.platform || "Desktop"}</p><label className="field-label">Local vault password (required to restore an encrypted remote vault)<input autoComplete="current-password" onChange={(event) => setVaultPassword(event.target.value)} type="password" value={vaultPassword} /></label><div className="settings-actions"><button className="add-account-button" disabled={working || !isNative} onClick={() => void syncNow()} type="button">{working ? "Syncing…" : "Sync now"}</button><button className="secondary-button" disabled={working || !isNative} onClick={() => void restoreRemoteVault()} type="button">Restore remote vault</button><button className="secondary-button" disabled={working} onClick={() => void signOut()} type="button">Sign out cloud identity</button></div></>}{message && <p className="backup-status" role="status">{message}</p>}</div>;
+  return <div className="settings-card"><h3>Account OS Cloud</h3><p>Cloud account: <strong>{session ? "Connected" : "Not connected"}</strong></p>{session && <p>Sync status: <strong>{syncStatus}</strong></p>}{!session ? <form onSubmit={connect}><label className="field-label">Cloud email<input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required spellCheck="false" type="email" value={email} /></label><label className="field-label">Cloud password<input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} required spellCheck="false" type="password" value={password} /></label><button className="unlock-submit" disabled={working} type="submit">{working ? "Connecting…" : "Connect cloud identity"}</button></form> : <><p>Device: {navigator.platform || "Desktop"}</p><label className="field-label">Local vault password (required to restore an encrypted remote vault)<input autoComplete="current-password" onChange={(event) => setVaultPassword(event.target.value)} spellCheck="false" type="password" value={vaultPassword} /></label><div className="settings-actions"><button className="add-account-button" disabled={working || !isNative} onClick={() => void syncNow()} type="button">{working ? "Syncing…" : "Sync now"}</button><button className="secondary-button" disabled={working || !isNative} onClick={() => void restoreRemoteVault()} type="button">Restore remote vault</button><button className="secondary-button" disabled={working} onClick={() => void signOut()} type="button">Sign out cloud identity</button></div></>}{message && <p className="backup-status" role="status">{message}</p>}</div>;
 }

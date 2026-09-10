@@ -1,48 +1,128 @@
+import type { CSSProperties } from "react";
+import {
+  siApple,
+  siDiscord,
+  siFacebook,
+  siGithub,
+  siGoogle,
+  siInstagram,
+  siSpotify,
+  siYoutube,
+} from "simple-icons";
 import type { Account } from "../domain/types";
-import { resolveCatalogService } from "../domain/serviceCatalog";
+import { resolveCatalogService, type CatalogService } from "../domain/serviceCatalog";
 
-type IdentityKind = "google" | "instagram" | "github" | "microsoft" | "apple" | "generic";
+interface LocalSimpleIcon {
+  path: string;
+  title: string;
+}
+
+const packagedIcons: Record<string, LocalSimpleIcon> = {
+  apple: siApple,
+  discord: siDiscord,
+  facebook: siFacebook,
+  github: siGithub,
+  google: siGoogle,
+  instagram: siInstagram,
+  spotify: siSpotify,
+  youtube: siYoutube,
+};
 
 export interface ServiceIdentity {
-  kind: IdentityKind;
+  id: string;
   label: string;
   monogram: string;
+  accent: string;
+  softAccent: string;
+  iconSource: "simple-icons" | "local" | "monogram";
+  iconSlug: string | null;
 }
 
-const knownServices: Array<{ kind: Exclude<IdentityKind, "generic">; names: string[]; label: string; monogram: string }> = [
-  { kind: "google", names: ["google"], label: "Google", monogram: "G" },
-  { kind: "instagram", names: ["instagram"], label: "Instagram", monogram: "I" },
-  { kind: "github", names: ["github"], label: "GitHub", monogram: "GH" },
-  { kind: "microsoft", names: ["microsoft", "outlook", "office", "azure"], label: "Microsoft", monogram: "M" },
-  { kind: "apple", names: ["apple", "icloud"], label: "Apple", monogram: "A" },
-];
-
-/** Local-only identity resolver. It never fetches favicons, domains, or external assets. */
-export function resolveServiceIdentity(serviceName: string, email = ""): ServiceIdentity {
-  const catalog = resolveCatalogService(serviceName, email);
-  if (catalog) return { kind: (["google", "instagram", "github", "microsoft", "apple"].includes(catalog.id) ? catalog.id : "generic") as IdentityKind, label: catalog.displayName, monogram: catalog.displayName.split(/\s+/).map((word) => word[0]).join("").slice(0, 2).toUpperCase() };
-  const candidate = `${serviceName} ${email}`.toLowerCase();
-  const found = knownServices.find((service) => service.names.some((name) => candidate.includes(name)));
-  if (found) return { kind: found.kind, label: found.label, monogram: found.monogram };
-
-  const letters = serviceName.trim().split(/\s+/).map((word) => word[0]).join("").slice(0, 2).toUpperCase();
-  return { kind: "generic", label: serviceName || "Unknown service", monogram: letters || "?" };
+function monogramFor(value: string) {
+  const words = value.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return "?";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return words.slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 }
 
-export function ServiceIdentityMark({ account, size = "regular" }: { account: Pick<Account, "serviceName"> & Partial<Pick<Account, "email">>; size?: "small" | "regular" | "large" }) {
-  const identity = resolveServiceIdentity(account.serviceName, account.email);
-  const catalog = resolveCatalogService(account.serviceName, account.email);
-  const mark = catalog?.id ?? identity.kind;
-  if (identity.kind === "microsoft") {
-    return <span className={`service-identity service-identity-${size} service-microsoft`} aria-label={`${identity.label} local identity`}><i /><i /><i /><i /></span>;
-  }
-  if (identity.kind === "instagram") return <span className={`service-identity service-identity-${size} service-instagram`} aria-label={`${identity.label} local identity`}><i /></span>;
-  if (identity.kind === "google") return <span className={`service-identity service-identity-${size} service-google`} aria-label={`${identity.label} local identity`}><b>G</b></span>;
-  const glyphs: Record<string, string> = { github: "<>", apple: "●", spotify: "≋", openai: "◎", amazon: "a", facebook: "f", linkedin: "in", discord: "◉", slack: "#", figma: "F", canva: "C", supabase: "S", vercel: "▲", cloudflare: "☁", paypal: "P", stripe: "S", jazzcash: "J", easypaisa: "E", sadapay: "S", nayapay: "N" };
-  return <span className={`service-identity service-identity-${size} service-${mark}`} aria-label={`${identity.label} local identity`}>{glyphs[mark] ?? identity.monogram}</span>;
+function fallbackAccent(value: string) {
+  const palette = ["#477ca9", "#6076a8", "#557f86", "#776e9c", "#527393"];
+  const hash = Array.from(value).reduce((total, character) => ((total * 31) + character.charCodeAt(0)) >>> 0, 0);
+  return palette[hash % palette.length];
 }
 
-export function ServiceIdentityHero({ account }: { account: Pick<Account, "serviceName" | "email" | "accountName" | "category"> }) {
-  const identity = resolveServiceIdentity(account.serviceName, account.email);
-  return <div className="service-identity-hero"><ServiceIdentityMark account={account} size="large" /><div><p className="service-hero-name">{identity.label}</p><h2>{account.accountName}</h2><span>{account.category} · {account.email || account.serviceName}</span></div><strong aria-hidden="true">{identity.monogram}</strong></div>;
+export function resolveServiceIdentity(serviceName: string, website = "", email = ""): ServiceIdentity {
+  const catalog = resolveCatalogService(serviceName, website || email);
+  if (catalog) return fromCatalog(catalog);
+  const label = serviceName.trim() || "Unknown service";
+  return {
+    id: "custom",
+    label,
+    monogram: monogramFor(label),
+    accent: fallbackAccent(label),
+    softAccent: "#edf3f8",
+    iconSource: "monogram",
+    iconSlug: null,
+  };
+}
+
+function fromCatalog(service: CatalogService): ServiceIdentity {
+  return {
+    id: service.id,
+    label: service.displayName,
+    monogram: monogramFor(service.displayName),
+    accent: service.accent,
+    softAccent: service.secondaryAccent,
+    iconSource: service.visualIdentity.iconSource,
+    iconSlug: service.visualIdentity.iconSlug,
+  };
+}
+
+type IdentityAccount = Pick<Account, "serviceName"> & Partial<Pick<Account, "email" | "website">>;
+
+export function ServiceIdentityMark({ account, size = "regular" }: { account: IdentityAccount; size?: "small" | "regular" | "large" }) {
+  const identity = resolveServiceIdentity(account.serviceName, account.website, account.email);
+  const style = {
+    "--service-accent": identity.accent,
+    "--service-soft": identity.softAccent,
+  } as CSSProperties;
+  const packaged = packagedIcons[identity.id];
+  return (
+    <span
+      aria-label={`${identity.label} local identity`}
+      className={`service-identity service-identity-${size}`}
+      data-service={identity.id}
+      data-source={identity.iconSource}
+      style={style}
+    >
+      {packaged ? (
+        <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d={packaged.path} /></svg>
+      ) : identity.id === "microsoft" ? (
+        <span aria-hidden="true" className="microsoft-mark"><i /><i /><i /><i /></span>
+      ) : identity.id === "linkedin" ? (
+        <strong aria-hidden="true" className="linkedin-mark">in</strong>
+      ) : (
+        <strong aria-hidden="true">{identity.monogram}</strong>
+      )}
+    </span>
+  );
+}
+
+export function ServiceIdentityHero({ account }: { account: Pick<Account, "serviceName" | "email" | "username" | "accountName" | "category"> & Partial<Pick<Account, "website">> }) {
+  const identity = resolveServiceIdentity(account.serviceName, account.website, account.email);
+  const style = {
+    "--service-accent": identity.accent,
+    "--service-soft": identity.softAccent,
+  } as CSSProperties;
+  return (
+    <div className="service-identity-hero" data-service={identity.id} style={style}>
+      <ServiceIdentityMark account={account} size="large" />
+      <div className="service-hero-copy">
+        <p>{identity.label}</p>
+        <h2>{account.accountName}</h2>
+        <span>{account.category} · {account.email || account.username || "No sign-in identity"}</span>
+      </div>
+      <strong aria-hidden="true" className="service-hero-watermark">{identity.monogram}</strong>
+    </div>
+  );
 }

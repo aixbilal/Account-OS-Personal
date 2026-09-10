@@ -1,41 +1,75 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { fakeVault } from "../data/fakeVault";
 import { AccountEditor } from "./AccountEditor";
 
-describe("AccountEditor local relationships", () => {
+describe("AccountEditor", () => {
   const account = fakeVault.accounts.find((item) => item.id === "account-github-test")!;
 
-  function renderEditor() {
-    const onSave = vi.fn().mockResolvedValue(undefined);
-    const onSaveRelationship = vi.fn().mockResolvedValue(undefined);
-    render(<AccountEditor account={account} accounts={fakeVault.accounts} relationships={fakeVault.relationships} onClose={vi.fn()} onDelete={vi.fn()} onDeleteRelationship={vi.fn()} onSave={onSave} onSaveRelationship={onSaveRelationship} />);
-    return { onSave, onSaveRelationship };
+  function renderEditor(overrides: Partial<React.ComponentProps<typeof AccountEditor>> = {}) {
+    const callbacks = {
+      onClose: vi.fn(),
+      onDelete: vi.fn().mockResolvedValue(undefined),
+      onDirtyChange: vi.fn(),
+      onNotify: vi.fn(),
+      onSave: vi.fn().mockResolvedValue(undefined),
+    };
+    render(
+      <AccountEditor
+        account={account}
+        {...callbacks}
+        {...overrides}
+      />,
+    );
+    return callbacks;
   }
 
-  it("saves a local relationship without submitting the enclosing account form", async () => {
+  it("loads and trims the real website field when saving", async () => {
     const user = userEvent.setup();
-    const { onSave, onSaveRelationship } = renderEditor();
+    const { onClose, onDirtyChange, onSave } = renderEditor();
+    const website = screen.getByRole("textbox", { name: /Website/ });
 
-    await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
-    await user.selectOptions(screen.getByLabelText("Relationship type"), "DEPENDS_ON");
-    await user.click(screen.getByRole("button", { name: "Add relationship" }));
+    expect(website).toHaveValue("https://github.example.invalid");
+    await user.clear(website);
+    await user.type(website, "  https://accounts.example.invalid/profile  ");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
 
-    expect(onSaveRelationship).toHaveBeenCalledWith(expect.objectContaining({
-      sourceAccountId: "account-github-test",
-      targetAccountId: "account-facebook-test",
-      relationshipType: "DEPENDS_ON",
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({
+      serviceName: "GitHub",
+      website: "https://accounts.example.invalid/profile",
     }));
-    expect(onSave).not.toHaveBeenCalled();
+    expect(onDirtyChange).toHaveBeenCalledWith(true);
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("shows a local validation error instead of silently ignoring an incomplete relationship", async () => {
+  it("requires explicit confirmation before discarding dirty fields", async () => {
     const user = userEvent.setup();
-    renderEditor();
+    const { onClose } = renderEditor();
 
-    await user.click(screen.getByRole("button", { name: "Add relationship" }));
+    await user.type(screen.getByRole("textbox", { name: "Account title" }), " changed");
+    await user.click(screen.getByRole("button", { name: "Close account editor" }));
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Choose a related account before saving this relationship.");
+    const confirmation = screen.getByRole("dialog", { name: "Discard unsaved changes?" });
+    expect(onClose).not.toHaveBeenCalled();
+    await user.click(within(confirmation).getByRole("button", { name: "Keep editing" }));
+    expect(screen.queryByRole("dialog", { name: "Discard unsaved changes?" })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Close account editor" }));
+    await user.click(within(screen.getByRole("dialog", { name: "Discard unsaved changes?" })).getByRole("button", { name: "Discard changes" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains relationship removal before deleting an account", async () => {
+    const user = userEvent.setup();
+    const { onDelete } = renderEditor({ relationshipCount: 2 });
+
+    await user.click(screen.getByRole("button", { name: "Delete account" }));
+    const confirmation = screen.getByRole("dialog", { name: `Delete ${account.accountName}?` });
+    expect(confirmation).toHaveTextContent("removes its 2 relationships");
+    expect(onDelete).not.toHaveBeenCalled();
+
+    await user.click(within(confirmation).getByRole("button", { name: "Delete account" }));
+    await waitFor(() => expect(onDelete).toHaveBeenCalledWith(account));
   });
 });

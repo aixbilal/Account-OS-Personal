@@ -14,4 +14,10 @@ describe("generatePassword", () => {
   it("requires a selected character group", () => {
     expect(() => generatePassword({ length: 12, uppercase: false, lowercase: false, numbers: false, symbols: false })).toThrow();
   });
+
+  it("clamps malformed or out-of-range lengths to safe supported bounds", () => {
+    expect(generatePassword({ length: 0, uppercase: true, lowercase: false, numbers: false, symbols: false })).toHaveLength(8);
+    expect(generatePassword({ length: Number.NaN, uppercase: true, lowercase: false, numbers: false, symbols: false })).toHaveLength(8);
+    expect(generatePassword({ length: 1000, uppercase: true, lowercase: false, numbers: false, symbols: false })).toHaveLength(64);
+  });
 });

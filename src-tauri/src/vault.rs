@@ -284,8 +284,8 @@ impl VaultService {
 
     pub fn export_sync_payload(&self) -> Result<String, VaultError> {
         let encrypted = fs::read(self.vault_path()).map_err(|_| VaultError::Missing)?;
-        let _: EncryptedVaultEnvelope = serde_json::from_slice(&encrypted)
-            .map_err(|_| VaultError::InvalidPasswordOrData)?;
+        let _: EncryptedVaultEnvelope =
+            serde_json::from_slice(&encrypted).map_err(|_| VaultError::InvalidPasswordOrData)?;
         Ok(BASE64.encode(encrypted))
     }
 
@@ -626,7 +626,10 @@ mod tests {
         fs::remove_dir_all(&storage_dir).unwrap();
         fs::write(&storage_dir, b"not a vault directory").unwrap();
 
-        assert!(matches!(service.save_data(&candidate, &unlocked), Err(VaultError::Storage)));
+        assert!(matches!(
+            service.save_data(&candidate, &unlocked),
+            Err(VaultError::Storage)
+        ));
         assert_eq!(unlocked.data, before);
     }
 
@@ -746,7 +749,10 @@ mod tests {
         let original = b"existing encrypted backup bytes";
         fs::write(&backup_path, original).unwrap();
 
-        assert!(matches!(service.export_backup(backup_path.clone()), Err(VaultError::InvalidData)));
+        assert!(matches!(
+            service.export_backup(backup_path.clone()),
+            Err(VaultError::InvalidData)
+        ));
         assert_eq!(fs::read(backup_path).unwrap(), original);
     }
 
@@ -767,6 +773,39 @@ mod tests {
         assert_eq!(
             service.unlock("test-master-password".into()).unwrap().data,
             unlocked.data
+        );
+    }
+
+    #[test]
+    fn rejects_a_wrong_backup_password_without_replacing_an_existing_vault() {
+        let source_directory = tempdir().unwrap();
+        let source = VaultService::new(source_directory.path().join("source-vault"));
+        let mut source_unlocked = source.create("source-test-master-password".into()).unwrap();
+        source_unlocked.data = fake_vault();
+        source_unlocked.data.accounts[0].account_name = "Backup source TEST account".into();
+        source.save_unlocked(&source_unlocked).unwrap();
+        let backup_path = source_directory.path().join("source-backup.aosbackup");
+        source.export_backup(backup_path.clone()).unwrap();
+
+        let target_directory = tempdir().unwrap();
+        let target = VaultService::new(target_directory.path().join("target-vault"));
+        let mut target_unlocked = target.create("target-test-master-password".into()).unwrap();
+        target_unlocked.data = fake_vault();
+        target_unlocked.data.accounts[0].account_name = "Existing target TEST account".into();
+        target.save_unlocked(&target_unlocked).unwrap();
+        let target_bytes_before = fs::read(target.vault_path()).unwrap();
+
+        assert!(matches!(
+            target.import_backup(backup_path, "wrong-test-master-password".into()),
+            Err(VaultError::InvalidPasswordOrData)
+        ));
+        assert_eq!(fs::read(target.vault_path()).unwrap(), target_bytes_before);
+        assert_eq!(
+            target
+                .unlock("target-test-master-password".into())
+                .unwrap()
+                .data,
+            target_unlocked.data
         );
     }
 
@@ -798,10 +837,8 @@ mod tests {
         source.save_unlocked(&source_unlocked).unwrap();
         let known_good_payload = source.export_sync_payload().unwrap();
 
-        let mut envelope: EncryptedVaultEnvelope = serde_json::from_slice(
-            &BASE64.decode(&known_good_payload).unwrap(),
-        )
-        .unwrap();
+        let mut envelope: EncryptedVaultEnvelope =
+            serde_json::from_slice(&BASE64.decode(&known_good_payload).unwrap()).unwrap();
         let mut ciphertext = envelope.ciphertext.into_bytes();
         ciphertext[0] = if ciphertext[0] == b'A' { b'B' } else { b'A' };
         envelope.ciphertext = String::from_utf8(ciphertext).unwrap();
@@ -819,7 +856,10 @@ mod tests {
             Err(VaultError::InvalidPasswordOrData)
         ));
         assert_eq!(
-            target.unlock("target-test-master-password".into()).unwrap().data,
+            target
+                .unlock("target-test-master-password".into())
+                .unwrap()
+                .data,
             target_unlocked.data
         );
 
@@ -850,14 +890,15 @@ mod tests {
             Err(VaultError::InvalidPasswordOrData)
         ));
         assert_eq!(
-            target.unlock("target-test-master-password".into()).unwrap().data,
+            target
+                .unlock("target-test-master-password".into())
+                .unwrap()
+                .data,
             target_unlocked.data
         );
 
-        let mut envelope: EncryptedVaultEnvelope = serde_json::from_slice(
-            &BASE64.decode(known_good_payload).unwrap(),
-        )
-        .unwrap();
+        let mut envelope: EncryptedVaultEnvelope =
+            serde_json::from_slice(&BASE64.decode(known_good_payload).unwrap()).unwrap();
         envelope.format_version = VAULT_FORMAT_VERSION + 1;
         let unsupported_payload = BASE64.encode(serde_json::to_vec(&envelope).unwrap());
         assert!(matches!(
@@ -865,7 +906,10 @@ mod tests {
             Err(VaultError::InvalidPasswordOrData)
         ));
         assert_eq!(
-            target.unlock("target-test-master-password".into()).unwrap().data,
+            target
+                .unlock("target-test-master-password".into())
+                .unwrap()
+                .data,
             target_unlocked.data
         );
     }

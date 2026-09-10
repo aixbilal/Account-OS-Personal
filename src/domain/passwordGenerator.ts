@@ -24,7 +24,8 @@ export function generatePassword(options: PasswordGeneratorOptions) {
     .filter((key) => options[key]);
   if (!selected.length) throw new Error("Choose at least one character group.");
 
-  const length = Math.max(options.length, selected.length);
+  const requestedLength = Number.isFinite(options.length) ? Math.floor(options.length) : 8;
+  const length = Math.min(64, Math.max(8, requestedLength, selected.length));
   const characters = selected.map((key) => characterSets[key]);
   const password = characters.map((set) => set[randomIndex(set.length)]);
   const pool = characters.join("");

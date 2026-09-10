@@ -1,12 +1,30 @@
 {
-  "schemaVersion": "1.0",
-  "resolverPolicy": {"status": "locked", "remoteFetching": "forbidden", "resolutionOrder": ["normalize-domain-locally", "local-registry", "local-bundled-asset", "user-provided-local-asset-future", "generic-monogram"]},
-  "fallback": {"id": "generic-monogram", "iconStrategy": "local-generated-monogram", "status": "approved"},
-  "identities": [
-    {"id": "google", "displayName": "Google", "domains": ["google.com"], "iconStrategy": "no-asset-in-step-2", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "provisional"},
-    {"id": "github", "displayName": "GitHub", "domains": ["github.com"], "iconStrategy": "no-asset-in-step-2", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "provisional"},
-    {"id": "instagram", "displayName": "Instagram", "domains": ["instagram.com"], "iconStrategy": "no-asset-in-step-7", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "planning-only"},
-    {"id": "microsoft", "displayName": "Microsoft", "domains": ["microsoft.com"], "iconStrategy": "no-asset-in-step-7", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "planning-only"},
-    {"id": "apple", "displayName": "Apple", "domains": ["apple.com"], "iconStrategy": "no-asset-in-step-7", "localAsset": null, "accentToken": null, "tileTreatment": "provisional", "licenseStatus": "not-reviewed", "trademarkNotes": "No asset bundled.", "status": "planning-only"}
-  ]
+  "schemaVersion": "2.0",
+  "runtimePolicy": {
+    "remoteFetching": "forbidden",
+    "resolutionOrder": ["normalize-domain-locally", "local-registry", "bundled-package-icon", "local-recognition-mark", "generated-monogram"]
+  },
+  "package": {
+    "name": "simple-icons",
+    "version": "16.30.0",
+    "license": "CC0-1.0 for package data; individual brand and trademark guidelines still apply",
+    "licenseUrl": "https://github.com/simple-icons/simple-icons/blob/develop/LICENSE.md"
+  },
+  "priorityIdentities": [
+    {"id":"google","source":"simple-icons","slug":"google","guidelines":"https://about.google/brand-resource-center/brand-elements/","note":"Brand and trademark guidelines apply."},
+    {"id":"spotify","source":"simple-icons","slug":"spotify","guidelines":"https://developer.spotify.com/documentation/design","note":"Brand and trademark guidelines apply."},
+    {"id":"github","source":"simple-icons","slug":"github","guidelines":"https://github.com/logos","note":"Brand and trademark guidelines apply."},
+    {"id":"instagram","source":"simple-icons","slug":"instagram","guidelines":"https://about.meta.com/brand/resources/instagram","note":"Brand and trademark guidelines apply."},
+    {"id":"microsoft","source":"local","slug":null,"guidelines":null,"note":"Installed Simple Icons package has no Microsoft export; Account OS uses a local four-tile recognition mark and claims no brand rights."},
+    {"id":"apple","source":"simple-icons","slug":"apple","guidelines":null,"note":"Brand and trademark guidelines apply."},
+    {"id":"youtube","source":"simple-icons","slug":"youtube","guidelines":"https://www.youtube.com/howyoutubeworks/resources/brand-resources/","note":"Brand and trademark guidelines apply."},
+    {"id":"linkedin","source":"local","slug":null,"guidelines":null,"note":"Installed Simple Icons package has no LinkedIn export; Account OS uses a local in recognition mark and claims no brand rights."},
+    {"id":"discord","source":"simple-icons","slug":"discord","guidelines":"https://discord.com/branding","note":"Brand and trademark guidelines apply."},
+    {"id":"facebook","source":"simple-icons","slug":"facebook","guidelines":"https://about.meta.com/brand/resources/facebook/logo","note":"Brand and trademark guidelines apply."}
+  ],
+  "fallback": {
+    "source": "monogram",
+    "behavior": "deterministic one-or-two-letter local monogram with a stable blue-grey accent",
+    "networkRequests": false
+  }
 }

@@ -1,166 +1,130 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { fakeVault } from "./data/fakeVault";
+import { ACCOUNT_CATEGORIES, type VaultData } from "./domain/types";
 
-function renderApp() {
-  return render(<App previewVault={fakeVault} />);
+function installMatchMedia(matches = false) {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: vi.fn().mockImplementation((media: string) => ({
+      addEventListener: vi.fn(),
+      addListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      matches,
+      media,
+      onchange: null,
+      removeEventListener: vi.fn(),
+      removeListener: vi.fn(),
+    })),
+  });
+}
+
+function renderApp(previewVault: VaultData = fakeVault) {
+  return render(<App previewVault={previewVault} />);
 }
 
 describe("Account OS shell", () => {
-  it("renders the synthetic vault dataset without exposing passwords", () => {
+  beforeEach(() => {
+    installMatchMedia();
+    window.localStorage.clear();
+    Object.defineProperty(navigator, "onLine", { configurable: true, value: true });
+  });
+
+  it("renders only the synthetic vault fixture without exposing its passwords", async () => {
     renderApp();
 
-    expect(screen.getByText("Google Personal TEST")).toBeInTheDocument();
+    expect(screen.getAllByText("Google Personal TEST").length).toBeGreaterThan(0);
     expect(screen.getByText(/13 accounts/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("Google Personal TEST account details")).toBeInTheDocument());
     expect(screen.queryByText("FAKE-PASSWORD-ONLY")).not.toBeInTheDocument();
   });
 
-  it("navigates to the interactive map", async () => {
+  it("resets a revealed credential when a different account is selected", async () => {
+    const user = userEvent.setup();
+    renderApp();
+    const list = screen.getByRole("list", { name: "Account list" });
+
+    await user.click(within(list).getByText("Google Personal TEST").closest("button")!);
+    await user.click(screen.getByRole("button", { name: "Reveal password" }));
+    expect(screen.getByText("FAKE-PASSWORD-ONLY")).toBeInTheDocument();
+
+    await user.click(within(list).getByText("Spotify TEST").closest("button")!);
+    expect(screen.queryByText("FAKE-PASSWORD-ONLY")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reveal password" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Hide password" })).not.toBeInTheDocument();
+  });
+
+  it("shows a truthful empty-vault onboarding path", async () => {
+    const user = userEvent.setup();
+    renderApp({ formatVersion: 1, categories: [...ACCOUNT_CATEGORIES], accounts: [], relationships: [] });
+
+    expect(screen.getByRole("heading", { name: "No accounts yet" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Your vault is empty" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add first account" }));
+    expect(screen.getByRole("dialog", { name: "Add account" })).toBeInTheDocument();
+  });
+
+  it("offers a recoverable no-results state and clears every filter", async () => {
     const user = userEvent.setup();
     renderApp();
 
-    await user.click(screen.getByRole("button", { name: "Map" }));
+    await user.type(screen.getByPlaceholderText("Search accounts"), "does-not-exist.invalid");
+    expect(screen.getByRole("heading", { name: "No matching accounts" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear search and filters" }));
 
-    expect(screen.getByRole("heading", { name: "Map" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search accounts")).toHaveValue("");
+    expect(screen.getAllByText("Google Personal TEST").length).toBeGreaterThan(0);
   });
 
-  it("requires explicit confirmation before Map relationship creation", async () => {
-    const user = userEvent.setup();
-    renderApp();
-
-    await user.click(screen.getByRole("button", { name: "Map" }));
-    await user.click(screen.getByRole("button", { name: "Relationship" }));
-    expect(screen.getByRole("dialog", { name: "Create relationship" })).toBeInTheDocument();
-    await user.selectOptions(screen.getByLabelText("Target account"), "account-facebook-test");
-    await user.click(screen.getByRole("button", { name: "Create relationship" }));
-    expect(screen.queryByRole("dialog", { name: "Create relationship" })).not.toBeInTheDocument();
-  });
-
-  it("keeps Map and Settings rendered when the browser reports offline", async () => {
-    const user = userEvent.setup();
-    Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
-    renderApp();
-
-    await user.click(screen.getByRole("button", { name: "Map" }));
-    expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Settings" }));
-    expect(screen.getByRole("heading", { name: "Encrypted backup and restore" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Account OS Cloud" })).toBeInTheDocument();
-  });
-
-  it("adds, edits, and deletes a synthetic account in preview mode", async () => {
+  it("persists a real website through the shared account editor", async () => {
     const user = userEvent.setup();
     renderApp();
 
     await user.click(screen.getByRole("button", { name: /Add account/ }));
-    await user.type(screen.getByLabelText("Service"), "Example Service TEST");
-    await user.type(screen.getByLabelText("Account title"), "Example Account TEST");
-    await user.type(screen.getByLabelText("Email"), "example@test.invalid");
+    await user.type(screen.getByRole("combobox", { name: "Service" }), "Example Service TEST");
+    await user.type(screen.getByRole("textbox", { name: "Account title" }), "Example Account TEST");
+    await user.type(screen.getByRole("textbox", { name: /Website/ }), "https://account.example.invalid");
     await user.click(screen.getByRole("button", { name: "Save account" }));
 
-    expect(screen.getAllByText("Example Account TEST").length).toBeGreaterThan(0);
-    await user.click(screen.getByRole("button", { name: /Example Account TEST/ }));
-    await user.click(screen.getByRole("button", { name: "Edit" }));
-    const title = screen.getByLabelText("Account title");
-    await user.clear(title);
-    await user.type(title, "Updated Account TEST");
-    await user.click(screen.getByRole("button", { name: "Save account" }));
-    expect((await screen.findAllByText("Updated Account TEST")).length).toBeGreaterThan(0);
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    await user.click(screen.getByRole("button", { name: /Updated Account TEST/ }));
-    await user.click(screen.getByRole("button", { name: "Edit" }));
-    await user.click(screen.getByRole("button", { name: "Delete account" }));
-    expect(screen.queryByText("Updated Account TEST")).not.toBeInTheDocument();
+    expect((await screen.findAllByText("Example Account TEST")).length).toBeGreaterThan(0);
+    expect(screen.getByText("https://account.example.invalid")).toBeInTheDocument();
   });
 
-  it("filters synthetic accounts by search, category, and authentication method", async () => {
+  it("uses the shared friendly relationship flow from the Map", async () => {
     const user = userEvent.setup();
     renderApp();
 
-    await user.type(screen.getByLabelText("Search accounts"), "Claude");
-    expect(screen.getByText("Claude Personal TEST")).toBeInTheDocument();
-    expect(screen.queryByText("Google Personal TEST")).not.toBeInTheDocument();
-
-    await user.clear(screen.getByLabelText("Search accounts"));
-    await user.selectOptions(screen.getByLabelText("Filter by category"), "Development");
-    expect(screen.getByText("GitHub TEST")).toBeInTheDocument();
-    expect(screen.queryByText("Facebook TEST")).not.toBeInTheDocument();
-
-    await user.selectOptions(screen.getByLabelText("Filter by authentication method"), "GitHub OAuth");
-    expect(screen.getByText("Supabase TEST")).toBeInTheDocument();
-    expect(screen.queryByText("GitHub TEST")).not.toBeInTheDocument();
-  });
-
-  it("creates, edits, and removes a relationship from account details", async () => {
-    const user = userEvent.setup();
-    renderApp();
-
-    await user.click(screen.getByRole("button", { name: /GitHub TEST/ }));
-    await user.click(screen.getByRole("button", { name: "Edit" }));
-    await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
-    await user.selectOptions(screen.getByLabelText("Relationship type"), "DEPENDS_ON");
-    await user.click(screen.getByRole("button", { name: "Add relationship" }));
-    expect(screen.getAllByText("DEPENDS_ON").some((element) => element.tagName === "STRONG")).toBe(true);
-
-    const editButtons = screen.getAllByRole("button", { name: "Edit" });
-    await user.click(editButtons[editButtons.length - 1]);
-    await user.selectOptions(screen.getByLabelText("Relationship type"), "CONNECTED_TO");
-    await user.click(screen.getByRole("button", { name: "Update relationship" }));
-    expect(screen.getAllByText("CONNECTED_TO").some((element) => element.tagName === "STRONG")).toBe(true);
-
-    const removeButtons = screen.getAllByRole("button", { name: "Remove" });
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    await user.click(removeButtons[removeButtons.length - 1]);
-    expect(screen.queryAllByText("CONNECTED_TO").some((element) => element.tagName === "STRONG")).toBe(false);
-  });
-
-  it("creates a relationship locally while offline and reflects it on the Map", async () => {
-    const user = userEvent.setup();
-    Object.defineProperty(navigator, "onLine", { configurable: true, value: false });
-    renderApp();
-
-    await user.click(screen.getByRole("button", { name: /GitHub TEST/ }));
-    await user.click(screen.getByRole("button", { name: "Edit" }));
-    await user.selectOptions(screen.getByLabelText("Related account"), "account-facebook-test");
-    await user.selectOptions(screen.getByLabelText("Relationship type"), "DEPENDS_ON");
-    await user.click(screen.getByRole("button", { name: "Add relationship" }));
-    expect(screen.getAllByText("DEPENDS_ON").some((element) => element.tagName === "STRONG")).toBe(true);
-
-    await user.click(screen.getByRole("button", { name: "Close account editor" }));
     await user.click(screen.getByRole("button", { name: "Map" }));
     expect(screen.getByLabelText("Account dependency map")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Relationship" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Add relationship" });
+    await user.selectOptions(within(dialog).getByLabelText("To account"), "account-facebook-test");
+    await user.selectOptions(within(dialog).getByLabelText("Relationship type"), "DEPENDS_ON");
+    expect(within(dialog).getByText("Depends on", { selector: "strong" })).toBeInTheDocument();
+    expect(within(dialog).queryByText("DEPENDS_ON")).not.toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Add relationship" }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Add relationship" })).not.toBeInTheDocument());
+    expect(screen.getByText("Relationship added")).toBeInTheDocument();
   });
 
-  it("shows encrypted backup controls in Settings", async () => {
+  it("migrates legacy appearance values to Light and persists explicit choices", async () => {
     const user = userEvent.setup();
+    window.localStorage.setItem("account-os-theme", "adaptive");
     renderApp();
+    const shell = screen.getByRole("complementary", { name: "Primary navigation" }).parentElement;
+
+    expect(shell).toHaveAttribute("data-theme", "light");
+    expect(window.localStorage.getItem("account-os-theme")).toBe("light");
     await user.click(screen.getByRole("button", { name: "Settings" }));
-    expect(screen.getByRole("heading", { name: "Encrypted backup and restore" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Export encrypted backup" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Choose backup file" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Account OS Cloud" })).toBeInTheDocument();
-  });
+    expect(screen.getByRole("radio", { name: /Light/ })).toHaveAttribute("aria-checked", "true");
+    expect(screen.queryByText("Adaptive")).not.toBeInTheDocument();
 
-  it("reveals, hides, generates, and intentionally copies a synthetic credential", async () => {
-    const user = userEvent.setup();
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
-    renderApp();
-
-    await user.click(screen.getByRole("button", { name: /Google Personal TEST/ }));
-    await user.click(screen.getByRole("button", { name: "Edit" }));
-    await user.click(screen.getByRole("button", { name: "Reveal" }));
-    expect(screen.getByDisplayValue("FAKE-PASSWORD-ONLY")).toHaveAttribute("type", "text");
-    await user.click(screen.getByRole("button", { name: "Hide" }));
-    expect(screen.getByDisplayValue("FAKE-PASSWORD-ONLY")).toHaveAttribute("type", "password");
-    await user.click(screen.getByRole("button", { name: "Generate" }));
-    const password = screen.getByLabelText(/Password \/ sensitive value/) as HTMLInputElement;
-    expect(password.value).toHaveLength(20);
-    await user.click(screen.getByRole("button", { name: "Copy" }));
-    expect(writeText).toHaveBeenCalledWith(password.value);
+    await user.click(screen.getByRole("radio", { name: /Dark/ }));
+    expect(shell).toHaveAttribute("data-theme", "dark");
+    expect(window.localStorage.getItem("account-os-theme")).toBe("dark");
   });
 });
