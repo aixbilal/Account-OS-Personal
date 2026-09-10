@@ -2093,13 +2093,13 @@ p {
 
 .map-node {
   display: flex;
-  width: 196px;
-  min-height: 62px;
+  width: 210px;
+  min-height: 64px;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
   border: 1px solid var(--aos-border);
   border-radius: 14px;
-  padding: 9px 11px;
+  padding: 10px 12px;
   color: var(--aos-text);
   background: var(--aos-surface);
   box-shadow: 0 10px 28px rgba(47, 89, 132, 0.09);
@@ -2136,13 +2136,13 @@ p {
 }
 
 .map-node strong {
-  font-size: 11px;
+  font-size: 12.5px;
 }
 
 .map-node span {
   margin-top: 3px;
   color: var(--aos-text-muted);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .map-handle {

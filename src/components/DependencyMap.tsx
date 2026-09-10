@@ -1,4 +1,3 @@
-import dagre from "@dagrejs/dagre";
 import {
   Background,
   BaseEdge,
@@ -8,7 +7,7 @@ import {
   MarkerType,
   Position,
   ReactFlow,
-  getSmoothStepPath,
+  getStraightPath,
   type Edge,
   type EdgeProps,
   type Node,
@@ -37,8 +36,9 @@ type RelationshipEdgeData = { label: string; focus: FocusState };
 type AccountNode = Node<AccountNodeData, "account">;
 type RelationshipEdge = Edge<RelationshipEdgeData, "relationship">;
 
-const nodeWidth = 224;
+const nodeWidth = 232;
 const nodeHeight = 78;
+const layoutSpacing = 250;
 
 export function toMapAccount(account: Account): MapAccount {
   return { id: account.id, accountName: account.accountName, serviceName: account.serviceName, category: account.category };
@@ -61,9 +61,6 @@ export function resolveMapNodeFocus(
 }
 
 export function buildDependencyGraph(accounts: Account[], relationships: AccountRelationship[]) {
-  const graph = new dagre.graphlib.Graph();
-  graph.setGraph({ rankdir: "LR", ranksep: 92, nodesep: 48, edgesep: 24, marginx: 30, marginy: 30 });
-  graph.setDefaultEdgeLabel(() => ({}));
   const sortedAccounts = [...accounts].sort((left, right) => left.id.localeCompare(right.id));
   const ids = new Set(sortedAccounts.map((account) => account.id));
   const accountById = new Map(sortedAccounts.map((account) => [account.id, account]));
@@ -71,19 +68,35 @@ export function buildDependencyGraph(accounts: Account[], relationships: Account
     .filter((relationship) => ids.has(relationship.sourceAccountId) && ids.has(relationship.targetAccountId))
     .sort((left, right) => left.id.localeCompare(right.id));
 
-  sortedAccounts.forEach((account) => graph.setNode(account.id, { width: nodeWidth, height: nodeHeight }));
-  validRelationships.forEach((relationship) => graph.setEdge(relationship.sourceAccountId, relationship.targetAccountId, { id: relationship.id }));
-  dagre.layout(graph);
+  // Weight each account by how connected it is, so hubs settle near the centre.
+  const degree = new Map(sortedAccounts.map((account) => [account.id, 0]));
+  validRelationships.forEach((relationship) => {
+    degree.set(relationship.sourceAccountId, (degree.get(relationship.sourceAccountId) ?? 0) + 1);
+    degree.set(relationship.targetAccountId, (degree.get(relationship.targetAccountId) ?? 0) + 1);
+  });
+  const ordered = [...sortedAccounts].sort((left, right) => {
+    const byDegree = (degree.get(right.id) ?? 0) - (degree.get(left.id) ?? 0);
+    return byDegree !== 0 ? byDegree : left.id.localeCompare(right.id);
+  });
+
+  // Deterministic phyllotaxis (sunflower) placement: compact, balanced, hub-centred.
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const position = new Map<string, { x: number; y: number }>();
+  ordered.forEach((account, index) => {
+    const radius = layoutSpacing * Math.sqrt(index + 0.6);
+    const angle = index * goldenAngle;
+    position.set(account.id, { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius * 0.74 });
+  });
 
   const nodes: AccountNode[] = sortedAccounts.map((account) => {
-    const position = graph.node(account.id);
+    const point = position.get(account.id)!;
     return {
       id: account.id,
       type: "account",
-      position: { x: position.x - nodeWidth / 2, y: position.y - nodeHeight / 2 },
+      position: { x: point.x - nodeWidth / 2, y: point.y - nodeHeight / 2 },
       data: { account: toMapAccount(account), focus: "normal" },
-      sourcePosition: Position.Right,
-      targetPosition: Position.Left,
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
       ariaLabel: `${account.accountName}, ${account.serviceName}`,
     };
   });
@@ -134,7 +147,7 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
     <div className="map-explorer" aria-label="Account dependency map">
       <div className="map-toolbar">
         <label className="map-search" htmlFor="map-search"><Search aria-hidden="true" size={16} /><input autoComplete="off" id="map-search" name="mapSearch" onChange={(event) => setQuery(event.target.value)} placeholder="Search the map…" type="search" value={query} />{query && <button aria-label="Clear Map search" onClick={() => setQuery("")} type="button"><X size={15} /></button>}</label>
-        <button className="secondary-button" onClick={() => flow?.fitView({ padding: 0.22, duration: reduceMotion ? 0 : 180 })} type="button"><Maximize2 size={15} />Fit graph</button>
+        <button className="secondary-button" onClick={() => flow?.fitView({ padding: 0.22, maxZoom: 0.9, duration: reduceMotion ? 0 : 180 })} type="button"><Maximize2 size={15} />Fit graph</button>
         <button className="primary-button" disabled={accounts.length < 2} onClick={() => onRequestRelationship(selected?.id)} title={accounts.length < 2 ? "Add a second account to create a relationship" : undefined} type="button"><Plus size={16} />Relationship</button>
       </div>
       <div className="map-layout">
@@ -145,8 +158,10 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
             edgeTypes={edgeTypes}
             deleteKeyCode={null}
             fitView
-            fitViewOptions={{ padding: 0.22 }}
-            minZoom={0.28}
+            fitViewOptions={{ padding: 0.22, maxZoom: 0.9 }}
+            minZoom={0.35}
+            maxZoom={1.75}
+            proOptions={{ hideAttribution: true }}
             nodesConnectable={false}
             nodesDraggable={false}
             nodeTypes={nodeTypes}
@@ -186,16 +201,16 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
 function AccountMapNode({ data, selected }: NodeProps<AccountNode>) {
   return (
     <div className="map-node" data-focus={data.focus} data-selected={selected || undefined}>
-      <Handle className="map-handle" isConnectable={false} position={Position.Left} type="target" />
+      <Handle className="map-handle" isConnectable={false} position={Position.Top} type="target" />
       <ServiceIdentityMark account={data.account} size="small" />
       <div><strong>{data.account.accountName}</strong><small>{data.account.serviceName} · {data.account.category}</small></div>
-      <Handle className="map-handle" isConnectable={false} position={Position.Right} type="source" />
+      <Handle className="map-handle" isConnectable={false} position={Position.Bottom} type="source" />
     </div>
   );
 }
 
-function RelationshipMapEdge({ id, sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, markerEnd, data }: EdgeProps<RelationshipEdge>) {
-  const [path, labelX, labelY] = getSmoothStepPath({ sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, borderRadius: 18 });
+function RelationshipMapEdge({ id, sourceX, sourceY, targetX, targetY, markerEnd, data }: EdgeProps<RelationshipEdge>) {
+  const [path, labelX, labelY] = getStraightPath({ sourceX, sourceY, targetX, targetY });
   return (
     <>
       <BaseEdge className="map-edge-path" id={id} markerEnd={markerEnd} path={path} style={{ opacity: data?.focus === "muted" ? 0.12 : 1 }} />
