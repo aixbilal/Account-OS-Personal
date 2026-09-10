@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fakeVault } from "../data/fakeVault";
-import { buildDependencyGraph, toMapAccount } from "./DependencyMap";
+import { buildDependencyGraph, resolveMapNodeFocus, toMapAccount } from "./DependencyMap";
 
 describe("buildDependencyGraph", () => {
   it("creates deterministic nodes and friendly directed edges", () => {
@@ -44,5 +44,15 @@ describe("buildDependencyGraph", () => {
     expect(toMapAccount(account)).not.toHaveProperty("email");
     expect(toMapAccount(account)).not.toHaveProperty("recoveryInformation");
     expect(toMapAccount(account)).not.toHaveProperty("website");
+  });
+
+  it("lets a search match override an unrelated selected-node dim state", () => {
+    const related = new Set(["related"]);
+    const matches = new Set(["searched"]);
+
+    expect(resolveMapNodeFocus("searched", "selected", related, matches, true)).toBe("normal");
+    expect(resolveMapNodeFocus("selected", "selected", related, matches, true)).toBe("muted");
+    expect(resolveMapNodeFocus("selected", "selected", related, matches, false)).toBe("selected");
+    expect(resolveMapNodeFocus("related", "selected", related, matches, false)).toBe("related");
   });
 });

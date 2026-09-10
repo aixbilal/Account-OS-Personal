@@ -31,7 +31,7 @@ interface DependencyMapProps {
 }
 
 export type MapAccount = Pick<Account, "id" | "accountName" | "serviceName" | "category">;
-type FocusState = "normal" | "selected" | "related" | "muted";
+export type FocusState = "normal" | "selected" | "related" | "muted";
 type AccountNodeData = { account: MapAccount; focus: FocusState };
 type RelationshipEdgeData = { label: string; focus: FocusState };
 type AccountNode = Node<AccountNodeData, "account">;
@@ -42,6 +42,22 @@ const nodeHeight = 78;
 
 export function toMapAccount(account: Account): MapAccount {
   return { id: account.id, accountName: account.accountName, serviceName: account.serviceName, category: account.category };
+}
+
+export function resolveMapNodeFocus(
+  nodeId: string,
+  selectedId: string | undefined,
+  relatedIds: ReadonlySet<string>,
+  matchingIds: ReadonlySet<string>,
+  hasQuery: boolean,
+): FocusState {
+  if (hasQuery) {
+    if (!matchingIds.has(nodeId)) return "muted";
+    return nodeId === selectedId ? "selected" : "normal";
+  }
+  if (!selectedId) return "normal";
+  if (nodeId === selectedId) return "selected";
+  return relatedIds.has(nodeId) ? "related" : "muted";
 }
 
 export function buildDependencyGraph(accounts: Account[], relationships: AccountRelationship[]) {
@@ -100,9 +116,7 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const nodes = baseGraph.nodes.map((node): AccountNode => {
-    let focus: FocusState = "normal";
-    if (selectedId) focus = node.id === selectedId ? "selected" : relatedIds.has(node.id) ? "related" : "muted";
-    if (normalizedQuery && !matchingIds.has(node.id)) focus = "muted";
+    const focus = resolveMapNodeFocus(node.id, selectedId, relatedIds, matchingIds, Boolean(normalizedQuery));
     return { ...node, data: { ...node.data, focus }, selected: node.id === selectedId };
   });
   const edges = baseGraph.edges.map((edge): RelationshipEdge => {
