@@ -1,5 +1,5 @@
-import { ChevronDown, Copy, Eye, EyeOff, KeyRound, LoaderCircle, Sparkles, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, Copy, Eye, EyeOff, KeyRound, LoaderCircle, LockKeyhole, Sparkles, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account } from "../domain/types";
 import { generatePassword } from "../domain/passwordGenerator";
 import { serviceCatalog } from "../domain/serviceCatalog";
@@ -13,6 +13,7 @@ interface AccountEditorProps {
   onClose: () => void;
   onDelete: (account: Account) => Promise<void>;
   onDirtyChange?: (dirty: boolean) => void;
+  onLock?: () => void;
   onNotify?: (message: string, tone?: "success" | "error" | "info") => void;
   onSave: (draft: AccountDraft) => Promise<void>;
   relationshipCount?: number;
@@ -49,7 +50,7 @@ function draftFor(account: Account | null): AccountDraft {
   };
 }
 
-export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onNotify, onSave, relationshipCount = 0 }: AccountEditorProps) {
+export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onLock, onNotify, onSave, relationshipCount = 0 }: AccountEditorProps) {
   const initialDraft = useMemo(() => draftFor(account), [account]);
   const [draft, setDraft] = useState<AccountDraft>(initialDraft);
   const [error, setError] = useState("");
@@ -57,6 +58,9 @@ export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onNot
   const [detailsOpen, setDetailsOpen] = useState(Boolean(account));
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingLock, setConfirmingLock] = useState(false);
+  const serviceRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
   const dirty = JSON.stringify(draft) !== JSON.stringify(initialDraft);
 
   useEffect(() => setDraft(initialDraft), [initialDraft]);
@@ -64,6 +68,16 @@ export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onNot
     onDirtyChange?.(dirty);
     return () => onDirtyChange?.(false);
   }, [dirty, onDirtyChange]);
+
+  useEffect(() => {
+    if (!dirty) return;
+    const protectUnsavedChanges = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", protectUnsavedChanges);
+    return () => window.removeEventListener("beforeunload", protectUnsavedChanges);
+  }, [dirty]);
 
   function update<K extends keyof AccountDraft>(key: K, value: AccountDraft[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -80,6 +94,10 @@ export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onNot
     setError("");
     if (!draft.serviceName.trim() || !draft.accountName.trim()) {
       setError("Service and account title are required.");
+      window.requestAnimationFrame(() => {
+        if (!draft.serviceName.trim()) serviceRef.current?.focus();
+        else titleRef.current?.focus();
+      });
       return;
     }
     setIsSaving(true);
@@ -119,24 +137,30 @@ export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onNot
     }
   }
 
+  function requestEditorLock() {
+    if (!onLock || isSaving) return;
+    if (dirty) setConfirmingLock(true);
+    else onLock();
+  }
+
   return (
     <>
-      <Sheet active={!confirmingDiscard && !confirmingDelete} className="account-editor" labelledBy="account-editor-title" onRequestClose={requestClose}>
+      <Sheet active={!confirmingDiscard && !confirmingDelete && !confirmingLock} className="account-editor" labelledBy="account-editor-title" onRequestClose={requestClose}>
         <header className="editor-header">
           <div><p className="eyebrow">{account ? "Account details" : "New local account"}</p><h2 id="account-editor-title">{account ? "Edit account" : "Add account"}</h2><span>{account ? "Update the details stored in your encrypted local vault." : "Save a new account to your encrypted local vault."}</span></div>
-          <button aria-label="Close account editor" className="icon-button" onClick={requestClose} type="button"><X size={19} /></button>
+          <div className="editor-header-actions">{onLock && <button aria-label="Lock vault" className="icon-button" onClick={requestEditorLock} title="Lock vault" type="button"><LockKeyhole size={18} /></button>}<button aria-label="Close account editor" className="icon-button" onClick={requestClose} type="button"><X size={19} /></button></div>
         </header>
         {account && <div className="editor-identity"><ServiceIdentityHero account={{ ...account, ...draft }} /></div>}
         <form className="editor-form" onSubmit={submit}>
           <div className="editor-scroll">
             <section className="editor-section" aria-labelledby="essential-details-title">
-              <div className="editor-section-heading"><span>Essential details</span><p id="essential-details-title">Everything needed for a common sign-in.</p></div>
+              <div className="editor-section-heading"><h3 id="essential-details-title">Essential details</h3><p>Everything needed for a common sign-in.</p></div>
               <div className="form-grid editor-essential">
-                <Field autoComplete="organization" autoFocus={!account} label="Service" list="local-service-catalog" name="serviceName" onChange={(value) => update("serviceName", value)} required value={draft.serviceName} />
-                <Field autoComplete="off" autoFocus={Boolean(account)} label="Account title" name="accountName" onChange={(value) => update("accountName", value)} required value={draft.accountName} />
+                <Field ariaDescribedBy={error ? "account-editor-error" : undefined} autoComplete="organization" autoFocus={!account} inputRef={serviceRef} invalid={Boolean(error && !draft.serviceName.trim())} label="Service" list="local-service-catalog" name="serviceName" onChange={(value) => update("serviceName", value)} required value={draft.serviceName} />
+                <Field ariaDescribedBy={error ? "account-editor-error" : undefined} autoComplete="off" autoFocus={Boolean(account)} inputRef={titleRef} invalid={Boolean(error && !draft.accountName.trim())} label="Account title" name="accountName" onChange={(value) => update("accountName", value)} required value={draft.accountName} />
                 <Field autoComplete="email" label="Email" name="email" onChange={(value) => update("email", value)} type="email" value={draft.email} />
                 <Field autoComplete="username" label="Username" name="username" onChange={(value) => update("username", value)} value={draft.username} />
-                <Field autoComplete="url" label="Website" name="website" onChange={(value) => update("website", value)} placeholder="https://example.com" type="url" value={draft.website ?? ""} />
+                <Field autoComplete="url" label="Website" name="website" onChange={(value) => update("website", value)} placeholder="https://example.com…" type="url" value={draft.website ?? ""} />
                 <CredentialField onChange={(value) => update("password", value)} onNotify={onNotify} value={draft.password} />
               </div>
             </section>
@@ -149,10 +173,10 @@ export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onNot
                   <Field autoComplete="off" label="2FA metadata" name="twoFactorInformation" onChange={(value) => update("twoFactorInformation", value)} placeholder="Authenticator app, security key…" value={draft.twoFactorInformation} />
                   <Field autoComplete="off" label="Recovery information" name="recoveryInformation" onChange={(value) => update("recoveryInformation", value)} value={draft.recoveryInformation} />
                 </div>
-                <label className="field-label" htmlFor="account-notes">Notes <span>(optional)</span><textarea id="account-notes" name="notes" onChange={(event) => update("notes", event.target.value)} spellCheck="false" value={draft.notes} /></label>
+                <label className="field-label" htmlFor="account-notes"><span className="field-caption">Notes <small>(optional)</small></span><textarea id="account-notes" name="notes" onChange={(event) => update("notes", event.target.value)} spellCheck="false" value={draft.notes} /></label>
               </section>
             )}
-            {error && <p className="form-error" role="alert">{error}</p>}
+            {error && <p className="form-error" id="account-editor-error" role="alert">{error}</p>}
           </div>
           <footer className="editor-actions">
             {account && <button className="danger-button subtle-danger" disabled={isSaving} onClick={() => setConfirmingDelete(true)} type="button"><Trash2 size={15} />Delete account</button>}
@@ -181,13 +205,25 @@ export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onNot
           <footer className="dialog-actions"><button className="secondary-button" data-autofocus onClick={() => setConfirmingDelete(false)} type="button">Cancel</button><button className="danger-button" disabled={isSaving} onClick={() => void remove()} type="button">Delete account</button></footer>
         </Dialog>
       )}
+
+      {confirmingLock && onLock && (
+        <Dialog className="confirm-dialog" labelledBy="lock-editor-title" onRequestClose={() => setConfirmingLock(false)}>
+          <div className="confirm-icon warning" aria-hidden="true"><LockKeyhole size={22} /></div>
+          <h2 id="lock-editor-title">Discard edits and lock?</h2>
+          <p>Locking now will discard these unsaved edits before the decrypted vault leaves memory.</p>
+          <footer className="dialog-actions"><button className="secondary-button" data-autofocus onClick={() => setConfirmingLock(false)} type="button">Keep editing</button><button className="primary-button" onClick={onLock} type="button">Discard and lock</button></footer>
+        </Dialog>
+      )}
     </>
   );
 }
 
-function Field({ autoComplete, autoFocus, label, list, name, onChange, placeholder, required, type = "text", value }: {
+function Field({ ariaDescribedBy, autoComplete, autoFocus, inputRef, invalid, label, list, name, onChange, placeholder, required, type = "text", value }: {
+  ariaDescribedBy?: string;
   autoComplete?: string;
   autoFocus?: boolean;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
+  invalid?: boolean;
   label: string;
   list?: string;
   name: string;
@@ -198,7 +234,7 @@ function Field({ autoComplete, autoFocus, label, list, name, onChange, placehold
   value: string;
 }) {
   const id = `account-${name}`;
-  return <label className="field-label" htmlFor={id}>{label}{!required && <span> (optional)</span>}<input autoComplete={autoComplete} data-autofocus={autoFocus || undefined} id={id} list={list} name={name} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={required} spellCheck="false" type={type} value={value} /></label>;
+  return <label className="field-label" htmlFor={id}><span className="field-caption">{label}{!required && <small> (optional)</small>}</span><input aria-describedby={ariaDescribedBy} aria-invalid={invalid || undefined} autoComplete={autoComplete} data-autofocus={autoFocus || undefined} id={id} list={list} name={name} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} ref={inputRef} required={required} spellCheck="false" type={type} value={value} /></label>;
 }
 
 function SelectField({ label, name, onChange, value, values }: { label: string; name: string; onChange: (value: string) => void; value: string; values: readonly string[] }) {
@@ -236,7 +272,7 @@ function CredentialField({ onChange, onNotify, value }: { onChange: (value: stri
 
   return (
     <div className="credential-field">
-      <label className="field-label" htmlFor="account-password">Password / sensitive value <span>(optional)</span></label>
+      <label className="field-label" htmlFor="account-password"><span className="field-caption">Password / sensitive value <small>(optional)</small></span></label>
       <div className="secret-input editor-secret-input">
         <input autoComplete="new-password" id="account-password" name="password" onChange={(event) => onChange(event.target.value)} spellCheck="false" type={visible ? "text" : "password"} value={value} />
         <button aria-label={visible ? "Hide password" : "Reveal password"} onClick={() => setVisible((current) => !current)} type="button">{visible ? <EyeOff size={17} /> : <Eye size={17} />}</button>
@@ -244,7 +280,7 @@ function CredentialField({ onChange, onNotify, value }: { onChange: (value: stri
         <button aria-label="Copy password" disabled={!value} onClick={() => void copyPassword()} type="button"><Copy size={17} /></button>
       </div>
       <button aria-expanded={generatorOpen} className="generator-toggle" onClick={() => setGeneratorOpen((open) => !open)} type="button">Generator options <ChevronDown aria-hidden="true" data-open={generatorOpen} size={14} /></button>
-      {generatorOpen && <div className="generator-options"><label>Length<input aria-label="Password length" max="64" min="8" onChange={(event) => setLength(Number(event.target.value))} type="number" value={length} /></label><label><input checked={uppercase} onChange={(event) => setUppercase(event.target.checked)} type="checkbox" />Uppercase</label><label><input checked={lowercase} onChange={(event) => setLowercase(event.target.checked)} type="checkbox" />Lowercase</label><label><input checked={numbers} onChange={(event) => setNumbers(event.target.checked)} type="checkbox" />Numbers</label><label><input checked={symbols} onChange={(event) => setSymbols(event.target.checked)} type="checkbox" />Symbols</label></div>}
+      {generatorOpen && <div className="generator-options"><label>Length<input aria-label="Password length" max="64" min="8" name="generatedPasswordLength" onChange={(event) => setLength(Number(event.target.value))} type="number" value={length} /></label><label><input checked={uppercase} name="generatedPasswordUppercase" onChange={(event) => setUppercase(event.target.checked)} type="checkbox" />Uppercase</label><label><input checked={lowercase} name="generatedPasswordLowercase" onChange={(event) => setLowercase(event.target.checked)} type="checkbox" />Lowercase</label><label><input checked={numbers} name="generatedPasswordNumbers" onChange={(event) => setNumbers(event.target.checked)} type="checkbox" />Numbers</label><label><input checked={symbols} name="generatedPasswordSymbols" onChange={(event) => setSymbols(event.target.checked)} type="checkbox" />Symbols</label></div>}
     </div>
   );
 }

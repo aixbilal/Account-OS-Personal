@@ -1,8 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { Session } from "@supabase/supabase-js";
+import { CloudDownload } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { canRestoreRemote, createCloudClient, decideSync, ensureDevice, isFreshLocalVault, isSupabaseConfigured, readSyncMetadata, writeSyncMetadata, type RemoteVaultRecord } from "../sync/cloudSync";
 import type { VaultData } from "../domain/types";
+import { Dialog } from "./ui/Modal";
 
 export function CloudSyncPanel({ isNative, onBusyChange, onVaultRestored }: { isNative: boolean; onBusyChange?: (busy: boolean) => void; onVaultRestored: (vault: VaultData) => void }) {
   const client = useMemo(() => {
@@ -19,6 +21,7 @@ export function CloudSyncPanel({ isNative, onBusyChange, onVaultRestored }: { is
   const [syncStatus, setSyncStatus] = useState("Not synced yet");
   const [message, setMessage] = useState("");
   const [working, setWorking] = useState(false);
+  const [confirmRemoteRestore, setConfirmRemoteRestore] = useState(false);
 
   useEffect(() => {
     onBusyChange?.(working);
@@ -143,10 +146,67 @@ export function CloudSyncPanel({ isNative, onBusyChange, onVaultRestored }: { is
       await applyRemoteVault(remote);
     } catch {
       setSyncStatus("Sync error"); setMessage("Remote vault restore failed validation. The local vault was not changed.");
-    } finally { setWorking(false); }
+    } finally {
+      setWorking(false);
+      setConfirmRemoteRestore(false);
+    }
+  }
+
+  function requestRemoteRestore() {
+    setMessage("");
+    if (!vaultPassword) {
+      setSyncStatus("Sync error");
+      setMessage("Enter the local vault password before restoring a remote encrypted vault.");
+      return;
+    }
+    setConfirmRemoteRestore(true);
+  }
+
+  function cancelRemoteRestore() {
+    if (working) return;
+    setConfirmRemoteRestore(false);
+    setVaultPassword("");
   }
 
   if (!isSupabaseConfigured() || !client) return <div className="settings-card"><h3>Account OS Cloud</h3><p>{isSupabaseConfigured() ? "Cloud is unavailable. Check the optional local configuration and connection." : <>Not connected. Add a Supabase project URL and publishable key to an untracked <code>.env.local</code> file to enable optional ciphertext-only sync.</>}</p><p className="selected-file">Your local vault remains fully available offline.</p></div>;
 
-  return <div className="settings-card"><h3>Account OS Cloud</h3><p>Cloud account: <strong>{session ? "Connected" : "Not connected"}</strong></p>{session && <p>Sync status: <strong>{syncStatus}</strong></p>}{!session ? <form onSubmit={connect}><label className="field-label">Cloud email<input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required spellCheck="false" type="email" value={email} /></label><label className="field-label">Cloud password<input autoComplete="current-password" onChange={(event) => setPassword(event.target.value)} required spellCheck="false" type="password" value={password} /></label><button className="unlock-submit" disabled={working} type="submit">{working ? "Connecting…" : "Connect cloud identity"}</button></form> : <><p>Device: {navigator.platform || "Desktop"}</p><label className="field-label">Local vault password (required to restore an encrypted remote vault)<input autoComplete="current-password" onChange={(event) => setVaultPassword(event.target.value)} spellCheck="false" type="password" value={vaultPassword} /></label><div className="settings-actions"><button className="add-account-button" disabled={working || !isNative} onClick={() => void syncNow()} type="button">{working ? "Syncing…" : "Sync now"}</button><button className="secondary-button" disabled={working || !isNative} onClick={() => void restoreRemoteVault()} type="button">Restore remote vault</button><button className="secondary-button" disabled={working} onClick={() => void signOut()} type="button">Sign out cloud identity</button></div></>}{message && <p className="backup-status" role="status">{message}</p>}</div>;
+  return (
+    <>
+      <div className="settings-card">
+        <h3>Account OS Cloud</h3>
+        <p>Cloud account: <strong>{session ? "Connected" : "Not connected"}</strong></p>
+        {session && <p>Sync status: <strong>{syncStatus}</strong></p>}
+        {!session ? (
+          <form onSubmit={connect}>
+            <label className="field-label" htmlFor="cloud-email">Cloud email<input autoComplete="email" id="cloud-email" name="cloudEmail" onChange={(event) => setEmail(event.target.value)} required spellCheck="false" type="email" value={email} /></label>
+            <label className="field-label" htmlFor="cloud-password">Cloud password<input autoComplete="current-password" id="cloud-password" name="cloudPassword" onChange={(event) => setPassword(event.target.value)} required spellCheck="false" type="password" value={password} /></label>
+            <button className="unlock-submit" disabled={working} type="submit">{working ? "Connecting…" : "Connect cloud identity"}</button>
+          </form>
+        ) : (
+          <>
+            <p>Device: {navigator.platform || "Desktop"}</p>
+            <label className="field-label" htmlFor="cloud-vault-password">Local vault password (required to restore an encrypted remote vault)<input autoComplete="current-password" id="cloud-vault-password" name="cloudVaultPassword" onChange={(event) => setVaultPassword(event.target.value)} spellCheck="false" type="password" value={vaultPassword} /></label>
+            <div className="settings-actions">
+              <button className="add-account-button" disabled={working || !isNative} onClick={() => void syncNow()} type="button">{working ? "Syncing…" : "Sync now"}</button>
+              <button className="secondary-button" disabled={working || !isNative} onClick={requestRemoteRestore} type="button">Restore remote vault</button>
+              <button className="secondary-button" disabled={working} onClick={() => void signOut()} type="button">Sign out cloud identity</button>
+            </div>
+          </>
+        )}
+        {message && <p className="backup-status" role="status">{message}</p>}
+      </div>
+
+      {confirmRemoteRestore && (
+        <Dialog className="confirm-dialog" labelledBy="confirm-remote-restore-title" onRequestClose={cancelRemoteRestore}>
+          <div className="confirm-icon warning" aria-hidden="true"><CloudDownload size={22} /></div>
+          <h2 id="confirm-remote-restore-title">Restore the remote encrypted vault?</h2>
+          <p>After password and revision validation, the remote vault will replace this local vault. Local changes prevent this operation.</p>
+          <footer className="dialog-actions">
+            <button className="secondary-button" data-autofocus disabled={working} onClick={cancelRemoteRestore} type="button">Cancel</button>
+            <button className="primary-button" disabled={working} onClick={() => void restoreRemoteVault()} type="button">{working ? "Restoring…" : "Restore remote vault"}</button>
+          </footer>
+        </Dialog>
+      )}
+    </>
+  );
 }

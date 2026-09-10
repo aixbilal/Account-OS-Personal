@@ -93,6 +93,7 @@ export function ServiceIdentityMark({ account, size = "regular" }: { account: Id
       className={`service-identity service-identity-${size}`}
       data-service={identity.id}
       data-source={identity.iconSource}
+      role="img"
       style={style}
     >
       {packaged ? (

@@ -30,6 +30,7 @@ export function VaultEntry({ hasVault, onCreate, onUnlock }: VaultEntryProps) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmationRef = useRef<HTMLInputElement>(null);
   const strength = useMemo(() => passwordStrength(password), [password]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -47,6 +48,7 @@ export function VaultEntry({ hasVault, onCreate, onUnlock }: VaultEntryProps) {
     }
     if (creating && password !== confirmation) {
       setError("The master password confirmation does not match.");
+      confirmationRef.current?.focus();
       return;
     }
 
@@ -101,6 +103,7 @@ export function VaultEntry({ hasVault, onCreate, onUnlock }: VaultEntryProps) {
           {creating && (
             <SecretInput
               autoComplete="new-password"
+              inputRef={confirmationRef}
               label="Confirm master password"
               name="masterPasswordConfirmation"
               onChange={setConfirmation}

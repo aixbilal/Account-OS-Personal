@@ -1,5 +1,5 @@
 import { ArrowRight, Link2, Pencil, Plus, Trash2, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { relationshipsForAccount } from "../domain/relationships";
 import { RELATIONSHIP_TYPES, type Account, type AccountRelationship, type RelationshipType } from "../domain/types";
 import { ServiceIdentityMark } from "./ServiceIdentity";
@@ -59,6 +59,8 @@ export function RelationshipDialog({
   const [mode, setMode] = useState<"manage" | "add" | "edit">(initialMode);
   const [editing, setEditing] = useState<AccountRelationship | null>(null);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [removeError, setRemoveError] = useState("");
+  const [removing, setRemoving] = useState(false);
   const managingAccount = accounts.find((account) => account.id === managingAccountId);
 
   function beginEdit(relationship: AccountRelationship) {
@@ -72,6 +74,21 @@ export function RelationshipDialog({
       setMode("manage");
     } else {
       onClose();
+    }
+  }
+
+  async function removeRelationship() {
+    if (!editing || removing) return;
+    setRemoving(true);
+    setRemoveError("");
+    try {
+      await onDelete(editing);
+      setConfirmingRemove(false);
+      returnToManager();
+    } catch {
+      setRemoveError("Unable to remove this relationship. The vault was not changed.");
+    } finally {
+      setRemoving(false);
     }
   }
 
@@ -121,17 +138,14 @@ export function RelationshipDialog({
       </Dialog>
 
       {confirmingRemove && editing && (
-        <Dialog className="confirm-dialog" labelledBy="remove-relationship-title" onRequestClose={() => setConfirmingRemove(false)}>
+        <Dialog className="confirm-dialog" labelledBy="remove-relationship-title" onRequestClose={() => { if (!removing) setConfirmingRemove(false); }}>
           <div className="confirm-icon danger" aria-hidden="true"><Trash2 size={22} /></div>
           <h2 id="remove-relationship-title">Remove relationship?</h2>
           <p>This connection will be removed from the Vault and Map. The accounts themselves will stay in your vault.</p>
+          {removeError && <p className="form-error" role="alert">{removeError}</p>}
           <footer className="dialog-actions">
-            <button className="secondary-button" data-autofocus onClick={() => setConfirmingRemove(false)} type="button">Keep relationship</button>
-            <button className="danger-button" onClick={async () => {
-              await onDelete(editing);
-              setConfirmingRemove(false);
-              returnToManager();
-            }} type="button">Remove relationship</button>
+            <button className="secondary-button" data-autofocus disabled={removing} onClick={() => setConfirmingRemove(false)} type="button">Keep relationship</button>
+            <button className="danger-button" disabled={removing} onClick={() => void removeRelationship()} type="button">{removing ? "Removing…" : "Remove relationship"}</button>
           </footer>
         </Dialog>
       )}
@@ -188,6 +202,7 @@ function RelationshipForm({ accounts, editing, initialSourceId, onCancel, onRemo
   const [notes, setNotes] = useState(editing?.notes ?? "");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const targetRef = useRef<HTMLSelectElement>(null);
   const source = accounts.find((account) => account.id === sourceAccountId);
   const target = accounts.find((account) => account.id === targetAccountId);
   const targets = useMemo(() => accounts.filter((account) => account.id !== sourceAccountId), [accounts, sourceAccountId]);
@@ -197,6 +212,7 @@ function RelationshipForm({ accounts, editing, initialSourceId, onCancel, onRemo
     setError("");
     if (!sourceAccountId || !targetAccountId) {
       setError("Choose two different accounts before saving this relationship.");
+      window.requestAnimationFrame(() => targetRef.current?.focus());
       return;
     }
     setSaving(true);
@@ -218,13 +234,13 @@ function RelationshipForm({ accounts, editing, initialSourceId, onCancel, onRemo
       ) : (
         <>
           <label className="field-label" htmlFor="relationship-source">From account<select data-autofocus id="relationship-source" name="relationshipSource" onChange={(event) => { setSourceAccountId(event.target.value); if (event.target.value === targetAccountId) setTargetAccountId(""); }} value={sourceAccountId}>{accounts.map((account) => <option key={account.id} value={account.id}>{account.accountName}</option>)}</select></label>
-          <label className="field-label" htmlFor="relationship-target">To account<select id="relationship-target" name="relationshipTarget" onChange={(event) => setTargetAccountId(event.target.value)} value={targetAccountId}><option value="">Choose an account</option>{targets.map((account) => <option key={account.id} value={account.id}>{account.accountName}</option>)}</select></label>
+          <label className="field-label" htmlFor="relationship-target">To account<select aria-describedby={error ? "relationship-error" : undefined} aria-invalid={Boolean(error && !targetAccountId) || undefined} id="relationship-target" name="relationshipTarget" onChange={(event) => setTargetAccountId(event.target.value)} ref={targetRef} value={targetAccountId}><option value="">Choose an account</option>{targets.map((account) => <option key={account.id} value={account.id}>{account.accountName}</option>)}</select></label>
         </>
       )}
       <label className="field-label" htmlFor="relationship-type">Relationship type<select id="relationship-type" name="relationshipType" onChange={(event) => setRelationshipType(event.target.value as RelationshipType)} value={relationshipType}>{RELATIONSHIP_TYPES.map((type) => <option key={type} value={type}>{relationshipTypeLabels[type]}</option>)}</select></label>
-      <label className="field-label" htmlFor="relationship-notes">Notes <span>(optional)</span><textarea id="relationship-notes" maxLength={200} name="relationshipNotes" onChange={(event) => setNotes(event.target.value)} placeholder="Why are these accounts connected?" spellCheck="false" value={notes} /></label>
+      <label className="field-label" htmlFor="relationship-notes"><span className="field-caption">Notes <small>(optional)</small></span><textarea id="relationship-notes" maxLength={200} name="relationshipNotes" onChange={(event) => setNotes(event.target.value)} placeholder="Why are these accounts connected?…" spellCheck="false" value={notes} /></label>
       <div className="direction-preview" aria-live="polite"><span>{source?.accountName ?? "Source account"}</span><ArrowRight aria-hidden="true" size={15} /><strong>{relationshipTypeLabels[relationshipType]}</strong><ArrowRight aria-hidden="true" size={15} /><span>{target?.accountName ?? "Target account"}</span></div>
-      {error && <p className="form-error" role="alert">{error}</p>}
+      {error && <p className="form-error" id="relationship-error" role="alert">{error}</p>}
       <footer className="dialog-actions relationship-form-actions">
         {onRemove && <button className="danger-button subtle-danger" disabled={saving} onClick={onRemove} type="button"><Trash2 size={15} />Remove</button>}
         <span className="action-spacer" />

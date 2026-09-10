@@ -70,11 +70,11 @@ describe("Account OS shell", () => {
     const user = userEvent.setup();
     renderApp();
 
-    await user.type(screen.getByPlaceholderText("Search accounts"), "does-not-exist.invalid");
+    await user.type(screen.getByRole("searchbox"), "does-not-exist.invalid");
     expect(screen.getByRole("heading", { name: "No matching accounts" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Clear search and filters" }));
 
-    expect(screen.getByPlaceholderText("Search accounts")).toHaveValue("");
+    expect(screen.getByRole("searchbox")).toHaveValue("");
     expect(screen.getAllByText("Google Personal TEST").length).toBeGreaterThan(0);
   });
 

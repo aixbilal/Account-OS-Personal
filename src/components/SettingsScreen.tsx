@@ -2,7 +2,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
 import { Cloud, DatabaseBackup, Eye, EyeOff, Info, LockKeyhole, MonitorCog, Palette, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import appPackage from "../../package.json";
 import type { VaultData } from "../domain/types";
 import { CloudSyncPanel } from "./CloudSyncPanel";
@@ -28,6 +28,7 @@ const settingsSections: Array<{ id: SettingsSection; label: string; icon: typeof
   { id: "connected", label: "Connected", icon: Cloud },
   { id: "system", label: "System", icon: MonitorCog },
 ];
+const themeOptions: ThemePreference[] = ["light", "dark", "system"];
 
 export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperationChange, onVaultRestored, theme, onThemeChange }: SettingsScreenProps) {
   const [section, setSection] = useState<SettingsSection>("appearance");
@@ -41,6 +42,8 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
   const [cloudWorking, setCloudWorking] = useState(false);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [appVersion, setAppVersion] = useState(appPackage.version);
+  const backupFileButtonRef = useRef<HTMLButtonElement>(null);
+  const backupPasswordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isNative) return;
@@ -93,6 +96,10 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
     setRestoreStatus(null);
     if (!importPath || !masterPassword) {
       setRestoreStatus({ tone: "error", message: "Choose an encrypted backup and enter its master password." });
+      window.requestAnimationFrame(() => {
+        if (!importPath) backupFileButtonRef.current?.focus();
+        else backupPasswordRef.current?.focus();
+      });
       return;
     }
     setConfirmRestore(true);
@@ -123,13 +130,42 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
     }
   }
 
+  function changeSection(nextSection: SettingsSection) {
+    if (section === "data" && nextSection !== "data") {
+      setMasterPassword("");
+      setPasswordVisible(false);
+      setConfirmRestore(false);
+    }
+    setSection(nextSection);
+  }
+
+  function handleThemeKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
+    const direction = event.key === "ArrowRight" || event.key === "ArrowDown"
+      ? 1
+      : event.key === "ArrowLeft" || event.key === "ArrowUp"
+        ? -1
+        : 0;
+    const nextIndex = event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? themeOptions.length - 1
+        : direction
+          ? (index + direction + themeOptions.length) % themeOptions.length
+          : -1;
+    if (nextIndex < 0) return;
+    event.preventDefault();
+    const nextTheme = themeOptions[nextIndex];
+    onThemeChange(nextTheme);
+    window.requestAnimationFrame(() => document.getElementById(`theme-option-${nextTheme}`)?.focus());
+  }
+
   return (
     <section className="settings-screen" aria-labelledby="settings-title">
       <aside className="settings-nav" aria-label="Settings sections">
-        <div><p className="eyebrow">Settings</p><h2 id="settings-title">Preferences</h2></div>
+        <div><p className="eyebrow">Settings</p><h1 id="settings-title">Preferences</h1></div>
         {settingsSections.map((item) => {
           const Icon = item.icon;
-          return <button aria-current={section === item.id ? "page" : undefined} data-active={section === item.id} disabled={(exportWorking || restoreWorking || cloudWorking) && section !== item.id} key={item.id} onClick={() => setSection(item.id)} type="button"><Icon aria-hidden="true" size={17} /><span>{item.label}</span></button>;
+          return <button aria-current={section === item.id ? "page" : undefined} data-active={section === item.id} disabled={(exportWorking || restoreWorking || cloudWorking) && section !== item.id} key={item.id} onClick={() => changeSection(item.id)} type="button"><Icon aria-hidden="true" size={17} /><span>{item.label}</span></button>;
         })}
       </aside>
 
@@ -137,8 +173,8 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
         {section === "appearance" && (
           <SettingsSectionHeading description="Choose how Account OS looks on this device." icon={Palette} title="Appearance">
             <div className="theme-choice" role="radiogroup" aria-label="Appearance theme">
-              {(["light", "dark", "system"] as const).map((option) => (
-                <button aria-checked={theme === option} data-active={theme === option} key={option} onClick={() => onThemeChange(option)} role="radio" type="button">
+              {themeOptions.map((option, index) => (
+                <button aria-checked={theme === option} data-active={theme === option} id={`theme-option-${option}`} key={option} onClick={() => onThemeChange(option)} onKeyDown={(event) => handleThemeKeyDown(event, index)} role="radio" tabIndex={theme === option ? 0 : -1} type="button">
                   <i aria-hidden="true" data-theme-preview={option} />
                   <span><strong>{option === "light" ? "Light" : option === "dark" ? "Dark" : "System"}</strong><small>{option === "light" ? "Recommended calm V3 appearance" : option === "dark" ? "Contrast-safe low-light workspace" : "Follow your Windows appearance"}</small></span>
                   <b aria-hidden="true" />
@@ -170,11 +206,11 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
               <article className="settings-card restore-card">
                 <div className="settings-card-heading"><div className="settings-card-icon"><ShieldCheck size={20} /></div><div><h3>Restore encrypted backup</h3><p>The current local vault changes only after the backup password and encrypted payload are validated.</p></div></div>
                 <form onSubmit={requestRestore}>
-                  <button className="secondary-button" disabled={restoreWorking} onClick={() => void chooseBackup()} type="button">Choose backup file</button>
+                  <button className="secondary-button" disabled={restoreWorking} onClick={() => void chooseBackup()} ref={backupFileButtonRef} type="button">Choose backup file</button>
                   <span className="selected-file" data-selected={Boolean(importPath)}>{importPath ? "Encrypted backup selected" : "No backup selected"}</span>
-                  <label className="field-label" htmlFor="backup-master-password">Backup master password<span className="input-with-action"><input autoComplete="current-password" id="backup-master-password" name="backupMasterPassword" onChange={(event) => setMasterPassword(event.target.value)} spellCheck="false" type={passwordVisible ? "text" : "password"} value={masterPassword} /><button aria-label={passwordVisible ? "Hide backup master password" : "Show backup master password"} onClick={() => setPasswordVisible((visible) => !visible)} type="button">{passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
-                  <button className="primary-button" disabled={!importPath || !masterPassword || restoreWorking} type="submit">{restoreWorking ? "Restoring…" : "Restore encrypted backup"}</button>
-                  <OperationMessage status={restoreStatus} />
+                  <label className="field-label" htmlFor="backup-master-password">Backup master password<span className="input-with-action"><input aria-describedby={restoreStatus?.tone === "error" ? "restore-operation-status" : undefined} aria-invalid={restoreStatus?.tone === "error" || undefined} autoComplete="current-password" id="backup-master-password" name="backupMasterPassword" onChange={(event) => setMasterPassword(event.target.value)} ref={backupPasswordRef} spellCheck="false" type={passwordVisible ? "text" : "password"} value={masterPassword} /><button aria-label={passwordVisible ? "Hide backup master password" : "Show backup master password"} onClick={() => setPasswordVisible((visible) => !visible)} type="button">{passwordVisible ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
+                  <button className="primary-button" disabled={restoreWorking} type="submit">{restoreWorking ? "Restoring…" : "Restore encrypted backup"}</button>
+                  <OperationMessage id="restore-operation-status" status={restoreStatus} />
                 </form>
               </article>
             </div>
@@ -218,7 +254,7 @@ function InfoRow({ icon: Icon, label, value }: { icon: typeof Palette; label: st
   return <div className="settings-info-row"><span><Icon aria-hidden="true" size={17} /></span><div><strong>{label}</strong><p>{value}</p></div></div>;
 }
 
-function OperationMessage({ status }: { status: OperationStatus }) {
+function OperationMessage({ id, status }: { id?: string; status: OperationStatus }) {
   if (!status) return null;
-  return <p className="operation-message" data-tone={status.tone} role={status.tone === "error" ? "alert" : "status"}>{status.message}</p>;
+  return <p className="operation-message" data-tone={status.tone} id={id} role={status.tone === "error" ? "alert" : "status"}>{status.message}</p>;
 }

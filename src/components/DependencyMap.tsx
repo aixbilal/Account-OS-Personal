@@ -50,6 +50,7 @@ export function buildDependencyGraph(accounts: Account[], relationships: Account
   graph.setDefaultEdgeLabel(() => ({}));
   const sortedAccounts = [...accounts].sort((left, right) => left.id.localeCompare(right.id));
   const ids = new Set(sortedAccounts.map((account) => account.id));
+  const accountById = new Map(sortedAccounts.map((account) => [account.id, account]));
   const validRelationships = relationships
     .filter((relationship) => ids.has(relationship.sourceAccountId) && ids.has(relationship.targetAccountId))
     .sort((left, right) => left.id.localeCompare(right.id));
@@ -76,6 +77,7 @@ export function buildDependencyGraph(accounts: Account[], relationships: Account
     target: relationship.targetAccountId,
     type: "relationship",
     data: { label: relationshipTypeLabels[relationship.relationshipType], focus: "normal" },
+    ariaLabel: `${accountById.get(relationship.sourceAccountId)?.accountName ?? "Source account"} ${relationshipTypeLabels[relationship.relationshipType]} ${accountById.get(relationship.targetAccountId)?.accountName ?? "target account"}`,
     markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15 },
   }));
   return { nodes, edges };
@@ -95,6 +97,7 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
   const relatedIds = new Set(selectedRelationships.flatMap((relationship) => [relationship.sourceAccountId, relationship.targetAccountId]));
   const normalizedQuery = query.trim().toLowerCase();
   const matchingIds = new Set(accounts.filter((account) => `${account.accountName} ${account.serviceName} ${account.category}`.toLowerCase().includes(normalizedQuery)).map((account) => account.id));
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const nodes = baseGraph.nodes.map((node): AccountNode => {
     let focus: FocusState = "normal";
@@ -116,18 +119,22 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
   return (
     <div className="map-explorer" aria-label="Account dependency map">
       <div className="map-toolbar">
-        <label className="map-search" htmlFor="map-search"><Search aria-hidden="true" size={16} /><input autoComplete="off" id="map-search" name="mapSearch" onChange={(event) => setQuery(event.target.value)} placeholder="Search the map" type="search" value={query} />{query && <button aria-label="Clear Map search" onClick={() => setQuery("")} type="button"><X size={15} /></button>}</label>
-        <button className="secondary-button" onClick={() => flow?.fitView({ padding: 0.22, duration: 180 })} type="button"><Maximize2 size={15} />Fit graph</button>
+        <label className="map-search" htmlFor="map-search"><Search aria-hidden="true" size={16} /><input autoComplete="off" id="map-search" name="mapSearch" onChange={(event) => setQuery(event.target.value)} placeholder="Search the map…" type="search" value={query} />{query && <button aria-label="Clear Map search" onClick={() => setQuery("")} type="button"><X size={15} /></button>}</label>
+        <button className="secondary-button" onClick={() => flow?.fitView({ padding: 0.22, duration: reduceMotion ? 0 : 180 })} type="button"><Maximize2 size={15} />Fit graph</button>
         <button className="primary-button" disabled={accounts.length < 2} onClick={() => onRequestRelationship(selected?.id)} title={accounts.length < 2 ? "Add a second account to create a relationship" : undefined} type="button"><Plus size={16} />Relationship</button>
       </div>
       <div className="map-layout">
         <div className="dependency-map">
           <ReactFlow<AccountNode, RelationshipEdge>
             edges={edges}
+            edgesReconnectable={false}
             edgeTypes={edgeTypes}
+            deleteKeyCode={null}
             fitView
             fitViewOptions={{ padding: 0.22 }}
             minZoom={0.28}
+            nodesConnectable={false}
+            nodesDraggable={false}
             nodeTypes={nodeTypes}
             nodes={nodes}
             onInit={setFlow}
@@ -136,7 +143,6 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
               const account = byId.get(node.id);
               if (account) onSelectAccount(account);
             }}
-            proOptions={{ hideAttribution: true }}
           >
             <Background color="var(--aos-border-strong)" gap={34} size={0.8} />
             <Controls position="bottom-left" showInteractive={false} />

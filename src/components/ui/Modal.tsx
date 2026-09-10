@@ -38,7 +38,9 @@ function ModalFrame({
 
   useEffect(() => {
     if (!active) return;
-    openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!openerRef.current) {
+      openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
     const panel = panelRef.current;
     const initial = panel?.querySelector<HTMLElement>("[data-autofocus]")
       ?? panel?.querySelector<HTMLElement>(focusableSelector)
@@ -61,6 +63,11 @@ function ModalFrame({
       }
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
+      if (!panel.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+        return;
+      }
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
@@ -73,22 +80,27 @@ function ModalFrame({
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      window.requestAnimationFrame(() => openerRef.current?.focus());
+      window.requestAnimationFrame(() => {
+        if (!panel?.isConnected) openerRef.current?.focus();
+      });
     };
   }, [active]);
 
   return (
     <div
       className={`modal-backdrop modal-backdrop-${variant}`}
+      data-active={active}
+      inert={!active}
       onMouseDown={(event) => {
         if (active && event.target === event.currentTarget) onRequestClose();
       }}
       role="presentation"
     >
       <section
+        aria-hidden={!active || undefined}
         aria-label={label}
         aria-labelledby={labelledBy}
-        aria-modal="true"
+        aria-modal={active || undefined}
         className={`modal-panel modal-${variant} ${className}`.trim()}
         ref={panelRef}
         role="dialog"

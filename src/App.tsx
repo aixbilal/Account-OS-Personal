@@ -9,7 +9,6 @@ import { DependencyMap } from "./components/DependencyMap";
 import { RelationshipDialog } from "./components/RelationshipDialog";
 import { SettingsScreen, type ThemePreference } from "./components/SettingsScreen";
 import { VaultEntry, VaultLoading } from "./components/VaultEntry";
-import { Dialog } from "./components/ui/Modal";
 import { ToastProvider, useToast } from "./components/ui/ToastProvider";
 import { isDuplicateRelationship, isValidRelationship, relationshipsForAccount } from "./domain/relationships";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountCategory, type AccountRelationship, type AuthenticationMethod, type VaultData } from "./domain/types";
@@ -53,10 +52,8 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
   const [vaultStatus, setVaultStatus] = useState<NativeVaultStatus | null>(() => isTauriRuntime ? null : { hasVault: true, unlocked: true });
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
   const [editingAccount, setEditingAccount] = useState<Account | null | undefined>(undefined);
-  const [editorDirty, setEditorDirty] = useState(false);
   const [selectedAccountId, setSelectedAccountId] = useState<string>();
   const [relationshipUi, setRelationshipUi] = useState<RelationshipUiState | null>(null);
-  const [confirmingLock, setConfirmingLock] = useState(false);
   const [vaultOperationBusy, setVaultOperationBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<AccountCategory | "all">("all");
@@ -101,6 +98,21 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
   }, [theme]);
 
   useEffect(() => {
+    const documentTheme = vaultStatus?.unlocked ? resolvedTheme : "light";
+    document.documentElement.dataset.theme = documentTheme;
+    document.documentElement.style.colorScheme = documentTheme;
+    const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (themeColor) themeColor.content = documentTheme === "dark" ? "#0e1827" : "#f6fafe";
+    return () => {
+      if (document.documentElement.dataset.theme === documentTheme) {
+        delete document.documentElement.dataset.theme;
+        document.documentElement.style.colorScheme = "light";
+        if (themeColor) themeColor.content = "#f6fafe";
+      }
+    };
+  }, [resolvedTheme, vaultStatus?.unlocked]);
+
+  useEffect(() => {
     const accounts = displayedVault?.accounts ?? [];
     if (!accounts.length) {
       setSelectedAccountId(undefined);
@@ -142,8 +154,7 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
 
   function requestLock() {
     if (vaultOperationBusy) return;
-    if (editorDirty && editingAccount !== undefined) setConfirmingLock(true);
-    else void performLock();
+    void performLock();
   }
 
   async function persistVault(nextVault: VaultData) {
@@ -184,24 +195,31 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
     const relationship: AccountRelationship = { ...draft, id: draft.id ?? crypto.randomUUID() };
     if (!isValidRelationship(displayedVault.accounts, relationship)) throw new Error("Choose two different accounts that still exist in this vault.");
     if (isDuplicateRelationship(displayedVault.relationships, relationship)) throw new Error("That relationship already exists.");
-    await persistVault({
-      ...displayedVault,
-      relationships: draft.id
-        ? displayedVault.relationships.map((item) => item.id === draft.id ? relationship : item)
-        : [...displayedVault.relationships, relationship],
-    });
+    try {
+      await persistVault({
+        ...displayedVault,
+        relationships: draft.id
+          ? displayedVault.relationships.map((item) => item.id === draft.id ? relationship : item)
+          : [...displayedVault.relationships, relationship],
+      });
+    } catch {
+      throw new Error("Unable to save this relationship. The local vault was not changed.");
+    }
     notify(draft.id ? "Relationship changes saved" : "Relationship added");
   }
 
   async function deleteRelationship(relationship: AccountRelationship) {
     if (!displayedVault) return;
-    await persistVault({ ...displayedVault, relationships: displayedVault.relationships.filter((item) => item.id !== relationship.id) });
+    try {
+      await persistVault({ ...displayedVault, relationships: displayedVault.relationships.filter((item) => item.id !== relationship.id) });
+    } catch {
+      throw new Error("Unable to remove this relationship. The local vault was not changed.");
+    }
     notify("Relationship removed");
   }
 
   function applyRestoredVault(vault: VaultData) {
     setEditingAccount(undefined);
-    setEditorDirty(false);
     setRelationshipUi(null);
     setSelectedAccountId(undefined);
     setVaultData(vault);
@@ -239,13 +257,13 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
         </div>
       </aside>
 
-      <main className="workspace" id="main-content">
+      <main className="workspace" id="main-content" tabIndex={-1}>
         {activeView === "vault" && (
           <section className="vault-screen" aria-labelledby="vault-title">
             <aside className="vault-list-pane">
               <header className="vault-list-header"><div><h1 id="vault-title">Vault</h1><p>{displayedVault?.accounts.length ?? 0} accounts · {displayedVault?.relationships.length ?? 0} relationships</p></div><button className="primary-button compact-button" onClick={() => setEditingAccount(null)} type="button">+ Add account</button></header>
               <div className="vault-filters">
-                <label className="vault-search" htmlFor="vault-search"><span aria-hidden="true">⌕</span><input autoComplete="off" id="vault-search" name="vaultSearch" onChange={(event) => setSearch(event.target.value)} placeholder="Search accounts" type="search" value={search} /></label>
+                <label className="vault-search" htmlFor="vault-search"><span aria-hidden="true">⌕</span><input autoComplete="off" id="vault-search" name="vaultSearch" onChange={(event) => setSearch(event.target.value)} placeholder="Search accounts…" type="search" value={search} /></label>
                 <div><select aria-label="Filter by category" name="categoryFilter" onChange={(event) => setCategoryFilter(event.target.value as AccountCategory | "all")} value={categoryFilter}><option value="all">All categories</option>{ACCOUNT_CATEGORIES.map((category) => <option key={category}>{category}</option>)}</select><select aria-label="Filter by authentication method" name="authenticationFilter" onChange={(event) => setAuthenticationFilter(event.target.value as AuthenticationMethod | "all")} value={authenticationFilter}><option value="all">All authentication methods</option>{AUTHENTICATION_METHODS.map((method) => <option key={method}>{method}</option>)}</select></div>
               </div>
               {displayedVault && displayedVault.accounts.length ? (
@@ -267,21 +285,13 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
       </main>
 
       {editingAccount !== undefined && (
-        <AccountEditor account={editingAccount} onClose={() => { setEditingAccount(undefined); setEditorDirty(false); }} onDelete={deleteAccount} onDirtyChange={setEditorDirty} onNotify={notify} onSave={saveAccount} relationshipCount={editingAccount ? relationshipsForAccount(displayedVault?.relationships ?? [], editingAccount.id).length : 0} />
+        <AccountEditor account={editingAccount} onClose={() => setEditingAccount(undefined)} onDelete={deleteAccount} onLock={isTauriRuntime ? () => void performLock() : undefined} onNotify={notify} onSave={saveAccount} relationshipCount={editingAccount ? relationshipsForAccount(displayedVault?.relationships ?? [], editingAccount.id).length : 0} />
       )}
 
       {relationshipUi && displayedVault && (
         <RelationshipDialog accounts={displayedVault.accounts} initialMode={relationshipUi.initialMode} initialSourceId={relationshipUi.sourceAccountId} managingAccountId={relationshipUi.managingAccountId} onClose={() => setRelationshipUi(null)} onDelete={deleteRelationship} onOpenAccount={(account) => { setSelectedAccountId(account.id); setActiveView("vault"); setRelationshipUi(null); }} onSave={saveRelationship} relationships={displayedVault.relationships} />
       )}
 
-      {confirmingLock && (
-        <Dialog className="confirm-dialog" labelledBy="discard-lock-title" onRequestClose={() => setConfirmingLock(false)}>
-          <div className="confirm-icon warning" aria-hidden="true"><LockKeyhole size={22} /></div>
-          <h2 id="discard-lock-title">Discard edits and lock?</h2>
-          <p>You have unsaved account changes. Locking now will discard those edits before the decrypted vault leaves memory.</p>
-          <footer className="dialog-actions"><button className="secondary-button" data-autofocus onClick={() => setConfirmingLock(false)} type="button">Keep editing</button><button className="primary-button" onClick={() => { setConfirmingLock(false); setEditingAccount(undefined); setEditorDirty(false); void performLock(); }} type="button">Discard and lock</button></footer>
-        </Dialog>
-      )}
     </div>
   );
 }
