@@ -3,12 +3,13 @@
 ## A. Project state
 
 - Product: Account OS - Personal Digital Identity Vault.
-- Current generation: V3 Release Candidate.
-- Status: **ENGINEERING COMPLETE / HUMAN ACCEPTANCE PENDING**.
+- Current generation: V3, calm-light product layer implemented.
+- Status: **ENGINEERING COMPLETE / HUMAN VISUAL ACCEPTANCE + INSTALLER SMOKE PENDING**.
 - Repository: `C:\Account OS`.
 - Branch: `v3-design-intelligence`.
-- Authoritative checkpoint: `c3e5806 chore: complete Account OS V3 autonomous QA hardening`.
-- Git state at checkpoint: clean.
+- Authoritative checkpoint: `99fd15e ui: rebuild V3 identity Map layout as calm dependency graph` (2026-09-10).
+- This supersedes the older `c3e5806` checkpoint that earlier revisions of this file named; `c3e5806` predates the entire calm-light UI redesign.
+- Git state at checkpoint: clean; branch pushed to `origin/v3-design-intelligence`.
 - Application version: `0.1.0`.
 
 ## B. What Account OS is
@@ -17,29 +18,41 @@ Account OS is a local-first encrypted account/password vault with a first-class 
 
 ## C. V1 / V2 / V3 history
 
-- V1: frozen historical local-vault foundation, documented as v0.1.0; no separate authoritative commit/tag is recorded here.
-- V2: connected/ciphertext sync foundation, documented as frozen/release ready; no separate release commit is asserted here.
-- V3: current release candidate; authoritative continuation checkpoint is `c3e5806`.
+- V1: local encrypted vault foundation (v0.1.0). No separate authoritative commit/tag is recorded here.
+- V2: connected / ciphertext-only sync foundation. Frozen on `main` at `540098a chore: freeze V2 connected foundation release`.
+- V3: branched from `main` as `v3-design-intelligence`. Progression:
+  - `e4128b4`..`072ec17` — design intelligence system and locked V3 design direction.
+  - `c8271cb`..`aae05ba` — first V3 vault, inspector, service-identity implementation and R2 corrections.
+  - `a98a9ea`..`c3e5806` — release-candidate packaging and autonomous QA hardening (57 frontend / 16 Rust era).
+  - `03c14e6`..`2d9b12c` — the "overnight" calm-light redesign: rebuilt Create/Unlock, three-pane Vault, right-side Add/Edit sheet, Settings, dialogs, and theme system toward the approved reference frames in `docs/15 - DESIGN INTELLIGENCE/V3 FINAL UI REFERENCES/`.
+  - `99fd15e` — identity Map rebuilt as an in-house deterministic phyllotaxis dependency graph; `@dagrejs/dagre` dependency removed.
+- Authoritative continuation checkpoint is `99fd15e`.
 
-## D. V3 features complete
+## D. V3 features implemented
 
-- Vault and three-pane, view-first account workflow.
-- Account CRUD, search/filter, reveal/copy/generate secret interactions.
-- Local service identity resolver with known and deterministic fallback identities.
-- Relationships and dependency Map.
-- Hybrid, Dark, Light, and System themes; Settings including Security, Data & Recovery, and Connected.
-- Encrypted backup/recovery and connected/device foundation where implemented.
-- Windows EXE, MSI, and NSIS packaging.
+- Create / Unlock local vault surface with strength meter and explicit local-security language.
+- Three-pane, view-first Vault: navigation, searchable/filterable account list, read-only inspector.
+- Account create / view / edit / delete via a right-side sheet; search; category + authentication filters; reveal / copy; local password generator with options.
+- Local-only service identity resolver (94 audited catalog entries + deterministic monogram/accent fallback). No remote favicon or logo lookups.
+- Relationships: inspector summary, Manage dialog (add / edit / remove with confirmation), and the Map — all driven by one persisted relationship model.
+- Dependency Map with node selection, focus dimming, search, fit, and Map-originated relationship creation with confirmation.
+- Settings sections: Appearance, Security, Data & Recovery, Connected, System.
+- Themes: `light`, `dark`, `system` (the in-code `ThemePreference`). Earlier docs referred to "Hybrid"/"Adaptive"; the shipped control exposes the three above.
+- Encrypted backup export and validated, non-mutating restore.
+- Offline-first operation; optional ciphertext-only cloud-sync foundation.
+- Windows EXE / MSI / NSIS packaging (unsigned x64).
 
-## E. Verified QA state
+## E. Verified QA state (2026-09-10)
 
-- Frontend: 57/57 tests passed.
-- Rust: 16/16 tests passed.
-- Typecheck and production build: passed.
-- Security: `npm audit --omit=dev` reported 0 vulnerabilities in the latest QA pass; cargo audit completed with 17 accepted upstream/transitive warnings; source/dist secret and fixture/review-helper scans passed.
-- Functional coverage passed: vault lifecycle, CRUD, search/filter, secret interaction, relationships, Map, service identities, themes/settings, backup/restore, atomicity/failure handling, and offline/connected boundaries.
+- Frontend: **72/72** tests passed (16 files), `npm test`.
+- Rust: **19/19** tests passed, `cargo test`.
+- Typecheck (`tsc --noEmit`) and production build (`npm run build`): passed.
+- `npm audit` and `npm audit --omit=dev`: **0 vulnerabilities**.
+- `cargo audit`: not run this session (needs network); last known baseline is 17 accepted upstream/transitive warnings.
+- Source secret scan: passed (no private keys, API tokens, JWTs, or cloud keys in committed source).
+- Functional coverage exercised in the renderer this session: vault list/search/filters, inspector reveal/copy/relationships/notes, Add/Edit sheet incl. generator and delete confirmation, Manage Relationships add/edit/remove, all five Settings sections incl. export + restore dialogs, Map selection/search/fit, and light/dark/system theme toggle.
 
-**ZERO KNOWN REPRODUCIBLE AUTOMATABLE P0/P1/P2 BUGS: YES**
+**ZERO KNOWN REPRODUCIBLE AUTOMATABLE P0/P1/P2 BUGS: YES** (see the walkthrough log referenced in section M for renderer-level findings).
 
 ## F. Backup/restore evidence
 
@@ -56,13 +69,9 @@ Account OS is a local-first encrypted account/password vault with a first-class 
 
 Version metadata is `0.1.0`; artifacts are x64 and unsigned. Windows SmartScreen/reputation warnings may occur. Code signing is not configured.
 
-| Artifact | Path | Size | SHA-256 |
-| --- | --- | ---: | --- |
-| EXE | `C:\Account OS\src-tauri\target\release\account-os.exe` | 9,586,176 bytes | `97053B63378B222D5BEE578080CEB7ECEFCC6AB16BB5EE83D1C7C6E91BB7132D` |
-| MSI | `C:\Account OS\src-tauri\target\release\bundle\msi\Account OS_0.1.0_x64_en-US.msi` | 3,280,896 bytes | `80DEFEFEC6D9F5ED1B8C4387A916B42BAC0CCD01178A9FD3187B9CE5025F1F66` |
-| NSIS | `C:\Account OS\src-tauri\target\release\bundle\nsis\Account OS_0.1.0_x64-setup.exe` | 2,190,916 bytes | `35577F577118B931CFDD8842D3BD10ECA861784BD37264D7DD86622818C97C01` |
+The installers under `src-tauri/target/release/` and the hashes previously listed here were built on **2026-09-06** and predate the entire calm-light UI redesign and the Map rebuild. They are superseded.
 
-Release copies and checksums are under `C:\tmp\account-os-v3-release\`.
+Current artifact status and SHA-256 hashes for a HEAD-`99fd15e` rebuild are recorded in `docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md`.
 
 ## H. Design state
 
@@ -97,6 +106,9 @@ Do not touch/reset the real/default private vault; delete V1/V2 history; casuall
 
 ## M. Important files
 
+- `docs/ACCOUNT-OS-V3-SCOPE-CLARITY.md` — feature-by-feature diff of Settings and Relationships against the approved reference frames, with each gap marked intentional (docs say do not build) or unfinished.
+- `docs/ACCOUNT-OS-V3-WALKTHROUGH-2026-09-10.md` — autonomous renderer walkthrough log with findings and screenshot references.
+- `scripts/dev-seed-vault.mjs` — dev-only test fixture generator (never touches the real vault; see its header).
 - `README.md`
 - `docs/ACCOUNT-OS-V3-RELEASE-CANDIDATE.md`
 - `docs/ACCOUNT-OS-V3-INSTALLATION.md`
@@ -114,14 +126,15 @@ Do not touch/reset the real/default private vault; delete V1/V2 history; casuall
 ## N. Agent handoff summary
 
 ```text
-ACCOUNT OS V3 CONTINUATION STATE
+ACCOUNT OS V3 CONTINUATION STATE  (authoritative checkpoint 99fd15e, 2026-09-10)
 
-Engineering: COMPLETE
-Automated QA: PASS
+Calm-light product layer: IMPLEMENTED across all screens
+Automated QA: PASS (frontend 72/72, Rust 19/19, typecheck, build, npm audit 0)
 Known automated P0/P1/P2 bugs: NONE
-Release package: READY
-Human visual acceptance: PENDING
+Branch pushed to origin/v3-design-intelligence: YES
+Release installers: rebuilt from HEAD (see RELEASE-MANIFEST); Sep 6 build superseded
+Human native visual acceptance: PENDING
 Interactive installer smoke: PENDING
-Public release/tag/freeze: NOT AUTHORIZED YET
-NEXT STEP: HUMAN ACCEPTANCE - NOT MORE DEVELOPMENT
+Public version decision / merge / tag / freeze / publish: NOT AUTHORIZED YET
+NEXT STEP: OWNER NATIVE ACCEPTANCE + INSTALLER SMOKE - NOT MORE DEVELOPMENT
 ```

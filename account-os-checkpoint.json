@@ -1,35 +1,39 @@
 {
   "project": "Account OS - Personal Digital Identity Vault",
-  "stage": "V3 Release Candidate - engineering complete, human acceptance pending",
+  "stage": "V3 calm-light product layer implemented - human visual acceptance and installer smoke pending",
   "repository": "C:\\Account OS",
   "branch": "v3-design-intelligence",
-  "checkpoint_commit": "c3e58065271debbb0bac04509ac250627d90ef98",
-  "checkpoint_subject": "chore: complete Account OS V3 autonomous QA hardening",
+  "checkpoint_commit": "99fd15efd5c1bd103863347432b41823139cb142",
+  "checkpoint_subject": "ui: rebuild V3 identity Map layout as calm dependency graph",
+  "supersedes_checkpoint": "c3e58065271debbb0bac04509ac250627d90ef98",
   "git_clean": true,
   "version": "0.1.0",
-  "frontend_tests": { "passed": 57, "failed": 0 },
-  "rust_tests": { "passed": 16, "failed": 0 },
+  "verified_on": "2026-09-10",
+  "frontend_tests": { "passed": 72, "failed": 0, "files": 16, "command": "npm test (vitest run)" },
+  "rust_tests": { "passed": 19, "failed": 0, "command": "cargo test" },
   "build": { "typecheck": "PASS", "production_build": "PASS" },
   "security": {
     "npm_audit": "0 vulnerabilities",
-    "cargo_audit": "17 accepted upstream/transitive warnings",
-    "secret_scan": "PASS",
-    "fixture_review_helper_scan": "PASS"
+    "npm_audit_omit_dev": "0 vulnerabilities",
+    "cargo_audit": "NOT RUN THIS SESSION (needs network); last known baseline 17 accepted upstream/transitive warnings",
+    "source_secret_scan": "PASS (no private keys, API tokens, JWTs, or cloud keys in committed source)"
   },
+  "service_identity_catalog_entries": 94,
   "backup_restore": {
-    "synthetic_accounts": 10,
-    "synthetic_relationships": 6,
-    "encrypted_export": "PASS",
-    "correct_password_restore": "PASS",
-    "wrong_password_rejection": "PASS",
-    "failed_restore_non_mutating": "PASS",
-    "corrupt_tamper_coverage": "PASS"
+    "coverage": "Rust regression tests (encrypted export, correct-password restore, wrong-password rejection, non-mutating failed restore, corrupt/tamper rejection, relationship survival)",
+    "renderer_walkthrough": "export + restore dialog flows exercised in the vite renderer this session; native encrypted round trip not re-run this session"
+  },
+  "delivery_artifacts": {
+    "status": "STALE - prior installers were built 2026-09-06 and predate the entire calm-light UI layer and the Map rebuild",
+    "rebuild": "Fresh npm run build + tauri build from HEAD 99fd15e is the remaining packaging step; see docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md for the current status and hashes",
+    "signing": "unsigned x64; Windows SmartScreen/reputation warnings expected"
   },
   "known_automatable_p0_p1_p2_bugs": 0,
   "manual_gates": [
-    "Direct native visual/UX acceptance review using isolated synthetic data",
-    "Disposable interactive Windows installer smoke test"
+    "Direct native visual/UX acceptance review of the built app using isolated synthetic data",
+    "Disposable interactive Windows installer smoke test",
+    "Public version decision, and any merge/tag/freeze/publish (owner authorization required)"
   ],
-  "next_action": "Human acceptance - verify checkpoint, read CONTINUE-ACCOUNT-OS.md, then perform visual review and installer smoke before more development.",
+  "next_action": "Owner performs native visual acceptance and installer smoke on the freshly built artifacts, then decides version/publish. No further development is required to reach those gates.",
   "release_authorized": false
 }
