@@ -29,7 +29,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={contextValue}>
       {children}
-      <div aria-label="Notifications" className="toast-viewport">
+      <div aria-label="Notifications" className="toast-viewport" role="region">
         {toasts.map((toast) => (
           <Toast key={toast.id} toast={toast} onDismiss={() => setToasts((current) => current.filter((item) => item.id !== toast.id))} />
         ))}

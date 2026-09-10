@@ -19,10 +19,13 @@
   --aos-primary: #126bc2;
   --aos-primary-hover: #0e5ca9;
   --aos-primary-soft: #e8f3ff;
+  --aos-on-primary: #ffffff;
   --aos-success: #16a765;
+  --aos-success-text: #0d7847;
   --aos-warning: #d88b12;
-  --aos-danger: #e34850;
+  --aos-danger: #d23742;
   --aos-danger-soft: #fff0f1;
+  --aos-on-danger: #ffffff;
   --aos-focus: #0f64ba;
   --aos-shadow-soft: 0 14px 36px rgba(47, 89, 132, 0.08);
   --aos-shadow-float: 0 20px 50px rgba(47, 89, 132, 0.12);
@@ -50,7 +53,11 @@
   --aos-primary: #5aa7ff;
   --aos-primary-hover: #7ab8ff;
   --aos-primary-soft: #193b62;
+  --aos-on-primary: #08182a;
+  --aos-success-text: #70e8aa;
+  --aos-danger: #ff7a82;
   --aos-danger-soft: #3c222d;
+  --aos-on-danger: #2b0810;
   --aos-focus: #79baff;
   --aos-shadow-soft: 0 16px 38px rgba(0, 0, 0, 0.22);
   --aos-shadow-float: 0 22px 56px rgba(0, 0, 0, 0.34);

@@ -21,6 +21,7 @@ textarea {
 
 button {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 h1,
@@ -37,7 +38,7 @@ p {
   left: 12px;
   padding: 9px 13px;
   border-radius: 9px;
-  color: white;
+  color: var(--aos-on-primary);
   background: var(--aos-primary);
   transform: translateY(-150%);
 }
@@ -239,12 +240,17 @@ p {
 
 .vault-list-header h1,
 .screen-header h1,
-.settings-section-header h2 {
+.settings-section-header h2,
+.entry-card h1,
+.onboarding-card h2,
+.modal-header h2,
+.confirm-dialog h2 {
   color: var(--aos-text);
   font-size: clamp(26px, 2vw, 32px);
   font-weight: 735;
   letter-spacing: -0.04em;
   line-height: 1.05;
+  text-wrap: balance;
 }
 
 .vault-list-header p,
@@ -281,7 +287,7 @@ p {
 .unlock-submit,
 .add-account-button {
   border: 1px solid var(--aos-primary);
-  color: white;
+  color: var(--aos-on-primary);
   background: var(--aos-primary);
   box-shadow: var(--aos-shadow-control);
 }
@@ -308,7 +314,7 @@ p {
 
 .danger-button {
   border: 1px solid var(--aos-danger);
-  color: white;
+  color: var(--aos-on-danger);
   background: var(--aos-danger);
 }
 
@@ -447,6 +453,11 @@ p {
 
 .account-list li + li {
   margin-top: 3px;
+}
+
+.account-list li {
+  content-visibility: auto;
+  contain-intrinsic-size: 66px;
 }
 
 .account-card:hover {
@@ -2605,7 +2616,7 @@ p {
 }
 
 .selected-file[data-selected="true"] {
-  color: var(--aos-success);
+  color: var(--aos-success-text);
   font-weight: 650;
 }
 
@@ -2626,7 +2637,7 @@ p {
 }
 
 .operation-message[data-tone="success"] {
-  color: var(--aos-success);
+  color: var(--aos-success-text);
   background: color-mix(in srgb, var(--aos-success) 8%, var(--aos-surface));
 }
 

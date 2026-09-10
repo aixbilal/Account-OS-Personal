@@ -252,7 +252,7 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
         </nav>
         <div className="sidebar-footer">
           {isTauriRuntime ? <button className="sidebar-lock" disabled={vaultOperationBusy} onClick={requestLock} title={vaultOperationBusy ? "Wait for the active vault operation to finish" : undefined} type="button"><LockKeyhole aria-hidden="true" size={17} />{vaultOperationBusy ? "Vault operation active" : "Lock Vault"}</button> : <div className="sidebar-preview"><LockKeyhole aria-hidden="true" size={16} />Renderer preview</div>}
-          <div className="sidebar-status" data-online={online}>{online ? <Wifi aria-hidden="true" size={17} /> : <WifiOff aria-hidden="true" size={17} />}<div><strong>{online ? "Online" : "Offline ready"}</strong><span>{online ? "Cloud connection is optional" : "Local vault remains available"}</span></div></div>
+          <div aria-live="polite" className="sidebar-status" data-online={online} role="status">{online ? <Wifi aria-hidden="true" size={17} /> : <WifiOff aria-hidden="true" size={17} />}<div><strong>{online ? "Online" : "Offline ready"}</strong><span>{online ? "Cloud connection is optional" : "Local vault remains available"}</span></div></div>
           <p className="sidebar-motto">Your data. Your control.</p>
         </div>
       </aside>
