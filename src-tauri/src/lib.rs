@@ -81,6 +81,33 @@ fn save_vault(vault: VaultData, state: State<'_, VaultState>) -> Result<VaultDat
 }
 
 #[tauri::command]
+fn change_master_password(
+    current_password: String,
+    new_password: String,
+    state: State<'_, VaultState>,
+) -> Result<(), String> {
+    if new_password.is_empty() {
+        return Err("Enter a new master password.".to_string());
+    }
+    if current_password == new_password {
+        return Err("Choose a new master password that differs from the current one.".to_string());
+    }
+    let mut unlocked = state
+        .unlocked_vault
+        .lock()
+        .map_err(|_| "The local vault is temporarily unavailable.".to_string())?;
+    if unlocked.is_none() {
+        return Err("Unlock the local vault before changing the master password.".to_string());
+    }
+    let rekeyed = state
+        .service
+        .change_master_password(current_password, new_password)
+        .map_err(|error| error.public_message().to_string())?;
+    *unlocked = Some(rekeyed);
+    Ok(())
+}
+
+#[tauri::command]
 fn export_backup(path: String, state: State<'_, VaultState>) -> Result<(), String> {
     let unlocked = state
         .unlocked_vault
@@ -166,6 +193,7 @@ pub fn run() {
             unlock_vault,
             lock_vault,
             save_vault,
+            change_master_password,
             export_backup,
             import_backup,
             export_sync_payload,

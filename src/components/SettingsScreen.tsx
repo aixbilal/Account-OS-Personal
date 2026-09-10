@@ -1,7 +1,7 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
-import { Cloud, DatabaseBackup, Eye, EyeOff, Info, LockKeyhole, MonitorCog, Palette, ShieldCheck } from "lucide-react";
+import { Cloud, DatabaseBackup, Eye, EyeOff, Info, KeyRound, LockKeyhole, MonitorCog, Palette, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import appPackage from "../../package.json";
 import type { VaultData } from "../domain/types";
@@ -15,6 +15,7 @@ type OperationStatus = { tone: "success" | "error" | "info"; message: string } |
 interface SettingsScreenProps {
   isNative: boolean;
   onCloudVaultRestored: (vault: VaultData) => void;
+  onMasterPasswordChanged: () => void;
   onThemeChange: (theme: ThemePreference) => void;
   onVaultOperationChange: (busy: boolean) => void;
   onVaultRestored: (vault: VaultData) => void;
@@ -30,7 +31,7 @@ const settingsSections: Array<{ id: SettingsSection; label: string; icon: typeof
 ];
 const themeOptions: ThemePreference[] = ["light", "dark", "system"];
 
-export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperationChange, onVaultRestored, theme, onThemeChange }: SettingsScreenProps) {
+export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswordChanged, onVaultOperationChange, onVaultRestored, theme, onThemeChange }: SettingsScreenProps) {
   const [section, setSection] = useState<SettingsSection>("appearance");
   const [importPath, setImportPath] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
@@ -42,8 +43,25 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
   const [cloudWorking, setCloudWorking] = useState(false);
   const [confirmRestore, setConfirmRestore] = useState(false);
   const [appVersion, setAppVersion] = useState(appPackage.version);
+  const [currentMaster, setCurrentMaster] = useState("");
+  const [newMaster, setNewMaster] = useState("");
+  const [confirmMaster, setConfirmMaster] = useState("");
+  const [rekeyVisible, setRekeyVisible] = useState(false);
+  const [rekeyStatus, setRekeyStatus] = useState<OperationStatus>(null);
+  const [rekeyWorking, setRekeyWorking] = useState(false);
+  const [confirmRekey, setConfirmRekey] = useState(false);
   const backupFileButtonRef = useRef<HTMLButtonElement>(null);
   const backupPasswordRef = useRef<HTMLInputElement>(null);
+  const currentMasterRef = useRef<HTMLInputElement>(null);
+  const newMasterRef = useRef<HTMLInputElement>(null);
+
+  function resetRekeyFields() {
+    setCurrentMaster("");
+    setNewMaster("");
+    setConfirmMaster("");
+    setRekeyVisible(false);
+    setConfirmRekey(false);
+  }
 
   useEffect(() => {
     if (!isNative) return;
@@ -51,9 +69,9 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
   }, [isNative]);
 
   useEffect(() => {
-    onVaultOperationChange(exportWorking || restoreWorking || cloudWorking);
+    onVaultOperationChange(exportWorking || restoreWorking || cloudWorking || rekeyWorking);
     return () => onVaultOperationChange(false);
-  }, [cloudWorking, exportWorking, onVaultOperationChange, restoreWorking]);
+  }, [cloudWorking, exportWorking, onVaultOperationChange, rekeyWorking, restoreWorking]);
 
   async function exportBackup() {
     setExportStatus(null);
@@ -130,11 +148,61 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
     }
   }
 
+  function requestRekey(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setRekeyStatus(null);
+    if (!isNative) {
+      setRekeyStatus({ tone: "info", message: "Changing the master password is available in the installed desktop application." });
+      return;
+    }
+    if (!currentMaster || !newMaster || !confirmMaster) {
+      setRekeyStatus({ tone: "error", message: "Enter your current master password and choose a new one twice." });
+      window.requestAnimationFrame(() => (!currentMaster ? currentMasterRef : newMasterRef).current?.focus());
+      return;
+    }
+    if (newMaster !== confirmMaster) {
+      setRekeyStatus({ tone: "error", message: "The new master password entries do not match." });
+      window.requestAnimationFrame(() => newMasterRef.current?.focus());
+      return;
+    }
+    if (newMaster === currentMaster) {
+      setRekeyStatus({ tone: "error", message: "Choose a new master password that differs from the current one." });
+      window.requestAnimationFrame(() => newMasterRef.current?.focus());
+      return;
+    }
+    setConfirmRekey(true);
+  }
+
+  function cancelRekeyConfirmation() {
+    if (rekeyWorking) return;
+    setConfirmRekey(false);
+  }
+
+  async function changeMasterPassword() {
+    setRekeyWorking(true);
+    setRekeyStatus(null);
+    try {
+      await invoke("change_master_password", { currentPassword: currentMaster, newPassword: newMaster });
+      resetRekeyFields();
+      setRekeyStatus({ tone: "success", message: "Master password changed. The vault was re-encrypted; use the new password at the next unlock." });
+      onMasterPasswordChanged();
+    } catch (reason) {
+      setRekeyStatus({ tone: "error", message: typeof reason === "string" ? reason : "The master password was not changed. Your vault is unchanged." });
+      setConfirmRekey(false);
+    } finally {
+      setRekeyWorking(false);
+    }
+  }
+
   function changeSection(nextSection: SettingsSection) {
     if (section === "data" && nextSection !== "data") {
       setMasterPassword("");
       setPasswordVisible(false);
       setConfirmRestore(false);
+    }
+    if (section === "security" && nextSection !== "security") {
+      resetRekeyFields();
+      setRekeyStatus(null);
     }
     setSection(nextSection);
   }
@@ -191,6 +259,16 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
               <InfoRow icon={ShieldCheck} label="Vault encryption" value="Argon2id key derivation · XChaCha20-Poly1305" />
               <InfoRow icon={Cloud} label="Cloud boundary" value="Optional sync stores encrypted vault payloads only" />
             </div>
+            <article className="settings-card">
+              <div className="settings-card-heading"><div className="settings-card-icon"><KeyRound size={20} /></div><div><h3>Change master password</h3><p>Re-encrypts the entire local vault under a new key. The vault file is replaced only after the new key is derived and verified; a wrong current password changes nothing.</p></div></div>
+              <form noValidate onSubmit={requestRekey}>
+                <label className="field-label" htmlFor="current-master-password">Current master password<span className="input-with-action"><input aria-describedby={rekeyStatus?.tone === "error" ? "rekey-operation-status" : undefined} aria-invalid={rekeyStatus?.tone === "error" || undefined} autoComplete="current-password" id="current-master-password" name="currentMasterPassword" onChange={(event) => setCurrentMaster(event.target.value)} ref={currentMasterRef} spellCheck="false" type={rekeyVisible ? "text" : "password"} value={currentMaster} /><button aria-label={rekeyVisible ? "Hide master passwords" : "Show master passwords"} onClick={() => setRekeyVisible((visible) => !visible)} type="button">{rekeyVisible ? <EyeOff size={17} /> : <Eye size={17} />}</button></span></label>
+                <label className="field-label" htmlFor="new-master-password">New master password<input autoComplete="new-password" id="new-master-password" name="newMasterPassword" onChange={(event) => setNewMaster(event.target.value)} ref={newMasterRef} spellCheck="false" type={rekeyVisible ? "text" : "password"} value={newMaster} /></label>
+                <label className="field-label" htmlFor="confirm-master-password">Confirm new master password<input autoComplete="new-password" id="confirm-master-password" name="confirmMasterPassword" onChange={(event) => setConfirmMaster(event.target.value)} spellCheck="false" type={rekeyVisible ? "text" : "password"} value={confirmMaster} /></label>
+                <button className="primary-button" disabled={rekeyWorking} type="submit">{rekeyWorking ? "Changing…" : "Change master password"}</button>
+                <OperationMessage id="rekey-operation-status" status={rekeyStatus} />
+              </form>
+            </article>
             <p className="settings-callout"><Info size={17} />Windows Hello and automatic lock controls are not part of this V3 candidate.</p>
           </SettingsSectionHeading>
         )}
@@ -240,6 +318,15 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onVaultOperatio
           <h2 id="confirm-restore-title">Restore this encrypted backup?</h2>
           <p>After validation, this backup will replace the current local vault. If validation fails, the current vault stays unchanged.</p>
           <footer className="dialog-actions"><button className="secondary-button" data-autofocus disabled={restoreWorking} onClick={cancelRestoreConfirmation} type="button">Cancel</button><button className="primary-button" disabled={restoreWorking} onClick={() => void importBackup()} type="button">{restoreWorking ? "Restoring…" : "Restore and replace"}</button></footer>
+        </Dialog>
+      )}
+
+      {confirmRekey && (
+        <Dialog className="confirm-dialog" labelledBy="confirm-rekey-title" onRequestClose={cancelRekeyConfirmation}>
+          <div className="confirm-icon warning" aria-hidden="true"><KeyRound size={22} /></div>
+          <h2 id="confirm-rekey-title">Change the master password?</h2>
+          <p>The local vault will be re-encrypted under the new password. The current password stops working once this succeeds. If anything fails, the vault is left unchanged.</p>
+          <footer className="dialog-actions"><button className="secondary-button" data-autofocus disabled={rekeyWorking} onClick={cancelRekeyConfirmation} type="button">Cancel</button><button className="primary-button" disabled={rekeyWorking} onClick={() => void changeMasterPassword()} type="button">{rekeyWorking ? "Changing…" : "Change password"}</button></footer>
         </Dialog>
       )}
     </section>

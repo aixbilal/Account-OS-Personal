@@ -282,6 +282,54 @@ impl VaultService {
         Ok(unlocked)
     }
 
+    /// Re-encrypts the entire vault under a key derived from `new_password`.
+    ///
+    /// `current_password` is authenticated against the on-disk vault first: a wrong
+    /// current password is rejected before anything is written, and the vault file
+    /// is left byte-for-byte unchanged. A fresh Argon2id salt is generated for the
+    /// new key, so the two passwords never share key material. The re-encrypted
+    /// envelope is verified by decrypting it again with the new password before the
+    /// atomic temp-file swap replaces the original. A failure at any step
+    /// (authentication, key derivation, encryption, verification, or the write)
+    /// returns an error with the original vault file still intact.
+    pub fn change_master_password(
+        &self,
+        current_password: String,
+        new_password: String,
+    ) -> Result<UnlockedVault, VaultError> {
+        let encrypted = fs::read(self.vault_path()).map_err(|_| VaultError::Missing)?;
+
+        // Authenticate the current master password against the stored vault. On a
+        // wrong password this returns before any write and the file is untouched.
+        let current = decrypt_vault(current_password, &encrypted)?;
+
+        // Derive a brand-new key from a fresh random salt.
+        let new_kdf = new_kdf_metadata();
+        let new_password = Zeroizing::new(new_password);
+        let new_key = derive_key(new_password.as_str(), &decode_salt(&new_kdf)?)?;
+
+        let rekeyed = UnlockedVault {
+            data: current.data,
+            key: new_key,
+            kdf: new_kdf,
+        };
+
+        let reencrypted = encrypt_vault(&rekeyed.data, &rekeyed.kdf, rekeyed.key.as_ref())?;
+
+        // Verify the new envelope round-trips with the new password before the
+        // original file is replaced. The transient password copy is zeroized
+        // inside decrypt_vault.
+        let verified = decrypt_vault(new_password.as_str().to_owned(), &reencrypted)?;
+        if verified.data != rekeyed.data {
+            return Err(VaultError::Storage);
+        }
+
+        // Atomic replace: temp file -> fsync -> rename -> fsync parent dir.
+        self.atomic_write(&reencrypted)?;
+
+        Ok(rekeyed)
+    }
+
     pub fn export_sync_payload(&self) -> Result<String, VaultError> {
         let encrypted = fs::read(self.vault_path()).map_err(|_| VaultError::Missing)?;
         let _: EncryptedVaultEnvelope =
@@ -912,6 +960,134 @@ mod tests {
                 .data,
             target_unlocked.data
         );
+    }
+
+    #[test]
+    fn change_master_password_round_trips_under_the_new_password() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut unlocked = service.create("old-test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+
+        let rekeyed = service
+            .change_master_password(
+                "old-test-master-password".into(),
+                "new-test-master-password".into(),
+            )
+            .unwrap();
+        assert_eq!(rekeyed.data, unlocked.data);
+
+        // The new password unlocks; the old password no longer does.
+        assert_eq!(
+            service
+                .unlock("new-test-master-password".into())
+                .unwrap()
+                .data,
+            unlocked.data
+        );
+        assert!(matches!(
+            service.unlock("old-test-master-password".into()),
+            Err(VaultError::InvalidPasswordOrData)
+        ));
+
+        // A fresh salt was drawn, so the two keys never shared derivation material.
+        let stored = fs::read(service.vault_path()).unwrap();
+        let envelope: EncryptedVaultEnvelope = serde_json::from_slice(&stored).unwrap();
+        assert_ne!(envelope.kdf.salt, unlocked.kdf.salt);
+    }
+
+    #[test]
+    fn change_master_password_rejects_a_wrong_current_password_and_leaves_the_file_untouched() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut unlocked = service.create("old-test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+        let bytes_before = fs::read(service.vault_path()).unwrap();
+
+        assert!(matches!(
+            service.change_master_password(
+                "wrong-current-password".into(),
+                "new-test-master-password".into(),
+            ),
+            Err(VaultError::InvalidPasswordOrData)
+        ));
+
+        // The vault file is byte-for-byte identical and still opens with the old password.
+        assert_eq!(fs::read(service.vault_path()).unwrap(), bytes_before);
+        assert_eq!(
+            service
+                .unlock("old-test-master-password".into())
+                .unwrap()
+                .data,
+            unlocked.data
+        );
+        assert!(matches!(
+            service.unlock("new-test-master-password".into()),
+            Err(VaultError::InvalidPasswordOrData)
+        ));
+        // No orphaned temp files were left behind.
+        assert!(!has_temp_file(directory.path()));
+    }
+
+    #[test]
+    fn change_master_password_leaves_the_original_vault_intact_when_the_atomic_write_fails() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut unlocked = service.create("old-test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+        let bytes_before = fs::read(service.vault_path()).unwrap();
+
+        // Simulate a mid-rekey write failure: authentication, key derivation,
+        // re-encryption and the verify step all succeed, then the atomic swap
+        // cannot land. A read-only vault file blocks the rename-replace on
+        // Windows; a read-only parent directory blocks the temp-file create on
+        // Unix. Either way the write step is what fails.
+        set_readonly(&service.vault_path(), true);
+        set_readonly(directory.path(), true);
+
+        let result = service.change_master_password(
+            "old-test-master-password".into(),
+            "new-test-master-password".into(),
+        );
+
+        // Restore permissions before asserting so a failure still cleans up.
+        set_readonly(directory.path(), false);
+        set_readonly(&service.vault_path(), false);
+
+        assert!(matches!(result, Err(VaultError::Storage)));
+        // The original vault file was not truncated, partially written, or replaced.
+        assert_eq!(fs::read(service.vault_path()).unwrap(), bytes_before);
+        assert_eq!(
+            service
+                .unlock("old-test-master-password".into())
+                .unwrap()
+                .data,
+            unlocked.data
+        );
+        assert!(matches!(
+            service.unlock("new-test-master-password".into()),
+            Err(VaultError::InvalidPasswordOrData)
+        ));
+        assert!(!has_temp_file(directory.path()));
+    }
+
+    fn set_readonly(path: &Path, readonly: bool) {
+        let mut permissions = fs::metadata(path).unwrap().permissions();
+        permissions.set_readonly(readonly);
+        fs::set_permissions(path, permissions).unwrap();
+    }
+
+    fn has_temp_file(directory: &Path) -> bool {
+        fs::read_dir(directory).unwrap().any(|entry| {
+            entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .ends_with(".tmp")
+        })
     }
 
     #[test]

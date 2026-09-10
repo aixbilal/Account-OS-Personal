@@ -281,7 +281,7 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
           </section>
         )}
 
-        {activeView === "settings" && <SettingsScreen isNative={isTauriRuntime} onCloudVaultRestored={applyRestoredVault} onThemeChange={setTheme} onVaultOperationChange={setVaultOperationBusy} onVaultRestored={handleLocalBackupRestored} theme={theme} />}
+        {activeView === "settings" && <SettingsScreen isNative={isTauriRuntime} onCloudVaultRestored={applyRestoredVault} onMasterPasswordChanged={() => { if (isTauriRuntime) markLocalVaultChange(); }} onThemeChange={setTheme} onVaultOperationChange={setVaultOperationBusy} onVaultRestored={handleLocalBackupRestored} theme={theme} />}
       </main>
 
       {editingAccount !== undefined && (
