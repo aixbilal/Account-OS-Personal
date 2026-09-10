@@ -1,50 +1,76 @@
 {
   "project": "Account OS - Personal Digital Identity Vault",
-  "stage": "V3 calm-light product layer implemented - human visual acceptance and installer smoke pending",
+  "stage": "V3 finish-out complete (F1/F2/F3 + master password change) - human visual acceptance and installer smoke pending",
   "repository": "C:\\Account OS",
   "branch": "v3-design-intelligence",
-  "checkpoint_commit": "13463d7",
-  "checkpoint_subject": "docs: add 2026-09-10 autonomous renderer walkthrough + screenshots",
-  "code_state_commit": "99fd15efd5c1bd103863347432b41823139cb142",
-  "supersedes_checkpoint": "c3e58065271debbb0bac04509ac250627d90ef98",
+  "checkpoint_commit": "bee3fd0",
+  "checkpoint_subject": "docs: 2026-09-11 walkthrough - F1/F2/F3 verified in the running app + rekey UI",
+  "code_state_commits": [
+    "22fce96 fix(v3): revert Map attribution hiding, add Map deselect, activate styled form errors",
+    "6acaf19 feat(v3): master password change (vault rekey)",
+    "d1b789f harden(v3): rekey form hygiene from the Phase 3 self-audit",
+    "bee3fd0 docs: 2026-09-11 walkthrough"
+  ],
+  "supersedes_checkpoint": "13463d7 (code state 99fd15e)",
   "git_clean": true,
-  "pushed_to_origin": "v3-design-intelligence at 13463d7",
+  "pushed_to_origin": "NOT pushed this session - local commits 22fce96..bee3fd0 ahead of origin/v3-design-intelligence",
   "version": "0.1.0",
-  "verified_on": "2026-09-10",
-  "frontend_tests": { "passed": 72, "failed": 0, "files": 16, "command": "npm test (vitest run)" },
-  "rust_tests": { "passed": 19, "failed": 0, "command": "cargo test" },
-  "build": { "typecheck": "PASS", "production_build": "PASS" },
+  "verified_on": "2026-09-11",
+  "workflow_note": "Codex is no longer part of this project. Claude Code is sole implementer AND reviewer going forward. See CONTINUE-ACCOUNT-OS.md section 0.",
+  "frontend_tests": { "passed": 79, "failed": 0, "files": 17, "command": "npm test (vitest run)" },
+  "rust_tests": { "passed": 22, "failed": 0, "command": "cargo test", "new_this_session": ["change_master_password_round_trips_under_the_new_password", "change_master_password_rejects_a_wrong_current_password_and_leaves_the_file_untouched", "change_master_password_leaves_the_original_vault_intact_when_the_atomic_write_fails"] },
+  "build": { "typecheck": "PASS", "production_build": "PASS (non-blocking 695.75 kB chunk-size warning)", "tauri_build": "PASS (exit 0): EXE + MSI + NSIS" },
   "security": {
     "npm_audit": "0 vulnerabilities",
     "npm_audit_omit_dev": "0 vulnerabilities",
-    "cargo_audit": "NOT RUN THIS SESSION (needs network); last known baseline 17 accepted upstream/transitive warnings",
-    "source_secret_scan": "PASS (no private keys, API tokens, JWTs, or cloud keys in committed source)"
+    "cargo_audit": "RUN 2026-09-11 (network available): 0 vulnerabilities; 7 allowed warnings (6 unmaintained proc-macro-error/unic-*, 1 unsound glib 0.18.5 VariantStrIter - GTK/Linux transitive, not on Windows path). None in the crypto path.",
+    "source_secret_scan": "PASS - src/ and dist/. dist/ carries only the Supabase project URL + sb_publishable_ key (intentional Vite client config); sb_secret_ appears only as a bare SDK guard literal. No private keys, service-role keys, JWTs, PATs, or AWS keys.",
+    "phase3_self_audit": "Full adversarial pass over the crypto/vault boundary. No active vulnerability found. Two small fixes applied (rekey >=12 char minimum, clear fields on error). Six items left for owner - see release manifest and CONTINUE-ACCOUNT-OS.md section I."
+  },
+  "master_password_change": {
+    "status": "IMPLEMENTED",
+    "backend": "src-tauri/src/vault.rs VaultService::change_master_password + src-tauri/src/lib.rs change_master_password command",
+    "design": "authenticate current password against on-disk vault -> derive new Argon2id key from a fresh random salt -> re-encrypt full vault -> verify the new envelope decrypts with the new password -> atomic temp-file/fsync/rename/fsync-dir swap. Any failure at any step leaves the original file byte-for-byte intact.",
+    "ui": "Settings -> Security 'Change master password' card (current/new/confirm, shared show-hide, confirm dialog). Web renderer defers with an 'installed desktop application' message and never calls the backend.",
+    "atomicity_confidence": "HIGH that no failure mode yields a partial/truncated/corrupt vault - the worst case is 'rekey did not take effect, old password still works'. The one unproven assumption is OS-level atomicity of fs::rename over every Windows filesystem/AV/OneDrive scenario, which every existing save_vault call already relies on; this change introduces nothing new there.",
+    "native_round_trip": "NOT click-tested in a native window this session (no desktop-automation tool; renderer cannot exercise native unlock). Covered by the 3 Rust tests above + 6 SettingsScreen.test.tsx tests. Remains part of the owner's native acceptance pass."
   },
   "service_identity_catalog_entries": 94,
-  "backup_restore": {
-    "coverage": "Rust regression tests (encrypted export, correct-password restore, wrong-password rejection, non-mutating failed restore, corrupt/tamper rejection, relationship survival)",
-    "renderer_walkthrough": "export + restore dialog flows exercised in the vite renderer this session; native encrypted round trip not re-run this session"
-  },
   "delivery_artifacts": {
-    "status": "REBUILT 2026-09-10 from HEAD via npx tauri build (exit 0): EXE + MSI + NSIS",
-    "hashes": "see docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md (EXE 9,606,144 B 86e81f84...; MSI 3,297,280 B 80cd3ee4...; NSIS 2,207,070 B f8c460a8...)",
+    "status": "REBUILT 2026-09-11 from HEAD via npx tauri build (exit 0): EXE + MSI + NSIS",
+    "hashes": {
+      "exe": { "path": "src-tauri/target/release/account-os.exe", "size_bytes": 9614848, "sha256": "99f81007dfb769c587b16575aea3047d0bef245a8a8936e283a750a346731ad8" },
+      "msi": { "path": "src-tauri/target/release/bundle/msi/Account OS_0.1.0_x64_en-US.msi", "size_bytes": 3301376, "sha256": "404213bb2f3d508cf93e949c109d37c2a476c5a710df95e7e432c9a70a95cef1" },
+      "nsis": { "path": "src-tauri/target/release/bundle/nsis/Account OS_0.1.0_x64-setup.exe", "size_bytes": 2214658, "sha256": "25803a3c98d566ab3f6da897b4791116eccf45cd01a7e2404282efe520f2cd48" }
+    },
     "committed": false,
-    "note": "src-tauri/target/ is gitignored; the Sep 6 build is superseded",
+    "note": "src-tauri/target/ is gitignored; the 2026-09-10 build is superseded",
     "signing": "unsigned x64; Windows SmartScreen/reputation warnings expected"
   },
   "open_decisions_for_owner": [
-    "React Flow attribution is hidden in the Map (proOptions in 99fd15e): keep or revert - see WALKTHROUGH F1",
-    "Map node selection cannot be cleared - see WALKTHROUGH F2",
-    "Add/Edit required-field feedback is the native browser bubble, not the styled error - see WALKTHROUGH F3",
-    "No change-master-password capability exists - see SCOPE-CLARITY",
-    "A separate local Codex agent committed bd94eb8 ('1.0 Final work') to this branch during the session - see FINAL REPORT"
+    "Phase 3 audit - 'Account' derives Debug over a plaintext password field (no code path prints it today); consider a redacting Debug impl / SecretString newtype",
+    "Phase 3 audit - no clipboard-clear timer (already an intentional V3 omission)",
+    "Phase 3 audit - master password crosses the webview heap as an un-zeroable JS string (inherent to Tauri)",
+    "Phase 3 audit - Supabase session persisted to localStorage (persistSession: true; standard, separate from vault unlock)",
+    "Phase 3 audit - orphaned .tmp on a hard crash between temp-write and rename (ciphertext only; pre-existing)",
+    "Phase 3 audit - vault file mode not pinned to 0600 on Unix (Windows-first app)",
+    "Pre-existing: 2 clippy needless_borrow warnings in atomic_write_to (unrelated to this work; clippy is not a gate)",
+    "Delete Vault destructive action still absent - see SCOPE-CLARITY (low priority)",
+    "Default view preference still absent - see SCOPE-CLARITY (small)"
+  ],
+  "resolved_this_session": [
+    "F1 - React Flow attribution un-hidden (xyflow docs restrict hiding to paid Pro); console warning gone",
+    "F2 - Map node selection now clearable via empty-canvas click and Escape",
+    "F3 - editor form has noValidate; styled role=alert error fires instead of the native bubble",
+    "Change master password capability added (was the main SCOPE-CLARITY flag)"
   ],
   "known_automatable_p0_p1_p2_bugs": 0,
   "manual_gates": [
-    "Direct native visual/UX acceptance review of the built app using isolated synthetic data",
+    "Direct native visual/UX acceptance review of the built app using isolated synthetic data - now including a real master-password change, wrong-current-password rejection, and a fresh unlock with the new password",
     "Disposable interactive Windows installer smoke test",
-    "Public version decision, and any merge/tag/freeze/publish (owner authorization required)"
+    "Public version decision, and any merge/tag/freeze/publish (owner authorization required)",
+    "git push of 22fce96..bee3fd0 to origin (owner's call)"
   ],
-  "next_action": "Owner performs native visual acceptance and installer smoke on the freshly built artifacts, then decides version/publish. No further development is required to reach those gates.",
+  "next_action": "Owner performs native visual acceptance (incl. the rekey flow) and installer smoke on the freshly built artifacts, reviews the Phase 3 'left for your call' list, then decides version/publish and whether to push. Do NOT start 1.0 Final scope until the owner explicitly freezes V3.",
   "release_authorized": false
 }
