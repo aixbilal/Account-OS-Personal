@@ -60,6 +60,22 @@ describe("AccountEditor", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
+  it("shows the app's own styled error when a required field is empty (noValidate)", async () => {
+    const user = userEvent.setup();
+    const { onSave } = renderEditor();
+    // The Service input exposes a datalist, so its ARIA role is combobox, not textbox.
+    const service = screen.getByRole("combobox", { name: "Service" });
+
+    await user.clear(service);
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Service and account title are required.",
+    );
+    expect(onSave).not.toHaveBeenCalled();
+    expect(service).toHaveFocus();
+  });
+
   it("explains relationship removal before deleting an account", async () => {
     const user = userEvent.setup();
     const { onDelete } = renderEditor({ relationshipCount: 2 });

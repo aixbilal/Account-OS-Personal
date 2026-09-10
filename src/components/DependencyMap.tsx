@@ -120,6 +120,7 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
   const [selectedId, setSelectedId] = useState<string>();
   const [query, setQuery] = useState("");
   const [flow, setFlow] = useState<ReactFlowInstance<AccountNode, RelationshipEdge>>();
+  const clearSelection = () => setSelectedId(undefined);
   const byId = useMemo(() => new Map(accounts.map((account) => [account.id, account])), [accounts]);
   const selected = selectedId ? byId.get(selectedId) : undefined;
   const selectedRelationships = selectedId ? relationships.filter((relationship) => relationship.sourceAccountId === selectedId || relationship.targetAccountId === selectedId) : [];
@@ -151,7 +152,15 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
         <button className="primary-button" disabled={accounts.length < 2} onClick={() => onRequestRelationship(selected?.id)} title={accounts.length < 2 ? "Add a second account to create a relationship" : undefined} type="button"><Plus size={16} />Relationship</button>
       </div>
       <div className="map-layout">
-        <div className="dependency-map">
+        <div
+          className="dependency-map"
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && selectedId) {
+              event.stopPropagation();
+              clearSelection();
+            }
+          }}
+        >
           <ReactFlow<AccountNode, RelationshipEdge>
             edges={edges}
             edgesReconnectable={false}
@@ -161,7 +170,6 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
             fitViewOptions={{ padding: 0.22, maxZoom: 0.9 }}
             minZoom={0.35}
             maxZoom={1.75}
-            proOptions={{ hideAttribution: true }}
             nodesConnectable={false}
             nodesDraggable={false}
             nodeTypes={nodeTypes}
@@ -172,6 +180,7 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
               const account = byId.get(node.id);
               if (account) onSelectAccount(account);
             }}
+            onPaneClick={clearSelection}
           >
             <Background color="var(--aos-border-strong)" gap={34} size={0.8} />
             <Controls position="bottom-left" showInteractive={false} />

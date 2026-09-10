@@ -151,7 +151,7 @@ export function AccountEditor({ account, onClose, onDelete, onDirtyChange, onLoc
           <div className="editor-header-actions">{onLock && <button aria-label="Lock vault" className="icon-button" onClick={requestEditorLock} title="Lock vault" type="button"><LockKeyhole size={18} /></button>}<button aria-label="Close account editor" className="icon-button" onClick={requestClose} type="button"><X size={19} /></button></div>
         </header>
         {account && <div className="editor-identity"><ServiceIdentityHero account={{ ...account, ...draft }} /></div>}
-        <form className="editor-form" onSubmit={submit}>
+        <form className="editor-form" noValidate onSubmit={submit}>
           <div className="editor-scroll">
             <section className="editor-section" aria-labelledby="essential-details-title">
               <div className="editor-section-heading"><h3 id="essential-details-title">Essential details</h3><p>Everything needed for a common sign-in.</p></div>
