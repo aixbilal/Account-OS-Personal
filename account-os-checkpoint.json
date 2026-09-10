@@ -3,10 +3,12 @@
   "stage": "V3 calm-light product layer implemented - human visual acceptance and installer smoke pending",
   "repository": "C:\\Account OS",
   "branch": "v3-design-intelligence",
-  "checkpoint_commit": "99fd15efd5c1bd103863347432b41823139cb142",
-  "checkpoint_subject": "ui: rebuild V3 identity Map layout as calm dependency graph",
+  "checkpoint_commit": "13463d7",
+  "checkpoint_subject": "docs: add 2026-09-10 autonomous renderer walkthrough + screenshots",
+  "code_state_commit": "99fd15efd5c1bd103863347432b41823139cb142",
   "supersedes_checkpoint": "c3e58065271debbb0bac04509ac250627d90ef98",
   "git_clean": true,
+  "pushed_to_origin": "v3-design-intelligence at 13463d7",
   "version": "0.1.0",
   "verified_on": "2026-09-10",
   "frontend_tests": { "passed": 72, "failed": 0, "files": 16, "command": "npm test (vitest run)" },
@@ -24,10 +26,19 @@
     "renderer_walkthrough": "export + restore dialog flows exercised in the vite renderer this session; native encrypted round trip not re-run this session"
   },
   "delivery_artifacts": {
-    "status": "STALE - prior installers were built 2026-09-06 and predate the entire calm-light UI layer and the Map rebuild",
-    "rebuild": "Fresh npm run build + tauri build from HEAD 99fd15e is the remaining packaging step; see docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md for the current status and hashes",
+    "status": "REBUILT 2026-09-10 from HEAD via npx tauri build (exit 0): EXE + MSI + NSIS",
+    "hashes": "see docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md (EXE 9,606,144 B 86e81f84...; MSI 3,297,280 B 80cd3ee4...; NSIS 2,207,070 B f8c460a8...)",
+    "committed": false,
+    "note": "src-tauri/target/ is gitignored; the Sep 6 build is superseded",
     "signing": "unsigned x64; Windows SmartScreen/reputation warnings expected"
   },
+  "open_decisions_for_owner": [
+    "React Flow attribution is hidden in the Map (proOptions in 99fd15e): keep or revert - see WALKTHROUGH F1",
+    "Map node selection cannot be cleared - see WALKTHROUGH F2",
+    "Add/Edit required-field feedback is the native browser bubble, not the styled error - see WALKTHROUGH F3",
+    "No change-master-password capability exists - see SCOPE-CLARITY",
+    "A separate local Codex agent committed bd94eb8 ('1.0 Final work') to this branch during the session - see FINAL REPORT"
+  ],
   "known_automatable_p0_p1_p2_bugs": 0,
   "manual_gates": [
     "Direct native visual/UX acceptance review of the built app using isolated synthetic data",
