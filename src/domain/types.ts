@@ -44,6 +44,7 @@ export interface Account {
   category: AccountCategory;
   username: string;
   email: string;
+  website?: string;
   password: string;
   authenticationMethod: AuthenticationMethod;
   recoveryInformation: string;

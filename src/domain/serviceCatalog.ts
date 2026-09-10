@@ -1,4 +1,28 @@
-export interface CatalogService { id:string; displayName:string; domains:string[]; aliases:string[]; category:string; accent:string; secondaryAccent:string; iconStrategy:"neutral-local-mark"; licenseStatus:"no-trademark-asset"; status:"catalog-v1"; }
+export type ServiceIconSource = "simple-icons" | "local" | "monogram";
+
+export interface ServiceVisualIdentity {
+  iconSource: ServiceIconSource;
+  iconSlug: string | null;
+  iconPackage: string | null;
+  iconSourceUrl: string | null;
+  iconGuidelinesUrl: string | null;
+  iconLicense: { type: string; url?: string } | null;
+  trademarkNotice: string;
+}
+
+export interface CatalogService {
+  id: string;
+  displayName: string;
+  domains: string[];
+  aliases: string[];
+  category: string;
+  accent: string;
+  secondaryAccent: string;
+  iconStrategy: "simple-icons-svg" | "local-recognition-mark" | "neutral-local-mark";
+  licenseStatus: "brand-guidelines-apply" | "local-mark-no-brand-rights" | "no-trademark-asset";
+  status: "catalog-v1";
+  visualIdentity: ServiceVisualIdentity;
+}
 const groups: Array<[string, string, string[], string[], string]> = [
   ["google","Google",["google.com","gmail.com"],["gmail","google drive","google cloud","gemini"],"identity"],["apple","Apple",["apple.com","icloud.com"],["icloud","apple music"],"identity"],["microsoft","Microsoft",["microsoft.com","outlook.com","live.com","office.com"],["outlook","onedrive","azure","teams"],"identity"],["yahoo","Yahoo",["yahoo.com"],["yahoo mail"],"identity"],["proton","Proton",["proton.me","protonmail.com"],["proton mail"],"identity"],["zoho","Zoho",["zoho.com"],[],"identity"],["fastmail","Fastmail",["fastmail.com"],[],"identity"],
   ["instagram","Instagram",["instagram.com"],[],"social"],["facebook","Facebook",["facebook.com"],[],"social"],["threads","Threads",["threads.net"],[],"social"],["x","X",["x.com","twitter.com"],["twitter"],"social"],["tiktok","TikTok",["tiktok.com"],[],"social"],["snapchat","Snapchat",["snapchat.com"],[],"social"],["linkedin","LinkedIn",["linkedin.com"],[],"social"],["pinterest","Pinterest",["pinterest.com"],[],"social"],["reddit","Reddit",["reddit.com"],[],"social"],["discord","Discord",["discord.com"],[],"social"],["telegram","Telegram",["telegram.org"],[],"social"],["whatsapp","WhatsApp",["whatsapp.com"],[],"social"],
@@ -9,7 +33,213 @@ const groups: Array<[string, string, string[], string[], string]> = [
   ["paypal","PayPal",["paypal.com"],[],"finance"],["stripe","Stripe",["stripe.com"],[],"finance"],["wise","Wise",["wise.com"],[],"finance"],["payoneer","Payoneer",["payoneer.com"],[],"finance"],["revolut","Revolut",["revolut.com"],[],"finance"],["coinbase","Coinbase",["coinbase.com"],[],"finance"],["jazzcash","JazzCash",["jazzcash.com.pk"],[],"finance"],["easypaisa","Easypaisa",["easypaisa.com.pk"],[],"finance"],["sadapay","SadaPay",["sadapay.pk"],[],"finance"],["nayapay","NayaPay",["nayapay.com"],[],"finance"],["hbl","HBL",["hbl.com"],[],"finance"],["meezan","Meezan Bank",["meezanbank.com"],[],"finance"],["ubl","UBL",["ubl.com.pk"],[],"finance"],["mcb","MCB",["mcb.com.pk"],[],"finance"],["alfalah","Bank Alfalah",["bankalfalah.com"],[],"finance"],
   ["youtube","YouTube",["youtube.com"],[],"streaming"],["netflix","Netflix",["netflix.com"],[],"streaming"],["spotify","Spotify",["spotify.com"],[],"streaming"],["primevideo","Prime Video",["primevideo.com"],[],"streaming"],["disney","Disney+",["disneyplus.com"],[],"streaming"],["twitch","Twitch",["twitch.tv"],[],"streaming"],["steam","Steam",["steampowered.com"],[],"gaming"],["epic","Epic Games",["epicgames.com"],[],"gaming"],["playstation","PlayStation",["playstation.com"],[],"gaming"],["xbox","Xbox",["xbox.com"],[],"gaming"],["nintendo","Nintendo",["nintendo.com"],[],"gaming"],["coursera","Coursera",["coursera.org"],[],"education"],["udemy","Udemy",["udemy.com"],[],"education"],["khan","Khan Academy",["khanacademy.org"],[],"education"],["moodle","Moodle",["moodle.org"],[],"education"],["jazz","Jazz",["jazz.com.pk"],[],"telecom"],["zong","Zong",["zong.com.pk"],[],"telecom"],["ufone","Ufone",["ufone.com"],[],"telecom"],["telenor","Telenor",["telenor.com.pk"],[],"telecom"],["ptcl","PTCL",["ptcl.com.pk"],[],"telecom"]
 ];
-export const serviceCatalog: CatalogService[] = groups.map(([id,displayName,domains,aliases,category],index)=>({id,displayName,domains,aliases,category,accent:["#315a7d","#7b4a69","#465b6f","#5c7050"][index%4],secondaryAccent:"#e7edf2",iconStrategy:"neutral-local-mark",licenseStatus:"no-trademark-asset",status:"catalog-v1"}));
-export const genericIdentityCategories=["Email","Social","Bank","Finance","University / Education","Government","Work","Personal","Shopping","Healthcare","Hosting","Developer","AI","Gaming","Streaming","Telecom","Router / Network","Generic Website"] as const;
-export function normalizeServiceInput(value:string){return value.trim().toLowerCase().replace(/^https?:\/\//,"").split(/[/?#]/)[0].replace(/^www\./,"");}
-export function resolveCatalogService(serviceName:string,domain=""){const input=normalizeServiceInput(domain||serviceName);return serviceCatalog.find(s=>s.domains.some(d=>input===d||input.endsWith(`.${d}`))||s.aliases.some(a=>`${serviceName} ${domain}`.toLowerCase().includes(a))||s.displayName.toLowerCase()===serviceName.trim().toLowerCase());}
+const SIMPLE_ICONS_PACKAGE = "simple-icons@16.30.0";
+const PACKAGE_TRADEMARK_NOTICE =
+  "Simple Icons package licensing does not grant rights to the represented brand or trademark.";
+const LOCAL_MARK_NOTICE =
+  "Account OS supplies a local recognition mark because this brand is not exported by the installed Simple Icons package; no brand rights are granted.";
+const MONOGRAM_NOTICE =
+  "Account OS generates this local monogram and does not bundle a third-party brand asset.";
+
+const priorityVisuals: Record<string, {
+  accent: string;
+  secondaryAccent: string;
+  iconStrategy: CatalogService["iconStrategy"];
+  licenseStatus: CatalogService["licenseStatus"];
+  visualIdentity: ServiceVisualIdentity;
+}> = {
+  google: simpleIconVisual(
+    "google",
+    "#4285F4",
+    "#EAF2FF",
+    "https://partnermarketinghub.withgoogle.com",
+    "https://about.google/brand-resource-center/brand-elements/",
+  ),
+  spotify: simpleIconVisual(
+    "spotify",
+    "#1ED760",
+    "#E8F9EE",
+    "https://developer.spotify.com/documentation/general/design-and-branding/#using-our-logo",
+    "https://developer.spotify.com/documentation/general/design-and-branding/#using-our-logo",
+  ),
+  github: simpleIconVisual(
+    "github",
+    "#181717",
+    "#ECEFF2",
+    "https://github.com/logos",
+    "https://github.com/logos",
+  ),
+  instagram: simpleIconVisual(
+    "instagram",
+    "#FF0069",
+    "#FDEAF3",
+    "https://about.meta.com/brand/resources/instagram",
+    "https://about.meta.com/brand/resources/instagram",
+  ),
+  apple: simpleIconVisual(
+    "apple",
+    "#000000",
+    "#ECEFF2",
+    "https://www.apple.com",
+    null,
+  ),
+  youtube: simpleIconVisual(
+    "youtube",
+    "#FF0000",
+    "#FDECEC",
+    "https://www.youtube.com/howyoutubeworks/resources/brand-resources/#logos-icons-and-colors",
+    "https://www.youtube.com/howyoutubeworks/resources/brand-resources/#logos-icons-and-colors",
+  ),
+  discord: simpleIconVisual(
+    "discord",
+    "#5865F2",
+    "#EEF0FF",
+    "https://discord.com/branding",
+    "https://discord.com/branding",
+  ),
+  facebook: simpleIconVisual(
+    "facebook",
+    "#0866FF",
+    "#EAF2FF",
+    "https://about.meta.com/brand/resources/facebook/logo",
+    "https://about.meta.com/brand/resources/facebook/logo",
+  ),
+  microsoft: localVisual("#5E5E5E", "#EEF3F7"),
+  linkedin: localVisual("#0A66C2", "#EAF3FB"),
+};
+
+function simpleIconVisual(
+  iconSlug: string,
+  accent: string,
+  secondaryAccent: string,
+  iconSourceUrl: string,
+  iconGuidelinesUrl: string | null,
+) {
+  return {
+    accent,
+    secondaryAccent,
+    iconStrategy: "simple-icons-svg" as const,
+    licenseStatus: "brand-guidelines-apply" as const,
+    visualIdentity: {
+      iconSource: "simple-icons" as const,
+      iconSlug,
+      iconPackage: SIMPLE_ICONS_PACKAGE,
+      iconSourceUrl,
+      iconGuidelinesUrl,
+      iconLicense: null,
+      trademarkNotice: PACKAGE_TRADEMARK_NOTICE,
+    },
+  };
+}
+
+function localVisual(accent: string, secondaryAccent: string) {
+  return {
+    accent,
+    secondaryAccent,
+    iconStrategy: "local-recognition-mark" as const,
+    licenseStatus: "local-mark-no-brand-rights" as const,
+    visualIdentity: {
+      iconSource: "local" as const,
+      iconSlug: null,
+      iconPackage: null,
+      iconSourceUrl: null,
+      iconGuidelinesUrl: null,
+      iconLicense: null,
+      trademarkNotice: LOCAL_MARK_NOTICE,
+    },
+  };
+}
+
+export const serviceCatalog: CatalogService[] = groups.map(
+  ([id, displayName, domains, aliases, category], index) => {
+    const visual = priorityVisuals[id];
+    if (visual) {
+      return {
+        id,
+        displayName,
+        domains,
+        aliases,
+        category,
+        ...visual,
+        status: "catalog-v1",
+      };
+    }
+
+    return {
+      id,
+      displayName,
+      domains,
+      aliases,
+      category,
+      accent: ["#315A7D", "#7B4A69", "#465B6F", "#5C7050"][index % 4],
+      secondaryAccent: "#E7EDF2",
+      iconStrategy: "neutral-local-mark",
+      licenseStatus: "no-trademark-asset",
+      status: "catalog-v1",
+      visualIdentity: {
+        iconSource: "monogram",
+        iconSlug: null,
+        iconPackage: null,
+        iconSourceUrl: null,
+        iconGuidelinesUrl: null,
+        iconLicense: null,
+        trademarkNotice: MONOGRAM_NOTICE,
+      },
+    };
+  },
+);
+
+export const priorityServiceIds = [
+  "google",
+  "spotify",
+  "github",
+  "instagram",
+  "microsoft",
+  "apple",
+  "youtube",
+  "linkedin",
+  "discord",
+  "facebook",
+] as const;
+
+export const genericIdentityCategories = [
+  "Email",
+  "Social",
+  "Bank",
+  "Finance",
+  "University / Education",
+  "Government",
+  "Work",
+  "Personal",
+  "Shopping",
+  "Healthcare",
+  "Hosting",
+  "Developer",
+  "AI",
+  "Gaming",
+  "Streaming",
+  "Telecom",
+  "Router / Network",
+  "Generic Website",
+] as const;
+
+export function normalizeServiceInput(value: string) {
+  const trimmed = value.trim().toLowerCase();
+  const emailDomain = trimmed.includes("@") ? trimmed.slice(trimmed.lastIndexOf("@") + 1) : trimmed;
+  return emailDomain
+    .replace(/^[a-z][a-z\d+.-]*:\/\//, "")
+    .split(/[/?#]/)[0]
+    .replace(/^www\./, "")
+    .replace(/:\d+$/, "");
+}
+
+export function resolveCatalogService(serviceName: string, domain = "") {
+  const input = normalizeServiceInput(domain || serviceName);
+  const searchable = (serviceName + " " + domain).toLowerCase();
+  return serviceCatalog.find(
+    (service) =>
+      service.domains.some((candidate) => input === candidate || input.endsWith("." + candidate))
+      || service.aliases.some((alias) => searchable.includes(alias))
+      || service.displayName.toLowerCase() === serviceName.trim().toLowerCase(),
+  );
+}

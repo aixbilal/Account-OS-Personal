@@ -33,6 +33,8 @@ pub struct Account {
     pub category: String,
     pub username: String,
     pub email: String,
+    #[serde(default)]
+    pub website: String,
     pub password: String,
     pub authentication_method: String,
     pub recovery_information: String,
@@ -486,6 +488,7 @@ mod tests {
                 category: "Personal".into(),
                 username: "test-only".into(),
                 email: "test@example.invalid".into(),
+                website: "https://example.invalid".into(),
                 password: "FAKE-PASSWORD-ONLY".into(),
                 authentication_method: "Google SSO".into(),
                 recovery_information: "recovery@example.invalid".into(),
@@ -514,6 +517,46 @@ mod tests {
             service.unlock("test-master-password".into()).unwrap().data,
             vault
         );
+    }
+
+    #[test]
+    fn legacy_vault_without_account_website_deserializes_with_an_empty_default() {
+        let legacy_json = r#"{
+            "formatVersion": 1,
+            "accounts": [{
+                "id": "legacy-account",
+                "serviceName": "Legacy Service",
+                "accountName": "Legacy TEST account",
+                "category": "Personal",
+                "username": "legacy-test",
+                "email": "legacy@example.invalid",
+                "password": "FAKE-LEGACY-PASSWORD",
+                "authenticationMethod": "Password",
+                "recoveryInformation": "",
+                "twoFactorInformation": "",
+                "notes": "Synthetic legacy payload",
+                "createdAt": "2026-08-30T12:00:00.000Z",
+                "updatedAt": "2026-08-30T12:00:00.000Z"
+            }],
+            "relationships": [],
+            "categories": ["Personal"]
+        }"#;
+
+        let vault: VaultData = serde_json::from_str(legacy_json).unwrap();
+
+        assert_eq!(vault.accounts[0].website, "");
+        assert!(validate_vault(&vault).is_ok());
+    }
+
+    #[test]
+    fn account_website_round_trips_through_vault_json() {
+        let vault = fake_vault();
+
+        let serialized = serde_json::to_vec(&vault).unwrap();
+        let round_tripped: VaultData = serde_json::from_slice(&serialized).unwrap();
+
+        assert_eq!(round_tripped.accounts[0].website, "https://example.invalid");
+        assert_eq!(round_tripped, vault);
     }
 
     #[test]
