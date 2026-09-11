@@ -112,8 +112,71 @@ export function buildDependencyGraph(accounts: Account[], relationships: Account
   return { nodes, edges };
 }
 
-const nodeTypes = { account: AccountMapNode };
-const edgeTypes = { relationship: RelationshipMapEdge };
+export const mapNodeTypes = { account: AccountMapNode };
+export const mapEdgeTypes = { relationship: RelationshipMapEdge };
+const nodeTypes = mapNodeTypes;
+const edgeTypes = mapEdgeTypes;
+
+/**
+ * A single account's direct connections only, laid out radially (the
+ * account at the centre, each direct neighbour spaced evenly on a circle
+ * around it) - the Relationships screen's ego-network view (Phase 5).
+ * Reuses the same node/edge shapes and renderers as the full Map so the
+ * two surfaces read as one coherent system (DI-011), just scoped down to
+ * one account instead of the whole vault.
+ */
+export function buildEgoGraph(accounts: Account[], relationships: AccountRelationship[], focusAccountId: string) {
+  const accountById = new Map(accounts.map((account) => [account.id, account]));
+  const focusAccount = accountById.get(focusAccountId);
+  if (!focusAccount) return { nodes: [] as AccountNode[], edges: [] as RelationshipEdge[] };
+
+  const direct = relationships.filter(
+    (relationship) =>
+      (relationship.sourceAccountId === focusAccountId || relationship.targetAccountId === focusAccountId)
+      && accountById.has(relationship.sourceAccountId)
+      && accountById.has(relationship.targetAccountId),
+  );
+  const neighborIds = [...new Set(direct.map((relationship) =>
+    relationship.sourceAccountId === focusAccountId ? relationship.targetAccountId : relationship.sourceAccountId,
+  ))];
+
+  const radius = neighborIds.length > 6 ? 300 : 240;
+  const nodes: AccountNode[] = [
+    {
+      id: focusAccountId,
+      type: "account",
+      position: { x: -nodeWidth / 2, y: -nodeHeight / 2 },
+      data: { account: toMapAccount(focusAccount), focus: "selected" },
+      sourcePosition: Position.Bottom,
+      targetPosition: Position.Top,
+      ariaLabel: `${focusAccount.accountName}, focused account`,
+    },
+    ...neighborIds.map((id, index): AccountNode => {
+      const account = accountById.get(id)!;
+      const angle = (index / neighborIds.length) * Math.PI * 2 - Math.PI / 2;
+      const point = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius * 0.85 };
+      return {
+        id,
+        type: "account",
+        position: { x: point.x - nodeWidth / 2, y: point.y - nodeHeight / 2 },
+        data: { account: toMapAccount(account), focus: "related" },
+        sourcePosition: Position.Bottom,
+        targetPosition: Position.Top,
+        ariaLabel: `${account.accountName}, ${account.serviceName}`,
+      };
+    }),
+  ];
+  const edges: RelationshipEdge[] = direct.map((relationship) => ({
+    id: relationship.id,
+    source: relationship.sourceAccountId,
+    target: relationship.targetAccountId,
+    type: "relationship",
+    data: { label: relationshipTypeLabels[relationship.relationshipType], focus: "related" },
+    ariaLabel: `${accountById.get(relationship.sourceAccountId)?.accountName ?? "Source account"} ${relationshipTypeLabels[relationship.relationshipType]} ${accountById.get(relationship.targetAccountId)?.accountName ?? "target account"}`,
+    markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15 },
+  }));
+  return { nodes, edges };
+}
 
 export function DependencyMap({ accounts, relationships, onSelectAccount, onOpenAccount, onRequestRelationship }: DependencyMapProps) {
   const baseGraph = useMemo(() => buildDependencyGraph(accounts, relationships), [accounts, relationships]);

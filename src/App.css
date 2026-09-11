@@ -2431,6 +2431,192 @@ p {
   background: var(--aos-bg);
 }
 
+/* Relationships (Phase 5 - new screen) */
+
+.relationships-screen {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  padding: 24px 28px 28px;
+  background:
+    radial-gradient(circle at 84% 3%, color-mix(in srgb, var(--aos-primary) 8%, transparent), transparent 30%),
+    var(--aos-bg);
+}
+
+.relationship-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.relationship-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-card);
+  padding: 14px 16px;
+  background: var(--aos-surface);
+  box-shadow: var(--aos-shadow-soft);
+}
+
+.relationship-stat strong {
+  display: block;
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.relationship-stat span {
+  color: var(--aos-text-muted);
+  font-size: 11px;
+  font-weight: 620;
+}
+
+.relationship-stat-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px;
+}
+
+.relationship-stat-icon[data-tone="total"] {
+  color: var(--aos-primary);
+  background: var(--aos-primary-soft);
+}
+
+.relationship-stat-icon[data-tone="connected"] {
+  color: var(--aos-success-text);
+  background: color-mix(in srgb, var(--aos-success) 16%, var(--aos-surface));
+}
+
+.relationship-stat-icon[data-tone="isolated"] {
+  color: var(--aos-danger);
+  background: var(--aos-danger-soft);
+}
+
+.relationships-layout {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 16px;
+}
+
+.relationship-graph-panel {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-panel);
+  background: var(--aos-surface);
+  box-shadow: var(--aos-shadow-soft);
+}
+
+.relationship-graph-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid var(--aos-border);
+  padding: 14px 18px;
+}
+
+.relationship-graph-heading h2 {
+  font-size: 14px;
+  font-weight: 720;
+}
+
+.relationship-graph-heading p {
+  margin-top: 3px;
+  color: var(--aos-text-muted);
+  font-size: 10px;
+}
+
+.relationship-focus-picker {
+  display: grid;
+  gap: 4px;
+  color: var(--aos-text-secondary);
+  font-size: 10px;
+  font-weight: 690;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.relationship-focus-picker select {
+  height: 34px;
+  min-width: 200px;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-control);
+  padding: 0 10px;
+  color: var(--aos-text);
+  background: var(--aos-surface);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.relationship-graph {
+  min-width: 0;
+  min-height: 0;
+  background-color: color-mix(in srgb, var(--aos-bg) 70%, var(--aos-surface));
+  background-image: radial-gradient(circle, var(--aos-border-strong) 0.8px, transparent 0.8px);
+  background-size: 22px 22px;
+}
+
+.relationship-side-panel {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  overflow: hidden;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-panel);
+  padding: 18px;
+  background: var(--aos-surface);
+  box-shadow: var(--aos-shadow-soft);
+}
+
+.relationship-side-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.relationship-side-heading strong {
+  display: block;
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relationship-side-heading span {
+  display: block;
+  margin-top: 2px;
+  color: var(--aos-text-muted);
+  font-size: 10px;
+}
+
+.relationship-connected-list {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.relationship-connected-items {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 /* Settings */
 
 .settings-screen {

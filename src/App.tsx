@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { LockKeyhole, Map, Settings, Vault, Wifi, WifiOff } from "lucide-react";
+import { LockKeyhole, Map, Network, Settings, Vault, Wifi, WifiOff } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AccountEditor, type AccountDraft } from "./components/AccountEditor";
 import { AccountInspector } from "./components/AccountInspector";
@@ -7,6 +7,7 @@ import { AccountList } from "./components/AccountList";
 import { AccountOsBrand } from "./components/Brand";
 import { DependencyMap } from "./components/DependencyMap";
 import { RelationshipDialog } from "./components/RelationshipDialog";
+import { RelationshipsScreen } from "./components/RelationshipsScreen";
 import { SettingsScreen, type ThemePreference } from "./components/SettingsScreen";
 import { VaultEntry, VaultLoading } from "./components/VaultEntry";
 import { ToastProvider, useToast } from "./components/ui/ToastProvider";
@@ -15,7 +16,7 @@ import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account, type AccountC
 import { markFreshLocalVault, markLocalVaultChange } from "./sync/cloudSync";
 import "./App.css";
 
-type View = "vault" | "map" | "settings";
+type View = "vault" | "map" | "relationships" | "settings";
 
 interface NativeVaultStatus {
   hasVault: boolean;
@@ -33,6 +34,7 @@ const emptyPreviewVault: VaultData = { formatVersion: 1, categories: [...ACCOUNT
 const navigation: Array<{ id: View; label: string; icon: typeof Vault }> = [
   { id: "vault", label: "Vault", icon: Vault },
   { id: "map", label: "Map", icon: Map },
+  { id: "relationships", label: "Relationships", icon: Network },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
@@ -279,6 +281,10 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
             <header className="screen-header"><div><p className="eyebrow">Identity map</p><h1 id="map-title">Map</h1><p>Explore real accounts and the relationships stored in your local vault.</p></div><span>{displayedVault?.accounts.length ?? 0} accounts · {displayedVault?.relationships.length ?? 0} relationships</span></header>
             <DependencyMap accounts={displayedVault?.accounts ?? []} onOpenAccount={(account) => { setSelectedAccountId(account.id); setActiveView("vault"); }} onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })} onSelectAccount={(account) => setSelectedAccountId(account.id)} relationships={displayedVault?.relationships ?? []} />
           </section>
+        )}
+
+        {activeView === "relationships" && (
+          <RelationshipsScreen accounts={displayedVault?.accounts ?? []} onOpenAccount={(account) => { setSelectedAccountId(account.id); setActiveView("vault"); }} onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })} relationships={displayedVault?.relationships ?? []} />
         )}
 
         {activeView === "settings" && <SettingsScreen isNative={isTauriRuntime} onCloudVaultRestored={applyRestoredVault} onMasterPasswordChanged={() => { if (isTauriRuntime) markLocalVaultChange(); }} onThemeChange={setTheme} onVaultOperationChange={setVaultOperationBusy} onVaultRestored={handleLocalBackupRestored} theme={theme} />}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fakeVault } from "../data/fakeVault";
-import { buildDependencyGraph, resolveMapNodeFocus, toMapAccount } from "./DependencyMap";
+import { buildDependencyGraph, buildEgoGraph, resolveMapNodeFocus, toMapAccount } from "./DependencyMap";
 
 describe("buildDependencyGraph", () => {
   it("creates deterministic nodes and friendly directed edges", () => {
@@ -54,5 +54,41 @@ describe("buildDependencyGraph", () => {
     expect(resolveMapNodeFocus("selected", "selected", related, matches, true)).toBe("muted");
     expect(resolveMapNodeFocus("selected", "selected", related, matches, false)).toBe("selected");
     expect(resolveMapNodeFocus("related", "selected", related, matches, false)).toBe("related");
+  });
+});
+
+describe("buildEgoGraph (Relationships screen radial view, Phase 5)", () => {
+  it("includes only the focused account's direct connections for a hub account", () => {
+    const graph = buildEgoGraph(fakeVault.accounts, fakeVault.relationships, "account-google-personal-test");
+
+    expect(graph.nodes.map((node) => node.id).sort()).toEqual([
+      "account-claude-personal-test",
+      "account-facebook-test",
+      "account-google-personal-test",
+      "account-openai-test",
+      "account-university-test",
+    ].sort());
+    expect(graph.nodes.find((node) => node.id === "account-google-personal-test")?.data.focus).toBe("selected");
+    expect(graph.edges).toHaveLength(4);
+    // None of Facebook's own further relationships (e.g. to Instagram) leak into Google's ego graph.
+    expect(graph.edges.some((edge) => edge.id === "relationship-facebook-instagram-test")).toBe(false);
+  });
+
+  it("renders a simple one-to-one pair with a single node on each side plus both edges between them", () => {
+    const graph = buildEgoGraph(fakeVault.accounts, fakeVault.relationships, "account-github-test");
+    expect(graph.nodes.map((node) => node.id).sort()).toEqual(["account-github-test", "account-supabase-test"]);
+    expect(graph.edges).toHaveLength(2);
+    expect(graph.edges.every((edge) => edge.source === "account-supabase-test" && edge.target === "account-github-test")).toBe(true);
+  });
+
+  it("renders just the focused node with no edges for an isolated account", () => {
+    const graph = buildEgoGraph(fakeVault.accounts, fakeVault.relationships, "account-apple-test");
+    expect(graph.nodes).toHaveLength(1);
+    expect(graph.nodes[0].data.focus).toBe("selected");
+    expect(graph.edges).toHaveLength(0);
+  });
+
+  it("returns an empty graph for an unknown focus id instead of throwing", () => {
+    expect(buildEgoGraph(fakeVault.accounts, fakeVault.relationships, "missing-account-test")).toEqual({ nodes: [], edges: [] });
   });
 });
