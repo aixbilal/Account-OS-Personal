@@ -1232,6 +1232,37 @@ p {
   font-weight: 500;
 }
 
+.field-hint {
+  color: var(--aos-text-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.field-with-icon {
+  position: relative;
+  display: block;
+}
+
+.field-inline-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  z-index: 1;
+  display: flex;
+  color: var(--aos-text-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.field-with-icon input,
+.field-with-icon select {
+  padding-left: 34px;
+}
+
+.field-with-icon textarea {
+  padding-left: 34px;
+}
+
 .field-label input,
 .field-label select,
 .field-label textarea {
@@ -1276,7 +1307,6 @@ p {
 }
 
 .input-with-action > button,
-.secret-input > button,
 .map-search > button {
   display: grid;
   width: 38px;
@@ -1289,7 +1319,6 @@ p {
 }
 
 .input-with-action > button:hover,
-.secret-input > button:hover,
 .map-search > button:hover {
   color: var(--aos-primary);
   background: var(--aos-primary-soft);
@@ -1605,8 +1634,7 @@ p {
   scrollbar-color: var(--aos-border-strong) transparent;
 }
 
-.editor-section + .editor-section,
-.editor-more {
+.editor-section + .editor-section {
   margin-top: 18px;
 }
 
@@ -1642,11 +1670,8 @@ p {
   gap: 13px 12px;
 }
 
-.editor-essential > :nth-child(1),
-.editor-essential > :nth-child(2),
-.editor-essential > :nth-child(5),
-.credential-field,
-.editor-more > .field-label {
+.field-span-2,
+.credential-field {
   grid-column: 1 / -1;
 }
 
@@ -1655,36 +1680,74 @@ p {
   gap: 7px;
 }
 
-.secret-input {
+/* Reference 05/06: password Reveal/Generate/Copy are three separate
+   bordered controls next to the input, not one merged bordered box. */
+.credential-row {
   display: flex;
   align-items: center;
-  overflow: hidden;
-  border: 1px solid var(--aos-border);
-  border-radius: var(--aos-radius-control);
-  background: var(--aos-surface);
+  gap: 8px;
 }
 
-.secret-input:focus-within {
+.credential-row > button {
+  flex: 0 0 auto;
+}
+
+.credential-input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-control);
+  padding: 0 12px;
+  outline: 0;
+  color: var(--aos-text);
+  background: var(--aos-surface);
+  font-size: 12px;
+}
+
+.credential-input:focus {
   border-color: color-mix(in srgb, var(--aos-primary) 55%, var(--aos-border));
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--aos-focus) 11%, transparent);
 }
 
-.secret-input input {
-  width: 100%;
-  min-width: 0;
-  height: 40px;
-  border: 0;
-  padding: 0 12px;
-  outline: 0;
-  color: var(--aos-text);
-  background: transparent;
-  font-size: 12px;
+.icon-button-outline {
+  flex: 0 0 auto;
+  border-color: var(--aos-border-strong);
+  background: var(--aos-surface);
 }
 
-.details-toggle,
+.strength-checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.strength-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--aos-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.strength-checklist li[data-met="true"] {
+  color: var(--aos-success-text);
+}
+
+.strength-checklist li svg {
+  color: var(--aos-text-muted);
+}
+
+.strength-checklist li[data-met="true"] svg {
+  color: var(--aos-success);
+}
+
 .generator-toggle {
   display: flex;
-  width: 100%;
   align-items: center;
   justify-content: space-between;
   border: 1px solid var(--aos-border);
@@ -1693,41 +1756,16 @@ p {
   text-align: left;
 }
 
-.details-toggle {
-  margin-top: 17px;
-  border-radius: var(--aos-radius-card);
-  padding: 11px 13px;
-}
-
-.details-toggle strong,
-.details-toggle small {
-  display: block;
-}
-
-.details-toggle strong {
-  color: var(--aos-text);
-  font-size: 11px;
-}
-
-.details-toggle small {
-  margin-top: 3px;
-  color: var(--aos-text-muted);
-  font-size: 9px;
-}
-
-.details-toggle svg,
 .generator-toggle svg {
   transition: transform var(--aos-motion-fast) var(--aos-ease);
 }
 
-.details-toggle:hover,
 .generator-toggle:hover {
   border-color: color-mix(in srgb, var(--aos-primary) 30%, var(--aos-border));
   color: var(--aos-primary);
   background: var(--aos-primary-soft);
 }
 
-.details-toggle svg[data-open="true"],
 .generator-toggle svg[data-open="true"] {
   transform: rotate(180deg);
 }
