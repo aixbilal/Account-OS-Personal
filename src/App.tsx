@@ -270,7 +270,7 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
                 visibleAccounts.length ? <AccountList accounts={visibleAccounts} onSelect={(account) => setSelectedAccountId(account.id)} selectedAccountId={selectedAccountId} /> : <div className="vault-zero list-zero"><span aria-hidden="true">⌕</span><h2>No matching accounts</h2><p>Try a different search or clear the active filters.</p><button className="secondary-button" onClick={clearFilters} type="button">Clear search and filters</button></div>
               ) : <div className="vault-zero list-zero"><span aria-hidden="true">▱</span><h2>No accounts yet</h2><p>Add your first account to begin your encrypted vault.</p></div>}
             </aside>
-            <AccountInspector account={selectedAccount} accounts={displayedVault?.accounts ?? []} onAddFirstAccount={() => setEditingAccount(null)} onEdit={setEditingAccount} onManageRelationships={(account) => setRelationshipUi({ initialMode: "manage", managingAccountId: account.id, sourceAccountId: account.id })} onNotify={notify} onOpenAccount={(account) => setSelectedAccountId(account.id)} relationships={displayedVault?.relationships ?? []} />
+            <AccountInspector account={selectedAccount} accounts={displayedVault?.accounts ?? []} onAddFirstAccount={() => setEditingAccount(null)} onDelete={deleteAccount} onEdit={setEditingAccount} onManageRelationships={(account) => setRelationshipUi({ initialMode: "manage", managingAccountId: account.id, sourceAccountId: account.id })} onNotify={notify} onOpenAccount={(account) => setSelectedAccountId(account.id)} relationships={displayedVault?.relationships ?? []} />
           </section>
         )}
 

@@ -597,6 +597,60 @@ p {
   gap: 18px;
 }
 
+.inspector-header-actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.inspector-overflow {
+  position: relative;
+}
+
+.inspector-overflow-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 5;
+  min-width: 180px;
+  overflow: hidden;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-card);
+  padding: 6px;
+  background: var(--aos-surface);
+  box-shadow: var(--aos-shadow-float);
+}
+
+.inspector-overflow-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-radius: var(--aos-radius-control);
+  padding: 9px 10px;
+  color: var(--aos-text);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.inspector-overflow-item:hover {
+  background: var(--aos-surface-soft);
+}
+
+.inspector-overflow-item.danger {
+  color: var(--aos-danger);
+}
+
+.inspector-overflow-item.danger:hover {
+  background: var(--aos-danger-soft);
+}
+
 .service-identity-hero {
   --service-accent: #527393;
   --service-soft: #edf3f8;
@@ -610,9 +664,12 @@ p {
   border: 1px solid color-mix(in srgb, var(--service-accent) 14%, var(--aos-border));
   border-radius: var(--aos-radius-panel);
   padding: 23px 26px;
+  /* Soft multi-hue pastel wash (Phase 1 tokens, measured from the
+     reference's account banner) with the service's own accent layered on
+     top as a subtle radial glow, rather than one flat single-accent tint. */
   background:
     radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--service-accent) 11%, transparent), transparent 28%),
-    linear-gradient(125deg, color-mix(in srgb, var(--service-soft) 82%, var(--aos-surface)), var(--aos-surface));
+    linear-gradient(100deg, var(--aos-banner-stop-1), var(--aos-banner-stop-2) 38%, var(--aos-banner-stop-3) 72%, var(--aos-banner-stop-4));
   box-shadow: var(--aos-shadow-soft);
 }
 
@@ -661,10 +718,18 @@ p {
   user-select: none;
 }
 
+.service-hero-watermark-svg {
+  right: 4%;
+  bottom: -14%;
+  width: 34%;
+  height: auto;
+  aspect-ratio: 1;
+  fill: currentColor;
+}
+
 .inspector-edit {
   position: relative;
   z-index: 2;
-  margin-top: 9px;
 }
 
 .inspector-fields {
@@ -672,21 +737,23 @@ p {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
   margin-top: 22px;
-  overflow: hidden;
-  border: 1px solid var(--aos-border);
-  border-radius: var(--aos-radius-panel);
-  background: var(--aos-surface);
-  box-shadow: var(--aos-shadow-soft);
 }
 
 .inspector-field {
   min-width: 0;
   min-height: 94px;
-  padding: 19px 21px;
+  padding: 17px 4px;
 }
 
+/* One continuous panel, thin dividers only (Section 3.1) - a full-width
+   hairline between rows, no vertical rule between the two columns and no
+   outer card border/shadow boxing each field individually. */
 .inspector-field:nth-child(odd) {
-  border-right: 1px solid var(--aos-border);
+  padding-right: 21px;
+}
+
+.inspector-field:nth-child(even) {
+  padding-left: 21px;
 }
 
 .inspector-field:nth-child(n + 3) {
@@ -743,16 +810,17 @@ p {
 }
 
 .field-copy {
-  min-height: 29px;
+  min-height: 33px;
   border: 0;
-  padding-inline: 8px;
+  padding-inline: 12px;
   color: var(--aos-primary);
-  background: transparent;
-  font-size: 11px;
+  background: var(--aos-primary-soft);
+  font-size: 12px;
+  font-weight: 620;
 }
 
 .field-copy:hover {
-  background: var(--aos-primary-soft);
+  background: color-mix(in srgb, var(--aos-primary-soft) 60%, var(--aos-primary) 12%);
 }
 
 .inspector-section,
@@ -2661,7 +2729,11 @@ p {
 [data-theme="dark"] .service-identity-hero {
   background:
     radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--service-accent) 18%, transparent), transparent 28%),
-    linear-gradient(125deg, color-mix(in srgb, var(--service-soft) 10%, var(--aos-surface)), var(--aos-surface));
+    linear-gradient(100deg, var(--aos-banner-stop-1), var(--aos-banner-stop-2) 38%, var(--aos-banner-stop-3) 72%, var(--aos-banner-stop-4));
+}
+
+[data-theme="dark"] .service-hero-watermark-svg {
+  color: color-mix(in srgb, var(--service-accent) 22%, transparent);
 }
 
 /* Supported desktop window classes */

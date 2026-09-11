@@ -1,15 +1,17 @@
-import { Copy, Eye, EyeOff, KeyRound, Link2, Pencil, Plus, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Copy, ExternalLink, Eye, EyeOff, KeyRound, Link2, MoreVertical, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { copySecretToClipboard } from "../domain/clipboard";
 import { relationshipsForAccount } from "../domain/relationships";
 import type { Account, AccountRelationship } from "../domain/types";
 import { relationshipDirectionLabel } from "./RelationshipDialog";
 import { ServiceIdentityHero, ServiceIdentityMark } from "./ServiceIdentity";
+import { Dialog } from "./ui/Modal";
 
 interface AccountInspectorProps {
   account?: Account;
   accounts: Account[];
   onAddFirstAccount: () => void;
+  onDelete?: (account: Account) => Promise<void>;
   onEdit: (account: Account) => void;
   onManageRelationships: (account: Account) => void;
   onNotify?: (message: string, tone?: "success" | "error" | "info") => void;
@@ -17,11 +19,47 @@ interface AccountInspectorProps {
   relationships: AccountRelationship[];
 }
 
-export function AccountInspector({ account, accounts, onAddFirstAccount, onEdit, onManageRelationships, onNotify, onOpenAccount, relationships }: AccountInspectorProps) {
+export function AccountInspector({ account, accounts, onAddFirstAccount, onDelete, onEdit, onManageRelationships, onNotify, onOpenAccount, relationships }: AccountInspectorProps) {
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const menuRef = useRef<HTMLDivElement>(null);
   const ownRelationships = account ? relationshipsForAccount(relationships, account.id) : [];
 
-  useEffect(() => setPasswordVisible(false), [account?.id]);
+  useEffect(() => { setPasswordVisible(false); setMenuOpen(false); }, [account?.id]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
+
+  async function confirmDelete() {
+    if (!account || !onDelete || deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await onDelete(account);
+      onNotify?.("Account deleted", "success");
+      setConfirmingDelete(false);
+    } catch {
+      setDeleteError("Unable to delete this account. The local vault was not changed.");
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   async function copy(value: string, label: string, sensitive = false) {
     if (!value) return;
@@ -64,19 +102,31 @@ export function AccountInspector({ account, accounts, onAddFirstAccount, onEdit,
     <section className="account-inspector" aria-label={`${account.accountName} account details`}>
       <header className="inspector-header">
         <ServiceIdentityHero account={account} />
-        <button className="secondary-button inspector-edit" onClick={() => onEdit(account)} type="button"><Pencil size={15} />Edit</button>
+        <div className="inspector-header-actions">
+          <button className="secondary-button inspector-edit" onClick={() => onEdit(account)} type="button"><Pencil size={15} />Edit</button>
+          {onDelete && (
+            <div className="inspector-overflow" ref={menuRef}>
+              <button aria-expanded={menuOpen} aria-haspopup="menu" aria-label="More account actions" className="icon-button" onClick={() => setMenuOpen((open) => !open)} type="button"><MoreVertical size={17} /></button>
+              {menuOpen && (
+                <div className="inspector-overflow-menu" role="menu">
+                  <button className="inspector-overflow-item danger" onClick={() => { setMenuOpen(false); setConfirmingDelete(true); }} role="menuitem" type="button"><Trash2 size={15} />Delete account</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       <section className="inspector-fields" aria-label="Account credentials">
         <InspectorField action={account.email ? <CopyButton label="Copy email" onClick={() => void copy(account.email, "Email")} /> : undefined} label="Email" value={account.email || "Not recorded"} />
         <InspectorField action={account.username ? <CopyButton label="Copy username" onClick={() => void copy(account.username, "Username")} /> : undefined} label="Username" value={account.username || "Not recorded"} />
         <InspectorField
-          action={account.password ? <span className="field-actions"><button aria-label={passwordVisible ? "Hide password" : "Reveal password"} className="icon-button field-icon-action" onClick={() => setPasswordVisible((visible) => !visible)} type="button">{passwordVisible ? <EyeOff size={16} /> : <Eye size={16} />}</button><CopyButton iconOnly label="Copy password" onClick={() => void copy(account.password, "Password", true)} /></span> : undefined}
+          action={account.password ? <span className="field-actions"><button aria-label={passwordVisible ? "Hide password" : "Reveal password"} className="icon-button field-icon-action" onClick={() => setPasswordVisible((visible) => !visible)} type="button">{passwordVisible ? <EyeOff size={16} /> : <Eye size={16} />}</button><CopyButton label="Copy password" onClick={() => void copy(account.password, "Password", true)} /></span> : undefined}
           label="Password"
           subvalue={account.password ? (passwordVisible ? "Visible until hidden" : "Hidden by default") : undefined}
           value={account.password ? (passwordVisible ? account.password : "••••••••••••••") : "Not recorded"}
         />
-        <InspectorField action={account.website ? <CopyButton label="Copy website" onClick={() => void copy(account.website ?? "", "Website")} /> : undefined} label="Website" value={account.website || "Not recorded"} />
+        <InspectorField action={account.website ? <OpenButton label="Open website" onClick={() => openWebsite(account.website ?? "")} /> : undefined} label="Website" value={account.website || "Not recorded"} />
         <InspectorField label="Authentication" subvalue={account.twoFactorInformation || "No 2FA metadata"} value={account.authenticationMethod} />
         <InspectorField label="Category" subvalue={`Updated ${formatDate(account.updatedAt)}`} value={account.category} />
       </section>
@@ -105,12 +155,42 @@ export function AccountInspector({ account, accounts, onAddFirstAccount, onEdit,
         <div><p className="eyebrow">Recovery information</p><p>{account.recoveryInformation || "No recovery information recorded."}</p></div>
       </section>
       <div className="local-encryption-note"><ShieldCheck aria-hidden="true" size={22} /><div><strong>Stored locally and encrypted</strong><span>Your master password protects this account with the rest of your vault.</span></div></div>
+
+      {confirmingDelete && (
+        <Dialog className="confirm-dialog" labelledBy="delete-account-inspector-title" onRequestClose={() => { if (!deleting) setConfirmingDelete(false); }}>
+          <div className="confirm-icon danger" aria-hidden="true"><Trash2 size={22} /></div>
+          <h2 id="delete-account-inspector-title">Delete {account.accountName}?</h2>
+          <p>This permanently deletes the account{ownRelationships.length ? ` and removes its ${ownRelationships.length} relationship${ownRelationships.length === 1 ? "" : "s"}` : ""}. This action cannot be undone.</p>
+          {deleteError && <p className="form-error" role="alert">{deleteError}</p>}
+          <footer className="dialog-actions"><button className="secondary-button" data-autofocus disabled={deleting} onClick={() => setConfirmingDelete(false)} type="button">Cancel</button><button className="danger-button" disabled={deleting} onClick={() => void confirmDelete()} type="button">{deleting ? "Deleting…" : "Delete account"}</button></footer>
+        </Dialog>
+      )}
     </section>
   );
 }
 
 function CopyButton({ iconOnly = false, label, onClick }: { iconOnly?: boolean; label: string; onClick: () => void }) {
   return <button aria-label={label} className={iconOnly ? "icon-button field-icon-action" : "field-copy"} onClick={onClick} type="button"><Copy size={15} />{!iconOnly && "Copy"}</button>;
+}
+
+function OpenButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return <button aria-label={label} className="field-copy" onClick={onClick} type="button"><ExternalLink size={15} />Open</button>;
+}
+
+/** Opens a stored website value in the default browser. Adds an `https://`
+ * scheme when the user saved a bare domain, and refuses to open anything
+ * that isn't (or can't be normalized into) a plain http(s) link. */
+function openWebsite(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return;
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  } catch {
+    // Not a openable URL - silently ignore rather than navigate somewhere unexpected.
+  }
 }
 
 function InspectorField({ action, label, subvalue, value }: { action?: React.ReactNode; label: string; subvalue?: string; value: string }) {

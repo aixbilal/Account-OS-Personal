@@ -95,6 +95,11 @@ export function ServiceIdentityHero({ account }: { account: Pick<Account, "servi
     "--service-accent": identity.accent,
     "--service-soft": identity.softAccent,
   } as CSSProperties;
+  // Phase 3 restyle: the banner watermark used to always be the 2-letter
+  // monogram, even for services with a real bundled logo. When one exists,
+  // fade the real mark into the banner instead; unmatched services keep
+  // the monogram watermark (there's nothing else to show).
+  const packaged = packagedIcons[identity.id];
   return (
     <div className="service-identity-hero" data-service={identity.id} style={style}>
       <ServiceIdentityMark account={account} size="large" />
@@ -103,7 +108,11 @@ export function ServiceIdentityHero({ account }: { account: Pick<Account, "servi
         <h2>{account.accountName}</h2>
         <span>{account.category} · {account.email || account.username || "No sign-in identity"}</span>
       </div>
-      <strong aria-hidden="true" className="service-hero-watermark">{identity.monogram}</strong>
+      {packaged ? (
+        <svg aria-hidden="true" className="service-hero-watermark service-hero-watermark-svg" focusable="false" viewBox="0 0 24 24"><path d={packaged.path} /></svg>
+      ) : (
+        <strong aria-hidden="true" className="service-hero-watermark">{identity.monogram}</strong>
+      )}
     </div>
   );
 }
