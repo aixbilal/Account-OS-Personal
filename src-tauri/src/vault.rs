@@ -388,7 +388,7 @@ impl VaultService {
     fn atomic_write_to(&self, destination: &Path, contents: &[u8]) -> Result<(), VaultError> {
         let parent = destination.parent().ok_or(VaultError::Storage)?;
         fs::create_dir_all(parent).map_err(|_| VaultError::Storage)?;
-        let temp_path = unique_temp_path(&destination);
+        let temp_path = unique_temp_path(destination);
 
         let result = (|| {
             let mut file = OpenOptions::new()
@@ -399,7 +399,7 @@ impl VaultService {
             file.write_all(contents).map_err(|_| VaultError::Storage)?;
             file.sync_all().map_err(|_| VaultError::Storage)?;
             drop(file);
-            fs::rename(&temp_path, &destination).map_err(|_| VaultError::Storage)?;
+            fs::rename(&temp_path, destination).map_err(|_| VaultError::Storage)?;
             sync_parent_directory(parent);
             Ok(())
         })();
