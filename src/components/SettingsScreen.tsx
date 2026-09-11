@@ -1,7 +1,7 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import { open as openDialog, save as saveDialog } from "@tauri-apps/plugin-dialog";
-import { Cloud, DatabaseBackup, Eye, EyeOff, Info, KeyRound, LockKeyhole, MonitorCog, Palette, ShieldCheck } from "lucide-react";
+import { AlertTriangle, Cloud, DatabaseBackup, Eye, EyeOff, FolderOpen, HardDrive, Info, KeyRound, Laptop, LockKeyhole, MonitorCog, Palette, RotateCcw, ShieldCheck, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import appPackage from "../../package.json";
 import type { VaultData } from "../domain/types";
@@ -12,14 +12,34 @@ export type ThemePreference = "light" | "dark" | "system";
 type SettingsSection = "appearance" | "security" | "data" | "connected" | "system";
 type OperationStatus = { tone: "success" | "error" | "info"; message: string } | null;
 
+interface DeviceInfo {
+  appDataPath: string;
+  hostname: string;
+  os: string;
+}
+
 interface SettingsScreenProps {
   isNative: boolean;
   onCloudVaultRestored: (vault: VaultData) => void;
   onMasterPasswordChanged: () => void;
   onThemeChange: (theme: ThemePreference) => void;
+  onVaultDeleted: () => void;
   onVaultOperationChange: (busy: boolean) => void;
   onVaultRestored: (vault: VaultData) => void;
   theme: ThemePreference;
+}
+
+/** Real byte count formatted for display - no fabricated quota (Section 3.6). */
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value < 10 ? value.toFixed(2) : value < 100 ? value.toFixed(1) : Math.round(value)} ${units[unitIndex]}`;
 }
 
 const settingsSections: Array<{ id: SettingsSection; label: string; icon: typeof Palette }> = [
@@ -31,7 +51,7 @@ const settingsSections: Array<{ id: SettingsSection; label: string; icon: typeof
 ];
 const themeOptions: ThemePreference[] = ["light", "dark", "system"];
 
-export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswordChanged, onVaultOperationChange, onVaultRestored, theme, onThemeChange }: SettingsScreenProps) {
+export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswordChanged, onThemeChange, onVaultDeleted, onVaultOperationChange, onVaultRestored, theme }: SettingsScreenProps) {
   const [section, setSection] = useState<SettingsSection>("appearance");
   const [importPath, setImportPath] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
@@ -50,6 +70,14 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
   const [rekeyStatus, setRekeyStatus] = useState<OperationStatus>(null);
   const [rekeyWorking, setRekeyWorking] = useState(false);
   const [confirmRekey, setConfirmRekey] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
+  const [vaultSizeBytes, setVaultSizeBytes] = useState<number | null>(null);
+  const [openFolderStatus, setOpenFolderStatus] = useState<OperationStatus>(null);
+  const [resetAppStatus, setResetAppStatus] = useState<OperationStatus>(null);
+  const [confirmResetApp, setConfirmResetApp] = useState(false);
+  const [deleteVaultStatus, setDeleteVaultStatus] = useState<OperationStatus>(null);
+  const [deleteVaultWorking, setDeleteVaultWorking] = useState(false);
+  const [confirmDeleteVault, setConfirmDeleteVault] = useState(false);
   const backupFileButtonRef = useRef<HTMLButtonElement>(null);
   const backupPasswordRef = useRef<HTMLInputElement>(null);
   const currentMasterRef = useRef<HTMLInputElement>(null);
@@ -69,9 +97,63 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
   }, [isNative]);
 
   useEffect(() => {
-    onVaultOperationChange(exportWorking || restoreWorking || cloudWorking || rekeyWorking);
+    if (!isNative) return;
+    invoke<DeviceInfo>("device_info").then(setDeviceInfo).catch(() => setDeviceInfo(null));
+    invoke<number | null>("vault_file_size").then(setVaultSizeBytes).catch(() => setVaultSizeBytes(null));
+  }, [isNative]);
+
+  useEffect(() => {
+    onVaultOperationChange(exportWorking || restoreWorking || cloudWorking || rekeyWorking || deleteVaultWorking);
     return () => onVaultOperationChange(false);
-  }, [cloudWorking, exportWorking, onVaultOperationChange, rekeyWorking, restoreWorking]);
+  }, [cloudWorking, deleteVaultWorking, exportWorking, onVaultOperationChange, rekeyWorking, restoreWorking]);
+
+  async function openAppDataFolder() {
+    setOpenFolderStatus(null);
+    if (!isNative) {
+      setOpenFolderStatus({ tone: "info", message: "Opening the app data folder is available in the installed desktop application." });
+      return;
+    }
+    try {
+      await invoke("open_app_data_folder");
+    } catch {
+      setOpenFolderStatus({ tone: "error", message: "Unable to open the app data folder." });
+    }
+  }
+
+  function resetApp() {
+    // Clears the one real client-side preference this app has (theme).
+    // Deliberately does not touch anything under the "data/vault" umbrella
+    // (backup/restore state, cloud sync bookkeeping) - those aren't
+    // "settings", and the reference's own description is "keeps vault
+    // data".
+    window.localStorage.removeItem("account-os-theme");
+    onThemeChange("light");
+    setConfirmResetApp(false);
+    setResetAppStatus({ tone: "success", message: "Settings reset to defaults. Your vault data was not touched." });
+  }
+
+  function requestDeleteVault() {
+    if (!isNative) {
+      setDeleteVaultStatus({ tone: "info", message: "Deleting the vault is available in the installed desktop application." });
+      return;
+    }
+    setConfirmDeleteVault(true);
+  }
+
+  async function deleteVault() {
+    setDeleteVaultWorking(true);
+    setDeleteVaultStatus(null);
+    try {
+      await invoke("delete_vault");
+      setConfirmDeleteVault(false);
+      onVaultDeleted();
+    } catch (reason) {
+      setDeleteVaultStatus({ tone: "error", message: typeof reason === "string" ? reason : "Unable to delete the local vault." });
+      setConfirmDeleteVault(false);
+    } finally {
+      setDeleteVaultWorking(false);
+    }
+  }
 
   async function exportBackup() {
     setExportStatus(null);
@@ -209,6 +291,13 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
       resetRekeyFields();
       setRekeyStatus(null);
     }
+    if (section === "system" && nextSection !== "system") {
+      setOpenFolderStatus(null);
+      setResetAppStatus(null);
+      setDeleteVaultStatus(null);
+      setConfirmResetApp(false);
+      setConfirmDeleteVault(false);
+    }
     setSection(nextSection);
   }
 
@@ -313,6 +402,44 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
               <InfoRow icon={MonitorCog} label="Version" value={appVersion} />
               <InfoRow icon={ShieldCheck} label="Runtime" value={isNative ? "Tauri desktop application" : "Web renderer preview"} />
             </div>
+
+            <article className="settings-card">
+              <div className="settings-card-heading"><div className="settings-card-icon"><Laptop size={20} /></div><div><h3>Device</h3><p>Real, locally-observable values - no telemetry, nothing sent anywhere.</p></div></div>
+              {isNative && deviceInfo ? (
+                <div className="settings-list">
+                  <InfoRow icon={Laptop} label="Device name" value={deviceInfo.hostname} />
+                  <InfoRow icon={MonitorCog} label="OS" value={deviceInfo.os} />
+                  <InfoRow icon={HardDrive} label="App data" value={deviceInfo.appDataPath} />
+                </div>
+              ) : (
+                <p className="operation-message" data-tone="info">{isNative ? "Loading device information…" : "Device details are available in the installed desktop application."}</p>
+              )}
+              <button className="secondary-button" disabled={!isNative} onClick={() => void openAppDataFolder()} type="button"><FolderOpen size={15} />Open folder</button>
+              <OperationMessage status={openFolderStatus} />
+            </article>
+
+            <article className="settings-card">
+              <div className="settings-card-heading"><div className="settings-card-icon"><HardDrive size={20} /></div><div><h3>Storage</h3><p>The real size of your encrypted vault file on disk.</p></div></div>
+              <div className="settings-list">
+                <InfoRow icon={HardDrive} label="Vault file size" value={isNative ? (vaultSizeBytes != null ? formatBytes(vaultSizeBytes) : "Unavailable") : "Available in the installed desktop application"} />
+              </div>
+            </article>
+
+            <article className="settings-card danger-zone">
+              <div className="settings-card-heading"><div className="settings-card-icon danger"><AlertTriangle size={20} /></div><div><h3>Danger zone</h3><p>These actions cannot be undone.</p></div></div>
+              <div className="danger-zone-actions">
+                <div className="danger-zone-row">
+                  <div><strong>Reset app</strong><p>Clear all settings (keeps vault data).</p></div>
+                  <button className="danger-button subtle-danger" onClick={() => setConfirmResetApp(true)} type="button"><RotateCcw size={15} />Reset app</button>
+                </div>
+                <div className="danger-zone-row">
+                  <div><strong>Delete vault</strong><p>Permanently delete the vault from this device.</p></div>
+                  <button className="danger-button subtle-danger" onClick={requestDeleteVault} type="button"><Trash2 size={15} />Delete vault</button>
+                </div>
+              </div>
+              <OperationMessage status={resetAppStatus} />
+              <OperationMessage status={deleteVaultStatus} />
+            </article>
           </SettingsSectionHeading>
         )}
       </div>
@@ -332,6 +459,24 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
           <h2 id="confirm-rekey-title">Change the master password?</h2>
           <p>The local vault will be re-encrypted under the new password. The current password stops working once this succeeds. If anything fails, the vault is left unchanged.</p>
           <footer className="dialog-actions"><button className="secondary-button" data-autofocus disabled={rekeyWorking} onClick={cancelRekeyConfirmation} type="button">Cancel</button><button className="primary-button" disabled={rekeyWorking} onClick={() => void changeMasterPassword()} type="button">{rekeyWorking ? "Changing…" : "Change password"}</button></footer>
+        </Dialog>
+      )}
+
+      {confirmResetApp && (
+        <Dialog className="confirm-dialog" labelledBy="confirm-reset-app-title" onRequestClose={() => setConfirmResetApp(false)}>
+          <div className="confirm-icon warning" aria-hidden="true"><RotateCcw size={22} /></div>
+          <h2 id="confirm-reset-app-title">Reset app settings?</h2>
+          <p>This clears Account OS's saved preferences (currently just your appearance theme) and restores their defaults. Your vault and its accounts are not touched.</p>
+          <footer className="dialog-actions"><button className="secondary-button" data-autofocus onClick={() => setConfirmResetApp(false)} type="button">Cancel</button><button className="danger-button" onClick={resetApp} type="button">Reset app</button></footer>
+        </Dialog>
+      )}
+
+      {confirmDeleteVault && (
+        <Dialog className="confirm-dialog" labelledBy="confirm-delete-vault-title" onRequestClose={() => { if (!deleteVaultWorking) setConfirmDeleteVault(false); }}>
+          <div className="confirm-icon danger" aria-hidden="true"><Trash2 size={22} /></div>
+          <h2 id="confirm-delete-vault-title">Delete this vault?</h2>
+          <p>This permanently deletes the encrypted vault file from this device, including every account and relationship inside it. This cannot be undone - export a backup first if you want to keep a copy.</p>
+          <footer className="dialog-actions"><button className="secondary-button" data-autofocus disabled={deleteVaultWorking} onClick={() => setConfirmDeleteVault(false)} type="button">Cancel</button><button className="danger-button" disabled={deleteVaultWorking} onClick={() => void deleteVault()} type="button">{deleteVaultWorking ? "Deleting…" : "Delete vault"}</button></footer>
         </Dialog>
       )}
     </section>

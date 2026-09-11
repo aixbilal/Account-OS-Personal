@@ -154,6 +154,14 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
     }
   }
 
+  function handleVaultDeleted() {
+    setEditingAccount(undefined);
+    setRelationshipUi(null);
+    setSelectedAccountId(undefined);
+    setVaultData(null);
+    setVaultStatus({ hasVault: false, unlocked: false });
+  }
+
   function requestLock() {
     if (vaultOperationBusy) return;
     void performLock();
@@ -287,7 +295,7 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
           <RelationshipsScreen accounts={displayedVault?.accounts ?? []} onOpenAccount={(account) => { setSelectedAccountId(account.id); setActiveView("vault"); }} onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })} relationships={displayedVault?.relationships ?? []} />
         )}
 
-        {activeView === "settings" && <SettingsScreen isNative={isTauriRuntime} onCloudVaultRestored={applyRestoredVault} onMasterPasswordChanged={() => { if (isTauriRuntime) markLocalVaultChange(); }} onThemeChange={setTheme} onVaultOperationChange={setVaultOperationBusy} onVaultRestored={handleLocalBackupRestored} theme={theme} />}
+        {activeView === "settings" && <SettingsScreen isNative={isTauriRuntime} onCloudVaultRestored={applyRestoredVault} onMasterPasswordChanged={() => { if (isTauriRuntime) markLocalVaultChange(); }} onThemeChange={setTheme} onVaultDeleted={handleVaultDeleted} onVaultOperationChange={setVaultOperationBusy} onVaultRestored={handleLocalBackupRestored} theme={theme} />}
       </main>
 
       {editingAccount !== undefined && (

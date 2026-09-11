@@ -2206,28 +2206,33 @@ p {
   border-radius: 50%;
 }
 
-.dependency-map .react-flow__controls {
+.dependency-map .react-flow__controls,
+.relationship-graph .react-flow__controls {
   overflow: hidden;
   border: 1px solid var(--aos-border);
   border-radius: 10px;
   box-shadow: var(--aos-shadow-soft);
 }
 
-.dependency-map .react-flow__controls-button {
+.dependency-map .react-flow__controls-button,
+.relationship-graph .react-flow__controls-button {
   border-bottom-color: var(--aos-border);
   color: var(--aos-text-secondary);
   background: var(--aos-surface);
 }
 
-.dependency-map .react-flow__controls-button:hover {
+.dependency-map .react-flow__controls-button:hover,
+.relationship-graph .react-flow__controls-button:hover {
   background: var(--aos-surface-soft);
 }
 
-.dependency-map .react-flow__controls-button svg {
+.dependency-map .react-flow__controls-button svg,
+.relationship-graph .react-flow__controls-button svg {
   fill: currentColor;
 }
 
-.dependency-map .react-flow__attribution {
+.dependency-map .react-flow__attribution,
+.relationship-graph .react-flow__attribution {
   color: var(--aos-text-muted);
   background: color-mix(in srgb, var(--aos-surface) 80%, transparent);
   font-size: 8px;
@@ -2938,6 +2943,45 @@ p {
 .settings-card > button,
 .settings-card > form > .primary-button {
   margin-top: auto;
+}
+
+.settings-card-icon.danger {
+  color: var(--aos-danger);
+  background: var(--aos-danger-soft);
+}
+
+.danger-zone {
+  border-color: color-mix(in srgb, var(--aos-danger) 30%, var(--aos-border));
+  align-items: stretch;
+}
+
+.danger-zone-actions {
+  display: grid;
+  width: 100%;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.danger-zone-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid color-mix(in srgb, var(--aos-danger) 24%, var(--aos-border));
+  border-radius: var(--aos-radius-card);
+  padding: 12px 14px;
+}
+
+.danger-zone-row strong {
+  display: block;
+  color: var(--aos-text);
+  font-size: 12.5px;
+}
+
+.danger-zone-row p {
+  margin-top: 2px;
+  color: var(--aos-text-secondary);
+  font-size: 10px;
 }
 
 .settings-card > .primary-button,
