@@ -251,6 +251,39 @@ impl VaultService {
         self.vault_path().is_file()
     }
 
+    /// Real on-disk size of the encrypted vault file, in bytes. Used by
+    /// Settings -> System to show a truthful storage figure instead of a
+    /// fabricated quota (Section 3.6: "no fabricated devices/storage").
+    /// `None` if the vault does not exist yet or its size cannot be read.
+    pub fn vault_file_size(&self) -> Option<u64> {
+        fs::metadata(self.vault_path()).ok().map(|metadata| metadata.len())
+    }
+
+    /// Directory the encrypted vault (and its backups-in-progress) live in.
+    /// Exposed read-only for the Settings "Device" card's app-data path and
+    /// its "Open folder" action — never for anything that touches the vault
+    /// file's contents or encryption.
+    pub fn storage_dir(&self) -> &Path {
+        &self.storage_dir
+    }
+
+    /// Permanently deletes the on-disk encrypted vault file. Does not touch
+    /// encryption, key derivation, or any other file in the storage
+    /// directory. A no-op (not an error) if there is no vault file, so
+    /// callers don't need to special-case "already gone". The caller is
+    /// responsible for clearing any in-memory unlocked state.
+    pub fn delete_vault_file(&self) -> Result<(), VaultError> {
+        let path = self.vault_path();
+        if !path.is_file() {
+            return Ok(());
+        }
+        fs::remove_file(&path).map_err(|_| VaultError::Storage)?;
+        if let Some(parent) = path.parent() {
+            sync_parent_directory(parent);
+        }
+        Ok(())
+    }
+
     pub fn create(&self, password: String) -> Result<UnlockedVault, VaultError> {
         if self.exists() {
             return Err(VaultError::AlreadyExists);
@@ -1237,5 +1270,53 @@ mod tests {
             service.unlock("test-master-password".into()),
             Err(VaultError::InvalidData)
         ));
+    }
+
+    #[test]
+    fn vault_file_size_is_none_before_creation_and_a_real_byte_count_after() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        assert_eq!(service.vault_file_size(), None);
+
+        let mut unlocked = service.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+
+        let size = service.vault_file_size().expect("vault file should exist");
+        let on_disk = fs::metadata(service.vault_path()).unwrap().len();
+        assert_eq!(size, on_disk);
+        assert!(size > 0);
+    }
+
+    #[test]
+    fn storage_dir_exposes_the_same_directory_the_service_was_built_with() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        assert_eq!(service.storage_dir(), directory.path());
+    }
+
+    #[test]
+    fn delete_vault_file_removes_the_vault_and_leaves_siblings_alone() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut unlocked = service.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+        let sibling = directory.path().join("unrelated-file.txt");
+        fs::write(&sibling, b"not a vault").unwrap();
+
+        assert!(service.exists());
+        service.delete_vault_file().unwrap();
+        assert!(!service.exists());
+        assert!(!service.vault_path().exists());
+        assert!(sibling.exists());
+    }
+
+    #[test]
+    fn delete_vault_file_is_a_no_op_when_there_is_no_vault() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        assert!(!service.exists());
+        assert!(service.delete_vault_file().is_ok());
     }
 }
