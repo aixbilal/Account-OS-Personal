@@ -24,7 +24,7 @@ const ARGON2_MEMORY_KIB: u32 = 65_536;
 const ARGON2_ITERATIONS: u32 = 3;
 const ARGON2_PARALLELISM: u32 = 1;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
     pub id: String,
@@ -42,6 +42,32 @@ pub struct Account {
     pub notes: String,
     pub created_at: String,
     pub updated_at: String,
+}
+
+/// Hand-rolled so a stray `dbg!`, log line, `.expect()` message, or panic can
+/// never dump stored credentials. `password`, `recovery_information` and
+/// `two_factor_information` are replaced with `[REDACTED]`; every other field
+/// still renders so the output stays useful for debugging. `VaultData`'s derived
+/// `Debug` routes through this impl, so it is redacted too.
+impl std::fmt::Debug for Account {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Account")
+            .field("id", &self.id)
+            .field("service_name", &self.service_name)
+            .field("account_name", &self.account_name)
+            .field("category", &self.category)
+            .field("username", &self.username)
+            .field("email", &self.email)
+            .field("website", &self.website)
+            .field("password", &"[REDACTED]")
+            .field("authentication_method", &self.authentication_method)
+            .field("recovery_information", &"[REDACTED]")
+            .field("two_factor_information", &"[REDACTED]")
+            .field("notes", &self.notes)
+            .field("created_at", &self.created_at)
+            .field("updated_at", &self.updated_at)
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -620,6 +646,35 @@ mod tests {
         assert!(!stored_text.contains("Claude Personal TEST"));
         assert!(!stored_text.contains("test@example.invalid"));
         assert!(!stored_text.contains("FAKE-PASSWORD-ONLY"));
+    }
+
+    #[test]
+    fn account_debug_output_redacts_secret_fields() {
+        let vault = fake_vault();
+        let account = &vault.accounts[0];
+        let rendered = format!("{:?}", account);
+
+        // The three sensitive fields never appear in Debug output.
+        assert!(!rendered.contains("FAKE-PASSWORD-ONLY"));
+        assert!(!rendered.contains("recovery@example.invalid"));
+        assert!(!rendered.contains("Authenticator TEST"));
+        assert!(rendered.contains("[REDACTED]"));
+
+        // Non-secret fields still render so the output stays useful.
+        assert!(rendered.contains("account-test"));
+        assert!(rendered.contains("Claude"));
+        assert!(rendered.contains("test@example.invalid"));
+    }
+
+    #[test]
+    fn vault_data_debug_output_redacts_account_secrets_transitively() {
+        // VaultData derives Debug; it must inherit Account's redaction.
+        let rendered = format!("{:?}", fake_vault());
+
+        assert!(!rendered.contains("FAKE-PASSWORD-ONLY"));
+        assert!(!rendered.contains("recovery@example.invalid"));
+        assert!(!rendered.contains("Authenticator TEST"));
+        assert!(rendered.contains("[REDACTED]"));
     }
 
     #[test]
