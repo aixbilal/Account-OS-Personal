@@ -181,8 +181,21 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let storage_dir = app.path().app_data_dir()?;
+            let service = VaultService::new(storage_dir);
+
+            // Clear any *.tmp files a previous run left behind if it was killed
+            // mid-save. They are ciphertext-only litter. Log names only.
+            let swept = service.sweep_stale_temp_files();
+            if !swept.is_empty() {
+                eprintln!(
+                    "account-os: removed {} stale temp file(s) from an interrupted save: {}",
+                    swept.len(),
+                    swept.join(", ")
+                );
+            }
+
             app.manage(VaultState {
-                service: VaultService::new(storage_dir),
+                service,
                 unlocked_vault: Mutex::new(None),
             });
             Ok(())

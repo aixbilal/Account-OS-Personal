@@ -376,6 +376,35 @@ impl VaultService {
         Ok(unlocked)
     }
 
+    /// Removes leftover `*.tmp` files from a previously interrupted atomic write.
+    ///
+    /// `atomic_write_to` writes to a uniquely named `.<rand>.tmp` file and then
+    /// renames it over the target; its own error path deletes that temp file.
+    /// Only a hard crash (power loss, kill) between the write and the rename can
+    /// leave one behind. Such a file holds nothing but AEAD ciphertext — no
+    /// plaintext — but it is litter. Call this once at startup.
+    ///
+    /// The real vault file is never touched. Returns the bare file names (not
+    /// paths, not contents) of what it removed, so the caller can log them.
+    /// A missing directory or an unremovable entry is ignored — this never fails.
+    pub fn sweep_stale_temp_files(&self) -> Vec<String> {
+        let mut removed = Vec::new();
+        let Ok(entries) = fs::read_dir(&self.storage_dir) else {
+            return removed;
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            if name == VAULT_FILE_NAME || !name.ends_with(".tmp") {
+                continue;
+            }
+            if entry.path().is_file() && fs::remove_file(entry.path()).is_ok() {
+                removed.push(name.into_owned());
+            }
+        }
+        removed
+    }
+
     fn vault_path(&self) -> PathBuf {
         self.storage_dir.join(VAULT_FILE_NAME)
     }
@@ -675,6 +704,47 @@ mod tests {
         assert!(!rendered.contains("recovery@example.invalid"));
         assert!(!rendered.contains("Authenticator TEST"));
         assert!(rendered.contains("[REDACTED]"));
+    }
+
+    #[test]
+    fn sweep_stale_temp_files_removes_leftovers_without_touching_the_vault() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().to_path_buf());
+        let mut unlocked = service.create("test-master-password".into()).unwrap();
+        unlocked.data = fake_vault();
+        service.save_unlocked(&unlocked).unwrap();
+        let vault_bytes_before = fs::read(service.vault_path()).unwrap();
+
+        // Plant stale temp files shaped like unique_temp_path output.
+        let stale_one = directory.path().join(".AbC123stale.tmp");
+        let stale_two = directory.path().join(".zzz999.tmp");
+        fs::write(&stale_one, b"leftover ciphertext one").unwrap();
+        fs::write(&stale_two, b"leftover ciphertext two").unwrap();
+        // A non-temp sibling must be left alone.
+        let sibling = directory.path().join("notes.txt");
+        fs::write(&sibling, b"keep me").unwrap();
+
+        let removed = service.sweep_stale_temp_files();
+
+        assert_eq!(removed.len(), 2);
+        assert!(removed.contains(&".AbC123stale.tmp".to_string()));
+        assert!(removed.contains(&".zzz999.tmp".to_string()));
+        assert!(!stale_one.exists());
+        assert!(!stale_two.exists());
+        assert!(sibling.exists());
+        // The real vault file is byte-for-byte untouched and still unlocks.
+        assert_eq!(fs::read(service.vault_path()).unwrap(), vault_bytes_before);
+        assert_eq!(
+            service.unlock("test-master-password".into()).unwrap().data,
+            unlocked.data
+        );
+    }
+
+    #[test]
+    fn sweep_stale_temp_files_is_a_noop_when_the_directory_is_missing() {
+        let directory = tempdir().unwrap();
+        let service = VaultService::new(directory.path().join("does-not-exist"));
+        assert!(service.sweep_stale_temp_files().is_empty());
     }
 
     #[test]
