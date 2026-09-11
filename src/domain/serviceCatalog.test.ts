@@ -41,7 +41,24 @@ describe("local service identity catalog", () => {
     expect(new Set(aliases).size).toBe(aliases.length);
     expect(domains.every((domain) => /^[a-z0-9][a-z0-9.-]*\.[a-z]{2,}$/.test(domain))).toBe(true);
     expect(serviceCatalog.every((service) => service.status === "catalog-v1" && Boolean(service.visualIdentity.trademarkNotice))).toBe(true);
-    expect(priorityServiceIds.every((id) => serviceCatalog.some((service) => service.id === id && service.iconStrategy !== "neutral-local-mark"))).toBe(true);
-    expect(serviceCatalog.filter((service) => !priorityServiceIds.includes(service.id as typeof priorityServiceIds[number])).every((service) => service.iconStrategy === "neutral-local-mark" && service.licenseStatus === "no-trademark-asset")).toBe(true);
+    // Every non-priority service must still be internally consistent: a
+    // neutral monogram strategy paired with the matching license status.
+    expect(serviceCatalog.filter((service) => !priorityServiceIds.includes(service.id)).every((service) => service.iconStrategy === "neutral-local-mark" && service.licenseStatus === "no-trademark-asset")).toBe(true);
+  });
+
+  it("Phase 2 icon fix: matches a real bundled brand icon for known major brands beyond the original 10, not just a monogram", () => {
+    // Regression coverage for the confirmed bug: PayPal (and many other
+    // catalog services the installed simple-icons package already covers)
+    // used to fall back to a 2-letter monogram because only 10 hardcoded
+    // ids ever got a real icon. `priorityServiceIds` is now derived from
+    // the catalog itself, so this only stays green if the fix is real.
+    for (const id of ["paypal", "vercel", "supabase", "npm", "notion", "steam"]) {
+      const service = serviceCatalog.find((candidate) => candidate.id === id);
+      expect(service?.iconStrategy).toBe("simple-icons-svg");
+      expect(service?.visualIdentity.iconSource).toBe("simple-icons");
+    }
+    // Not a 94/94 coverage goal (Section 3.2) - but the fix should recover
+    // real icons for the large majority of the catalog, not a handful.
+    expect(priorityServiceIds.length).toBeGreaterThanOrEqual(60);
   });
 });

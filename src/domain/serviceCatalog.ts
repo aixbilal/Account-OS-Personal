@@ -1,3 +1,5 @@
+import { iconRegistry } from "./iconRegistry";
+
 export type ServiceIconSource = "simple-icons" | "local" | "monogram";
 
 export interface ServiceVisualIdentity {
@@ -132,6 +134,52 @@ function simpleIconVisual(
   };
 }
 
+/**
+ * A pale tint of `hex`, mixed toward white. Used to derive a chip/badge
+ * background for every service that gets its color from `iconRegistry`
+ * (the package's own official brand hex) rather than a hand-curated pair,
+ * so the auto-covered ~55 services (Phase 2) still get a soft, on-brand
+ * secondary accent instead of one flat neutral gray.
+ */
+function paleTint(hex: string, mixWithWhite = 0.9) {
+  const normalized = hex.replace("#", "");
+  const value = Number.parseInt(normalized, 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  const mix = (channel: number) => Math.round(channel + (255 - channel) * mixWithWhite);
+  return `#${[r, g, b].map((channel) => mix(channel).toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
+ * Builds a `simple-icons`-backed visual identity straight from the
+ * installed package's own data (hex, guidelines URL) for a catalog id that
+ * `iconRegistry` covers but that has no hand-curated entry in
+ * `priorityVisuals` above. This is the Phase 2 fix: previously only the 10
+ * ids in `priorityVisuals` ever got a real icon, even though the package
+ * bundles real marks for dozens more (PayPal included).
+ */
+function registryVisual(id: string) {
+  const icon = iconRegistry[id];
+  if (!icon) return undefined;
+  const accent = `#${icon.hex}`;
+  return {
+    accent,
+    secondaryAccent: paleTint(accent),
+    iconStrategy: "simple-icons-svg" as const,
+    licenseStatus: "brand-guidelines-apply" as const,
+    visualIdentity: {
+      iconSource: "simple-icons" as const,
+      iconSlug: icon.slug,
+      iconPackage: SIMPLE_ICONS_PACKAGE,
+      iconSourceUrl: icon.guidelines ?? null,
+      iconGuidelinesUrl: icon.guidelines ?? null,
+      iconLicense: null,
+      trademarkNotice: PACKAGE_TRADEMARK_NOTICE,
+    },
+  };
+}
+
 function localVisual(accent: string, secondaryAccent: string) {
   return {
     accent,
@@ -152,7 +200,7 @@ function localVisual(accent: string, secondaryAccent: string) {
 
 export const serviceCatalog: CatalogService[] = groups.map(
   ([id, displayName, domains, aliases, category], index) => {
-    const visual = priorityVisuals[id];
+    const visual = priorityVisuals[id] ?? registryVisual(id);
     if (visual) {
       return {
         id,
@@ -165,14 +213,20 @@ export const serviceCatalog: CatalogService[] = groups.map(
       };
     }
 
+    // Phase 2 restyle: previously every fallback shared one flat gray
+    // (`#E7EDF2`) regardless of its rotating accent, which read as dull. The
+    // secondary accent is now a pale tint of that same entry's own accent,
+    // so each unmatched service still gets a coherent two-tone mark instead
+    // of a colored ring around a gray disc.
+    const monogramAccent = ["#3B5E86", "#8A4E72", "#3F6B73", "#5C7050"][index % 4];
     return {
       id,
       displayName,
       domains,
       aliases,
       category,
-      accent: ["#315A7D", "#7B4A69", "#465B6F", "#5C7050"][index % 4],
-      secondaryAccent: "#E7EDF2",
+      accent: monogramAccent,
+      secondaryAccent: paleTint(monogramAccent, 0.88),
       iconStrategy: "neutral-local-mark",
       licenseStatus: "no-trademark-asset",
       status: "catalog-v1",
@@ -189,18 +243,20 @@ export const serviceCatalog: CatalogService[] = groups.map(
   },
 );
 
-export const priorityServiceIds = [
-  "google",
-  "spotify",
-  "github",
-  "instagram",
-  "microsoft",
-  "apple",
-  "youtube",
-  "linkedin",
-  "discord",
-  "facebook",
-] as const;
+/**
+ * Every catalog id that renders a real brand mark - either a `simple-icons`
+ * SVG (hand-curated in `priorityVisuals` or auto-derived via
+ * `registryVisual`/`iconRegistry`) or a hand-built local recognition mark
+ * (Microsoft, LinkedIn) - as opposed to the generic neutral monogram.
+ * Derived from `serviceCatalog` itself (rather than hand-maintained) so it
+ * can't silently drift out of sync with `iconRegistry` the way the old
+ * hardcoded 10-id list did, which is what caused the Phase 2 bug: PayPal
+ * (and ~50 other services the bundled icon package already covers) fell
+ * back to a monogram purely because this list forgot to mention them.
+ */
+export const priorityServiceIds = serviceCatalog
+  .filter((service) => service.iconStrategy !== "neutral-local-mark")
+  .map((service) => service.id);
 
 export const genericIdentityCategories = [
   "Email",

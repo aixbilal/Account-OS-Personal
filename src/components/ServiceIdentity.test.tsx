@@ -18,6 +18,15 @@ describe("ServiceIdentity local priority services", () => {
     expect(resolveServiceIdentity(serviceName)).toMatchObject({ id, iconSource });
   });
 
+  it.each([
+    ["PayPal", "paypal"],
+    ["Vercel", "vercel"],
+    ["Notion", "notion"],
+    ["Steam", "steam"],
+  ])("Phase 2 icon fix: %s resolves to its real bundled logo, not a monogram", (serviceName, id) => {
+    expect(resolveServiceIdentity(serviceName)).toMatchObject({ id, iconSource: "simple-icons" });
+  });
+
   it("prefers a real website domain and keeps unknown services intentional", () => {
     expect(resolveServiceIdentity("Personal mail", "https://accounts.google.com/login")).toMatchObject({ id: "google" });
     expect(resolveServiceIdentity("Northern Star Archive")).toMatchObject({ id: "custom", monogram: "NS", iconSource: "monogram" });

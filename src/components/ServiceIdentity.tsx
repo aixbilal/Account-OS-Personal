@@ -1,32 +1,12 @@
 import type { CSSProperties } from "react";
-import {
-  siApple,
-  siDiscord,
-  siFacebook,
-  siGithub,
-  siGoogle,
-  siInstagram,
-  siSpotify,
-  siYoutube,
-} from "simple-icons";
 import type { Account } from "../domain/types";
+import { iconRegistry } from "../domain/iconRegistry";
 import { resolveCatalogService, type CatalogService } from "../domain/serviceCatalog";
 
-interface LocalSimpleIcon {
-  path: string;
-  title: string;
-}
-
-const packagedIcons: Record<string, LocalSimpleIcon> = {
-  apple: siApple,
-  discord: siDiscord,
-  facebook: siFacebook,
-  github: siGithub,
-  google: siGoogle,
-  instagram: siInstagram,
-  spotify: siSpotify,
-  youtube: siYoutube,
-};
+// Real bundled brand marks, keyed by catalog id (see domain/iconRegistry -
+// Phase 2 of the V3 UI correction pass fixed this from a hardcoded 8-id
+// allowlist to every service the installed `simple-icons` package covers).
+const packagedIcons = iconRegistry;
 
 export interface ServiceIdentity {
   id: string;
