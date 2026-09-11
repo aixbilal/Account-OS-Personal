@@ -2,11 +2,19 @@
 
 ## Authoritative checkpoint
 
-`bee3fd0` — `docs: 2026-09-11 walkthrough — F1/F2/F3 verified in the running app
-+ rekey UI`. Code state includes the 2026-09-11 finish-out: `22fce96` (F1/F2/F3
-fixes), `6acaf19` (master password change / vault rekey), `d1b789f` (Phase 3
-audit hardening), `bee3fd0` (walkthrough). Supersedes the `13463d7` / `99fd15e`
-checkpoint and everything older.
+`32f18f7` — `docs(v3): Phase 7 dark-theme final-regression addendum to
+design tokens doc`. This is the end of the "V3 UI Correction & Enhancement"
+workstream (Phases 1–7 of `ACCOUNT-OS-V3-UI-CORRECTION-MASTER-PLAN.md`,
+which may since have been deleted per that plan's own instructions — see
+`ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md` at the repo root for the
+self-contained account of what changed and why).
+
+Code state, in order: `5622fae` (Phase 1, tokens) → `c1d081e` (Phase 2,
+icon fix) → `a129758` (Phase 3, inspector restyle) → `abc4fe7` (Phase 4,
+Add/Edit form) → `bd6ba88` (Phase 5, new Relationships screen) →
+`b3fac75` (Phase 6, Map restyle) → `6e4c624` + `af7578f` (Phase 7,
+Settings/Danger Zone + dark-mode fix) → `6e0923c` + `32f18f7` (Phase 7
+docs). Supersedes the `bee3fd0` checkpoint and everything older.
 
 ## Version and metadata
 
@@ -14,7 +22,7 @@ The application, npm package, Cargo package, and Tauri bundle are consistently
 versioned `0.1.0`. No separate public V3/1.0 version has been decided; none was
 invented. **Version decision required before public release.**
 
-## Windows artifacts — rebuilt 2026-09-11 from HEAD
+## Windows artifacts — rebuilt 2026-09-12 from HEAD
 
 `npx tauri build` (which runs `npm run build` first) completed with exit 0 and
 produced all three bundles. These files are **not** committed (`.gitignore`
@@ -22,47 +30,47 @@ excludes `src-tauri/target/`); the hashes below identify this build.
 
 | Artifact | Path | Size (bytes) | SHA-256 |
 | --- | --- | ---: | --- |
-| EXE | `src-tauri/target/release/account-os.exe` | 9,614,848 | `99f81007dfb769c587b16575aea3047d0bef245a8a8936e283a750a346731ad8` |
-| MSI | `src-tauri/target/release/bundle/msi/Account OS_0.1.0_x64_en-US.msi` | 3,301,376 | `404213bb2f3d508cf93e949c109d37c2a476c5a710df95e7e432c9a70a95cef1` |
-| NSIS | `src-tauri/target/release/bundle/nsis/Account OS_0.1.0_x64-setup.exe` | 2,214,658 | `25803a3c98d566ab3f6da897b4791116eccf45cd01a7e2404282efe520f2cd48` |
+| EXE | `src-tauri/target/release/account-os.exe` | 9,711,104 | `d2b52d1b169d49befa3030274a1eba42447c9469988084cd81d1ba0c64d375ba` |
+| MSI | `src-tauri/target/release/bundle/msi/Account OS_0.1.0_x64_en-US.msi` | 3,350,528 | `72b342a61230b10ff1491bbd6bf52ae32e35e22be397d7ecf7c679bd51f1d763` |
+| NSIS | `src-tauri/target/release/bundle/nsis/Account OS_0.1.0_x64-setup.exe` | 2,247,383 | `4a8a283e209f0e17e3cab714482858cd682a39ec095f45f0064db2c8adc47627` |
 
 x64 (`0x8664`), all three unsigned. Windows SmartScreen/reputation warnings may
 occur; no signing certificate was created or simulated.
 
-The prior 2026-09-10 artifacts (EXE `86e81f84…`, MSI `80cd3ee4…`, NSIS `f8c460a8…`)
-and the 2026-09-06 artifacts before them are superseded by this build.
+The prior 2026-09-11 artifacts (EXE `99f81007…`, MSI `404213bb…`, NSIS
+`25803a3c…`) and everything before them are superseded by this build.
 
-## Verification — 2026-09-11, at HEAD `bee3fd0`
+## Verification — 2026-09-12, at HEAD `32f18f7`
 
-- Frontend: **79/79** tests passed (17 files), `npm test`.
-- Rust: **22/22** tests passed, `cargo test` (includes rekey round-trip, wrong-current-password rejection, simulated mid-rekey write-failure).
-- Typecheck (`tsc --noEmit`): pass. Production frontend build (`npm run build`): pass (non-blocking 695.75 kB chunk-size warning — pre-existing, grew ~48 kB with the rekey UI). `npx tauri build`: pass (EXE + MSI + NSIS).
-- `npm audit`: **0 vulnerabilities**. `npm audit --omit=dev`: **0 vulnerabilities**.
-- `cargo audit`: run this session (network available). **0 vulnerabilities**; 7 allowed warnings — 6 "unmaintained" (`proc-macro-error`, `unic-*`) and 1 "unsound" (`glib 0.18.5` `VariantStrIter`, a GTK/Linux transitive dep not on the Windows path). None in the crypto path.
-- Secret scan of `src/` and `dist/`: pass — no private keys, service-role keys, GitHub PATs, AWS keys, or JWT-shaped strings. `dist/` contains the `VITE_SUPABASE_URL` project ref and the `sb_publishable_…` key, both intentional client-side config baked by Vite; `sb_secret_` appears only as a bare guard literal in the Supabase SDK. `demo-not-a-real-password-*` placeholders live only in `src/data/devSeedVault.{json,ts}` (tree-shaken out of the production bundle).
-- Renderer walkthrough against the 20-account synthetic fixture: F1/F2/F3 verified resolved in the running app; full regression clean, no JS errors — see `ACCOUNT-OS-V3-WALKTHROUGH-2026-09-11.md`.
+- Frontend: **114/114** tests passed (21 files), `npm test`.
+- Rust: **30/30** tests passed, `cargo test` (adds 4 new tests this workstream: `vault_file_size_is_none_before_creation_and_a_real_byte_count_after`, `storage_dir_exposes_the_same_directory_the_service_was_built_with`, `delete_vault_file_removes_the_vault_and_leaves_siblings_alone`, `delete_vault_file_is_a_no_op_when_there_is_no_vault`).
+- Typecheck (`tsc --noEmit`): pass. Production frontend build (`npm run build`): pass (non-blocking chunk-size warning, pre-existing; now 773.63 kB / 236.85 kB gzip — grew across this workstream mainly from Phase 2's ~55 additional bundled brand icon SVGs). `npx tauri build`: pass (EXE + MSI + NSIS).
+- `npm audit` and `npm audit --omit=dev`: **0 vulnerabilities**.
+- `cargo audit`: run this session (network available). **0 vulnerabilities**; 7 allowed warnings — 6 "unmaintained" (`unic-*`) and 1 "unsound" (`glib 0.18.5` `VariantStrIter`, a GTK/Linux transitive dep not on the Windows path). None in the crypto path. Same set as every prior report; none introduced by this workstream.
+- `cargo clippy --all-targets`: clean, 0 warnings.
+- Secret scan of `src/`, `dist/`, and `src-tauri/src/`: pass — no private keys, service-role keys, GitHub PATs, AWS keys, or JWT-shaped strings. `dist/` contains only the intentional `sb_publishable_…` Supabase client key. `demo-not-a-real-password-*` placeholders live only in `src/data/devSeedVault.{json,ts}` (tree-shaken out of the production bundle).
+- Full renderer walkthrough against the 20-account / 15-relationship synthetic fixture, both light and dark themes, every screen this workstream touched (Vault/inspector, Add/Edit, Map, Relationships, Settings): zero console errors. Screenshots in `docs/walkthrough-2026-09-11-phase7/{light,dark}/`. See `ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md` for the full account.
 
-## Manual gates (owner only)
+## Manual gates (owner only) — unchanged by this workstream
 
-1. Direct native visual/UX review of the built app using an isolated synthetic profile.
+1. Direct native visual/UX review of the built app using an isolated synthetic profile — now additionally covering the Settings → System Device card, real vault-size display, Delete Vault, and Reset App, none of which could be click-tested outside the native app (see the final report's honesty notes).
 2. Disposable interactive installer smoke launch (EXE/MSI/NSIS).
 3. Public version decision, then any merge / tag / freeze / publish.
 
-## Previously flagged — now resolved (2026-09-11)
+## Left for owner decision
 
-- **React Flow attribution** (F1): `proOptions={{ hideAttribution: true }}` reverted; the attribution link is visible and the console warning is gone.
-- **Map node deselect** (F2): `onPaneClick` + an `Escape` handler clear the selection and restore every node to full opacity.
-- **Add/Edit validation** (F3): `<form class="editor-form">` now has `noValidate`; the app's styled `role="alert"` error fires instead of the native bubble.
-- **Change master password**: implemented — `change_master_password` in `src-tauri/src/{vault,lib}.rs` (Argon2id re-key, fresh salt, verify-before-swap, atomic write) and a card in Settings → Security.
+Carried forward, unchanged by this workstream (still real, still not this workstream's scope):
 
-## Left for owner decision (from the Phase 3 self-audit)
+- `Account` derives `Debug` over a plaintext `password` field — **resolved** 2026-09-11 (redacting Debug impl shipped; see the security-ledger cleanup commits before this workstream).
+- No clipboard-clear timer — **resolved** 2026-09-11 (40s auto-clear shipped).
+- Master password crosses the webview heap as a JS string (inherent to Tauri; applies to create/unlock/import too) — still open, investigate-only doc exists.
+- Supabase session persisted to `localStorage` (`persistSession: true`; standard, and separate from vault unlock per D020) — still open.
+- Vault file mode not pinned to 0600 on Unix (Windows-first app) — still open.
 
-- `Account` derives `Debug` over a plaintext `password` field (no current code path prints it).
-- No clipboard-clear timer (already documented as an intentional V3 omission).
-- Master password crosses the webview heap as a JS string (inherent to Tauri; applies to create/unlock/import too).
-- Supabase session persisted to `localStorage` (`persistSession: true`; standard, and separate from vault unlock per D020).
-- Orphaned `.tmp` on a hard crash between temp-write and rename (ciphertext only; pre-existing for every save).
-- Vault file mode not pinned to 0600 on Unix (Windows-first app).
+New from this workstream — see the final report's "left for your call" section for full reasoning:
+
+- Category is intentionally still a plain read-only field in the inspector, not the reference's dropdown-styled box (would imply inline editing that isn't wired up).
+- The Relationships screen (Phase 5) was built despite the Screen Reference Ledger's "planned only" note for dedicated screens — the master plan explicitly pre-authorized this specific exception; flagged rather than silently overridden.
+- Auto-lock-by-inactivity and a real clear-clipboard *toggle* (vs. today's always-on behavior) remain out of scope, per the master plan's own Section 3.6 marking them optional.
 
 No passwords, vaults, backups, or installers are committed to this repository.
-Screenshots under `docs/walkthrough-2026-09-11/` are synthetic-data renderer captures.

@@ -1,76 +1,87 @@
 {
   "project": "Account OS - Personal Digital Identity Vault",
-  "stage": "V3 finish-out complete (F1/F2/F3 + master password change) - human visual acceptance and installer smoke pending",
+  "stage": "V3 UI Correction & Enhancement workstream complete (Phases 1-7) - human visual acceptance and installer smoke pending",
   "repository": "C:\\Account OS",
   "branch": "v3-design-intelligence",
-  "checkpoint_commit": "bee3fd0",
-  "checkpoint_subject": "docs: 2026-09-11 walkthrough - F1/F2/F3 verified in the running app + rekey UI",
+  "checkpoint_commit": "32f18f7",
+  "checkpoint_subject": "docs(v3): Phase 7 dark-theme final-regression addendum to design tokens doc",
   "code_state_commits": [
-    "22fce96 fix(v3): revert Map attribution hiding, add Map deselect, activate styled form errors",
-    "6acaf19 feat(v3): master password change (vault rekey)",
-    "d1b789f harden(v3): rekey form hygiene from the Phase 3 self-audit",
-    "bee3fd0 docs: 2026-09-11 walkthrough"
+    "5622fae feat(v3): Phase 1 - re-extract the light palette, scaffold dark companions",
+    "c1d081e fix(v3): Phase 2 - major brands (PayPal etc.) now render their real logo",
+    "a129758 feat(v3): Phase 3 - restyle Vault inspector to match the reference",
+    "abc4fe7 feat(v3): Phase 4 - flatten Add/Edit form, real password strength checklist",
+    "bd6ba88 feat(v3): Phase 5 - new Relationships screen (pre-approved scope, Section 3.5)",
+    "b3fac75 feat(v3): Phase 6 - restyle the Map with Phase 1 tokens and category color hints",
+    "6e4c624 feat(v3): Phase 7 backend - real device/storage facts, vault deletion",
+    "af7578f feat(v3): Phase 7 frontend - Settings System/Danger Zone, dark-mode fix",
+    "6e0923c docs(v3): Phase 7 final regression walkthrough screenshots",
+    "32f18f7 docs(v3): Phase 7 dark-theme final-regression addendum to design tokens doc"
   ],
-  "supersedes_checkpoint": "13463d7 (code state 99fd15e)",
+  "supersedes_checkpoint": "bee3fd0 (2026-09-11 finish-out) and 0741973 (security-ledger cleanup, same session as this workstream started from)",
   "git_clean": true,
-  "pushed_to_origin": "NOT pushed this session - local commits 22fce96..bee3fd0 ahead of origin/v3-design-intelligence",
+  "pushed_to_origin": "NOT pushed this session - owner's call, per every prior checkpoint in this project",
   "version": "0.1.0",
-  "verified_on": "2026-09-11",
-  "workflow_note": "Codex is no longer part of this project. Claude Code is sole implementer AND reviewer going forward. See CONTINUE-ACCOUNT-OS.md section 0.",
-  "frontend_tests": { "passed": 79, "failed": 0, "files": 17, "command": "npm test (vitest run)" },
-  "rust_tests": { "passed": 22, "failed": 0, "command": "cargo test", "new_this_session": ["change_master_password_round_trips_under_the_new_password", "change_master_password_rejects_a_wrong_current_password_and_leaves_the_file_untouched", "change_master_password_leaves_the_original_vault_intact_when_the_atomic_write_fails"] },
-  "build": { "typecheck": "PASS", "production_build": "PASS (non-blocking 695.75 kB chunk-size warning)", "tauri_build": "PASS (exit 0): EXE + MSI + NSIS" },
+  "verified_on": "2026-09-12",
+  "workflow_note": "Claude Code is sole implementer AND reviewer. This checkpoint covers the 7-phase UI correction/enhancement workstream run from ACCOUNT-OS-V3-UI-CORRECTION-MASTER-PLAN.md (repo root - may be deleted per that doc's own instructions once ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md exists, which it now does).",
+  "frontend_tests": { "passed": 114, "failed": 0, "files": 21, "command": "npm test (vitest run)" },
+  "rust_tests": { "passed": 30, "failed": 0, "command": "cargo test", "new_this_session": ["vault_file_size_is_none_before_creation_and_a_real_byte_count_after", "storage_dir_exposes_the_same_directory_the_service_was_built_with", "delete_vault_file_removes_the_vault_and_leaves_siblings_alone", "delete_vault_file_is_a_no_op_when_there_is_no_vault"] },
+  "build": { "typecheck": "PASS", "production_build": "PASS (non-blocking 773.63 kB chunk-size warning, pre-existing category; grew mainly from Phase 2's ~55 additional bundled brand icons)", "tauri_build": "PASS (exit 0): EXE + MSI + NSIS" },
   "security": {
     "npm_audit": "0 vulnerabilities",
     "npm_audit_omit_dev": "0 vulnerabilities",
-    "cargo_audit": "RUN 2026-09-11 (network available): 0 vulnerabilities; 7 allowed warnings (6 unmaintained proc-macro-error/unic-*, 1 unsound glib 0.18.5 VariantStrIter - GTK/Linux transitive, not on Windows path). None in the crypto path.",
-    "source_secret_scan": "PASS - src/ and dist/. dist/ carries only the Supabase project URL + sb_publishable_ key (intentional Vite client config); sb_secret_ appears only as a bare SDK guard literal. No private keys, service-role keys, JWTs, PATs, or AWS keys.",
-    "phase3_self_audit": "Full adversarial pass over the crypto/vault boundary. No active vulnerability found. Two small fixes applied (rekey >=12 char minimum, clear fields on error). Six items left for owner - see release manifest and CONTINUE-ACCOUNT-OS.md section I."
+    "cargo_audit": "RUN 2026-09-12 (network available): 0 vulnerabilities; 7 allowed warnings (6 unmaintained unic-*, 1 unsound glib 0.18.5 VariantStrIter - GTK/Linux transitive, not on Windows path). Same set as every prior report; none introduced by this workstream.",
+    "cargo_clippy": "clean, 0 warnings",
+    "source_secret_scan": "PASS - src/, dist/, src-tauri/src/. dist/ carries only the Supabase project URL + sb_publishable_ key (intentional Vite client config). No private keys, service-role keys, JWTs, PATs, or AWS keys."
   },
-  "master_password_change": {
-    "status": "IMPLEMENTED",
-    "backend": "src-tauri/src/vault.rs VaultService::change_master_password + src-tauri/src/lib.rs change_master_password command",
-    "design": "authenticate current password against on-disk vault -> derive new Argon2id key from a fresh random salt -> re-encrypt full vault -> verify the new envelope decrypts with the new password -> atomic temp-file/fsync/rename/fsync-dir swap. Any failure at any step leaves the original file byte-for-byte intact.",
-    "ui": "Settings -> Security 'Change master password' card (current/new/confirm, shared show-hide, confirm dialog). Web renderer defers with an 'installed desktop application' message and never calls the backend.",
-    "atomicity_confidence": "HIGH that no failure mode yields a partial/truncated/corrupt vault - the worst case is 'rekey did not take effect, old password still works'. The one unproven assumption is OS-level atomicity of fs::rename over every Windows filesystem/AV/OneDrive scenario, which every existing save_vault call already relies on; this change introduces nothing new there.",
-    "native_round_trip": "NOT click-tested in a native window this session (no desktop-automation tool; renderer cannot exercise native unlock). Covered by the 3 Rust tests above + 6 SettingsScreen.test.tsx tests. Remains part of the owner's native acceptance pass."
+  "ui_correction_workstream": {
+    "status": "COMPLETE - all 7 phases",
+    "plan_doc": "ACCOUNT-OS-V3-UI-CORRECTION-MASTER-PLAN.md (repo root, may be deleted now that the report below exists)",
+    "report_doc": "ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md (repo root) - self-contained final report, does not depend on the plan doc existing",
+    "phase_1_tokens": "Re-extracted the light palette from the reference PNGs via PowerShell pixel sampling (no Python in this environment); scaffolded dark-theme companion tokens.",
+    "phase_2_icons": "Fixed the real-icon matching bug (PayPal etc. now show real logos): before 6 real logos / 3 local marks / 11 monogram of 20 seeded accounts -> after 12 / 3 / 5.",
+    "phase_3_vault_inspector": "Real-logo banner watermark, un-boxed continuous field panel, labeled Copy/Open buttons, inspector overflow menu with Delete account.",
+    "phase_4_add_edit": "Flattened form layout with captions, live password-strength checklist, 2FA type+detail split (no schema change), relabeled password action buttons.",
+    "phase_5_relationships": "New Relationships nav item/screen: stat cards, single-account radial ego-graph, connected-accounts panel. Built despite the Screen Reference Ledger's 'planned only' note per the master plan's explicit pre-authorization.",
+    "phase_6_map": "Category color-hint dots + legend, edge-label legibility fix (dead CSS selector), Phase 1 tokens flow through automatically.",
+    "phase_7_settings_dark": "Settings System tab: real Device card, real vault file size, Delete Vault + Reset App danger-zone actions. Dark theme final-regression pass (found and fixed a Relationships-screen dark-mode CSS scoping bug).",
+    "screenshots": "docs/walkthrough-2026-09-11-phase7/{light,dark}/ - fresh seeded-vault captures for every touched screen."
   },
   "service_identity_catalog_entries": 94,
   "delivery_artifacts": {
-    "status": "REBUILT 2026-09-11 from HEAD via npx tauri build (exit 0): EXE + MSI + NSIS",
+    "status": "REBUILT 2026-09-12 from HEAD 32f18f7 via npx tauri build (exit 0): EXE + MSI + NSIS",
     "hashes": {
-      "exe": { "path": "src-tauri/target/release/account-os.exe", "size_bytes": 9614848, "sha256": "99f81007dfb769c587b16575aea3047d0bef245a8a8936e283a750a346731ad8" },
-      "msi": { "path": "src-tauri/target/release/bundle/msi/Account OS_0.1.0_x64_en-US.msi", "size_bytes": 3301376, "sha256": "404213bb2f3d508cf93e949c109d37c2a476c5a710df95e7e432c9a70a95cef1" },
-      "nsis": { "path": "src-tauri/target/release/bundle/nsis/Account OS_0.1.0_x64-setup.exe", "size_bytes": 2214658, "sha256": "25803a3c98d566ab3f6da897b4791116eccf45cd01a7e2404282efe520f2cd48" }
+      "exe": { "path": "src-tauri/target/release/account-os.exe", "size_bytes": 9711104, "sha256": "d2b52d1b169d49befa3030274a1eba42447c9469988084cd81d1ba0c64d375ba" },
+      "msi": { "path": "src-tauri/target/release/bundle/msi/Account OS_0.1.0_x64_en-US.msi", "size_bytes": 3350528, "sha256": "72b342a61230b10ff1491bbd6bf52ae32e35e22be397d7ecf7c679bd51f1d763" },
+      "nsis": { "path": "src-tauri/target/release/bundle/nsis/Account OS_0.1.0_x64-setup.exe", "size_bytes": 2247383, "sha256": "4a8a283e209f0e17e3cab714482858cd682a39ec095f45f0064db2c8adc47627" }
     },
     "committed": false,
-    "note": "src-tauri/target/ is gitignored; the 2026-09-10 build is superseded",
+    "note": "src-tauri/target/ is gitignored; the 2026-09-11 build is superseded",
     "signing": "unsigned x64; Windows SmartScreen/reputation warnings expected"
   },
   "open_decisions_for_owner": [
-    "Phase 3 audit - 'Account' derives Debug over a plaintext password field (no code path prints it today); consider a redacting Debug impl / SecretString newtype",
-    "Phase 3 audit - no clipboard-clear timer (already an intentional V3 omission)",
-    "Phase 3 audit - master password crosses the webview heap as an un-zeroable JS string (inherent to Tauri)",
-    "Phase 3 audit - Supabase session persisted to localStorage (persistSession: true; standard, separate from vault unlock)",
-    "Phase 3 audit - orphaned .tmp on a hard crash between temp-write and rename (ciphertext only; pre-existing)",
-    "Phase 3 audit - vault file mode not pinned to 0600 on Unix (Windows-first app)",
-    "Pre-existing: 2 clippy needless_borrow warnings in atomic_write_to (unrelated to this work; clippy is not a gate)",
-    "Delete Vault destructive action still absent - see SCOPE-CLARITY (low priority)",
-    "Default view preference still absent - see SCOPE-CLARITY (small)"
+    "Master password crosses the webview heap as an un-zeroable JS string (inherent to Tauri) - investigate-only doc exists, no change made",
+    "Supabase session persisted to localStorage (persistSession: true; standard, separate from vault unlock)",
+    "Vault file mode not pinned to 0600 on Unix (Windows-first app)",
+    "Category field in the inspector is intentionally still read-only, not the reference's dropdown-styled (implies-editable) box - see final report",
+    "Auto-lock-by-inactivity timer and a real clear-clipboard toggle remain unbuilt (optional per the master plan)",
+    "The Relationships screen's construction despite the Screen Reference Ledger's 'planned only' note - pre-authorized by the master plan, flagged per Section 1's own conflict-resolution rule"
   ],
   "resolved_this_session": [
-    "F1 - React Flow attribution un-hidden (xyflow docs restrict hiding to paid Pro); console warning gone",
-    "F2 - Map node selection now clearable via empty-canvas click and Escape",
-    "F3 - editor form has noValidate; styled role=alert error fires instead of the native bubble",
-    "Change master password capability added (was the main SCOPE-CLARITY flag)"
+    "Phase 1 - light palette re-extracted from real references, dark companions scaffolded",
+    "Phase 2 - PayPal/Vercel/Supabase/npm/Notion/Steam/etc. now show real bundled logos instead of a monogram (root cause: a hardcoded 10-id allowlist)",
+    "Phase 3 - Vault inspector restyled to match the reference (banner, field layout, button labels, overflow menu)",
+    "Phase 4 - Add/Edit form flattened, real password-strength checklist, 2FA type/detail split",
+    "Phase 5 - new Relationships screen shipped",
+    "Phase 6 - Map restyled with category hints and a legibility fix",
+    "Phase 7 - Settings Device/Storage/Danger Zone shipped, dark theme final-regression pass (with one bug found and fixed)"
   ],
   "known_automatable_p0_p1_p2_bugs": 0,
   "manual_gates": [
-    "Direct native visual/UX acceptance review of the built app using isolated synthetic data - now including a real master-password change, wrong-current-password rejection, and a fresh unlock with the new password",
+    "Direct native visual/UX acceptance review of the built app using isolated synthetic data - now also covering Settings -> System (Device card, real vault size, Delete Vault, Reset App), none of which could be exercised outside the native app this session",
     "Disposable interactive Windows installer smoke test",
     "Public version decision, and any merge/tag/freeze/publish (owner authorization required)",
-    "git push of 22fce96..bee3fd0 to origin (owner's call)"
+    "git push to origin (owner's call)"
   ],
-  "next_action": "Owner performs native visual acceptance (incl. the rekey flow) and installer smoke on the freshly built artifacts, reviews the Phase 3 'left for your call' list, then decides version/publish and whether to push. Do NOT start 1.0 Final scope until the owner explicitly freezes V3.",
+  "next_action": "Owner reads ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md, performs native visual acceptance (incl. the new Settings System tab and Delete Vault/Reset App flows) and installer smoke on the freshly built artifacts, then decides version/publish and whether to push.",
   "release_authorized": false
 }
