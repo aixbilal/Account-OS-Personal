@@ -1,5 +1,6 @@
 import { Copy, Eye, EyeOff, KeyRound, Link2, Pencil, Plus, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { copySecretToClipboard } from "../domain/clipboard";
 import { relationshipsForAccount } from "../domain/relationships";
 import type { Account, AccountRelationship } from "../domain/types";
 import { relationshipDirectionLabel } from "./RelationshipDialog";
@@ -22,10 +23,16 @@ export function AccountInspector({ account, accounts, onAddFirstAccount, onEdit,
 
   useEffect(() => setPasswordVisible(false), [account?.id]);
 
-  async function copy(value: string, label: string) {
+  async function copy(value: string, label: string, sensitive = false) {
     if (!value) return;
     try {
-      await navigator.clipboard.writeText(value);
+      // Sensitive values are auto-cleared from the clipboard after a short
+      // delay (see domain/clipboard); non-secret fields are a plain copy.
+      if (sensitive) {
+        await copySecretToClipboard(value);
+      } else {
+        await navigator.clipboard.writeText(value);
+      }
       onNotify?.(`${label} copied`, "success");
     } catch {
       onNotify?.(`${label} copy unavailable`, "error");
@@ -64,7 +71,7 @@ export function AccountInspector({ account, accounts, onAddFirstAccount, onEdit,
         <InspectorField action={account.email ? <CopyButton label="Copy email" onClick={() => void copy(account.email, "Email")} /> : undefined} label="Email" value={account.email || "Not recorded"} />
         <InspectorField action={account.username ? <CopyButton label="Copy username" onClick={() => void copy(account.username, "Username")} /> : undefined} label="Username" value={account.username || "Not recorded"} />
         <InspectorField
-          action={account.password ? <span className="field-actions"><button aria-label={passwordVisible ? "Hide password" : "Reveal password"} className="icon-button field-icon-action" onClick={() => setPasswordVisible((visible) => !visible)} type="button">{passwordVisible ? <EyeOff size={16} /> : <Eye size={16} />}</button><CopyButton iconOnly label="Copy password" onClick={() => void copy(account.password, "Password")} /></span> : undefined}
+          action={account.password ? <span className="field-actions"><button aria-label={passwordVisible ? "Hide password" : "Reveal password"} className="icon-button field-icon-action" onClick={() => setPasswordVisible((visible) => !visible)} type="button">{passwordVisible ? <EyeOff size={16} /> : <Eye size={16} />}</button><CopyButton iconOnly label="Copy password" onClick={() => void copy(account.password, "Password", true)} /></span> : undefined}
           label="Password"
           subvalue={account.password ? (passwordVisible ? "Visible until hidden" : "Hidden by default") : undefined}
           value={account.password ? (passwordVisible ? account.password : "••••••••••••••") : "Not recorded"}

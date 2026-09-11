@@ -1,6 +1,7 @@
 import { ChevronDown, Copy, Eye, EyeOff, KeyRound, LoaderCircle, LockKeyhole, Sparkles, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account } from "../domain/types";
+import { copySecretToClipboard } from "../domain/clipboard";
 import { generatePassword } from "../domain/passwordGenerator";
 import { serviceCatalog } from "../domain/serviceCatalog";
 import { ServiceIdentityHero } from "./ServiceIdentity";
@@ -254,7 +255,8 @@ function CredentialField({ onChange, onNotify, value }: { onChange: (value: stri
   async function copyPassword() {
     if (!value) return;
     try {
-      await navigator.clipboard.writeText(value);
+      // Auto-cleared from the clipboard after a short delay (domain/clipboard).
+      await copySecretToClipboard(value);
       onNotify?.("Password copied", "success");
     } catch {
       onNotify?.("Password copy unavailable", "error");

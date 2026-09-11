@@ -7,3 +7,4 @@
 - `cargo audit` completed with 17 allowed upstream RustSec warnings.
 - The production frontend build emits a non-blocking minified JavaScript chunk-size warning (648.16 kB); no late code-splitting refactor was made during release freeze.
 - Cloud sync is optional and foundational. It is not a master-password recovery mechanism and does not make local-vault use depend on connectivity.
+- Copied passwords are auto-cleared from the clipboard 40 seconds after the copy, but only if the clipboard still holds exactly the copied value. The timer runs in the app webview: if the application is fully quit before it elapses, the clipboard is not cleared. Clipboard history managers (e.g. Windows Win+V) may also retain an independent copy that this cannot reach.
