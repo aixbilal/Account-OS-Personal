@@ -2163,11 +2163,47 @@ p {
 }
 
 .dependency-map {
+  position: relative;
   min-width: 0;
   min-height: 0;
   background-color: color-mix(in srgb, var(--aos-bg) 70%, var(--aos-surface));
   background-image: radial-gradient(circle, var(--aos-border-strong) 0.8px, transparent 0.8px);
   background-size: 22px 22px;
+}
+
+/* Phase 6: explains the category dot on each node (color hint only, not a
+   new entity type or a layout change - Section 3.4/Do). */
+.map-legend {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  max-width: 230px;
+  margin: 0;
+  border: 1px solid var(--aos-border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--aos-surface) 92%, transparent);
+  box-shadow: var(--aos-shadow-soft);
+  list-style: none;
+}
+
+.map-legend li {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--aos-text-secondary);
+  font-size: 9px;
+  font-weight: 640;
+}
+
+.map-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
 .dependency-map .react-flow__controls {
@@ -2198,6 +2234,7 @@ p {
 }
 
 .map-node {
+  position: relative;
   display: flex;
   width: 210px;
   min-height: 64px;
@@ -2234,7 +2271,7 @@ p {
 }
 
 .map-node strong,
-.map-node span {
+.map-node small {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2242,13 +2279,28 @@ p {
 }
 
 .map-node strong {
-  font-size: 12.5px;
+  font-size: 13px;
 }
 
-.map-node span {
+/* Phase 6 legibility fix: this rule previously targeted `.map-node span`,
+   which never matched anything (the subtext is a <small>), so it silently
+   never applied and this text rendered at the browser's unstyled <small>
+   default instead of the intended size/color/spacing. */
+.map-node small {
   margin-top: 3px;
-  color: var(--aos-text-muted);
-  font-size: 10px;
+  color: var(--aos-text-secondary);
+  font-size: 10.5px;
+  font-weight: 550;
+}
+
+.map-node-category-dot {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--aos-surface);
 }
 
 .map-handle {
@@ -2267,11 +2319,11 @@ p {
   position: absolute;
   border: 1px solid var(--aos-border);
   border-radius: 999px;
-  padding: 3px 7px;
-  color: var(--aos-text-secondary);
-  background: color-mix(in srgb, var(--aos-surface) 94%, transparent);
-  box-shadow: 0 4px 10px rgba(47, 89, 132, 0.06);
-  font-size: 8px;
+  padding: 4px 8px;
+  color: var(--aos-text);
+  background: var(--aos-surface);
+  box-shadow: 0 4px 10px rgba(47, 89, 132, 0.09);
+  font-size: 9.5px;
   font-weight: 720;
   pointer-events: none;
 }

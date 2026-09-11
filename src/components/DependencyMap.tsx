@@ -17,7 +17,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import { Link2, Maximize2, Plus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import type { Account, AccountRelationship } from "../domain/types";
+import { ACCOUNT_CATEGORIES, type Account, type AccountCategory, type AccountRelationship } from "../domain/types";
 import { relationshipTypeLabels } from "./RelationshipDialog";
 import { ServiceIdentityMark } from "./ServiceIdentity";
 
@@ -28,6 +28,23 @@ interface DependencyMapProps {
   onSelectAccount: (account: Account) => void;
   relationships: AccountRelationship[];
 }
+
+/**
+ * Phase 6 restyle: a purely visual category hint (a small colored dot per
+ * node) - not a new entity type, and not a layout change, so the existing
+ * deterministic phyllotaxis positions are untouched. Reused on both the
+ * full Map and the Relationships screen's ego-graph view since they share
+ * the same node renderer.
+ */
+export const categoryMapColors: Record<AccountCategory, string> = {
+  Personal: "#2c84fc",
+  Development: "#3f8f5c",
+  Social: "#b8548c",
+  University: "#c98a2e",
+  Finance: "#3f8b8f",
+  Work: "#5c6bc0",
+  Other: "#7c8494",
+};
 
 export type MapAccount = Pick<Account, "id" | "accountName" | "serviceName" | "category">;
 export type FocusState = "normal" | "selected" | "related" | "muted";
@@ -248,6 +265,9 @@ export function DependencyMap({ accounts, relationships, onSelectAccount, onOpen
             <Background color="var(--aos-border-strong)" gap={34} size={0.8} />
             <Controls position="bottom-left" showInteractive={false} />
           </ReactFlow>
+          <ul className="map-legend" aria-label="Category color key">
+            {ACCOUNT_CATEGORIES.map((category) => <li key={category}><i aria-hidden="true" style={{ background: categoryMapColors[category] }} />{category}</li>)}
+          </ul>
         </div>
         <aside className="map-inspector" aria-label="Map selection details">
           {selected ? (
@@ -274,6 +294,7 @@ function AccountMapNode({ data, selected }: NodeProps<AccountNode>) {
   return (
     <div className="map-node" data-focus={data.focus} data-selected={selected || undefined}>
       <Handle className="map-handle" isConnectable={false} position={Position.Top} type="target" />
+      <span aria-hidden="true" className="map-node-category-dot" style={{ background: categoryMapColors[data.account.category] }} title={data.account.category} />
       <ServiceIdentityMark account={data.account} size="small" />
       <div><strong>{data.account.accountName}</strong><small>{data.account.serviceName} · {data.account.category}</small></div>
       <Handle className="map-handle" isConnectable={false} position={Position.Bottom} type="source" />
