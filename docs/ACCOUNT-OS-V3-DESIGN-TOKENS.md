@@ -127,3 +127,56 @@ clear AA-normal.
 
 - `src/theme/tokens.css` — token values only, per the plan's Phase 1 scope.
 - No component file was touched in this phase.
+
+---
+
+## Phase 7 addendum — dark theme final regression
+
+Phase 1 (above) re-tuned the dark theme's `--aos-primary`/`--aos-success`/
+`--aos-banner-*` tokens to stay in the same family as the newly measured
+light values; nothing about the dark palette changed again in Phase 7.
+This addendum is the final-regression documentation the plan asks for:
+a full pass over every screen this workstream touched, in dark, plus the
+additional contrast pairs Phases 3–7 introduced that Phase 1's table
+didn't cover yet (the original doc only checked the pairs Phase 1 itself
+changed).
+
+**Restated plainly, as required**: the dark theme is newly designed for
+this project, not extracted — no dark reference exists anywhere in
+`V3 FINAL UI REFERENCES/`. Every dark value below is either inherited
+from a pre-existing dark palette (already shipped before this workstream)
+or newly tuned in Phase 1 to match the re-measured light primary/success
+hues.
+
+### Additional contrast ratios (WCAG 2.1, computed programmatically)
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| Dark `--aos-danger` (`#ff7a82`) on `--aos-bg` (`#0e1827`) | 7.09:1 | AA-normal |
+| Dark `--aos-danger` on `--aos-surface` (`#17263b`, the Danger Zone card) | 6.07:1 | AA-normal |
+| Dark `--aos-text-secondary` (`#b6c7dc`) on `--aos-bg` | 10.34:1 | AA-normal |
+| Dark `--aos-text-secondary` on `--aos-surface` | 8.86:1 | AA-normal |
+| Light `--aos-danger` (`#d23742`) on white | 4.81:1 | AA-normal |
+| Light `--aos-text-secondary` (`#5f7394`) on white | 4.81:1 | AA-normal |
+
+These cover every new UI surface added in Phases 3–7 that carries its own
+text-on-background pair not already checked: the inspector's "•••" danger
+menu item, the Settings Danger Zone cards, and the Relationships/Map
+muted secondary text used throughout the new screens. All pass AA-normal
+in both themes; nothing in this workstream shipped a text pair below
+AA-normal except the one primary-button case already called out in the
+main Phase 1 section above (which is the reference's own extracted color,
+used only for large/bold button labels).
+
+### Dark-mode visual regression (fresh seeded vault, screenshots in
+`docs/walkthrough-2026-09-11-phase7/dark/`)
+
+| Screen | Result |
+|---|---|
+| Vault + inspector | Banner wash, real-logo watermark, un-boxed fields, Copy/Open buttons all render correctly; text contrast good throughout. |
+| Add account | Flat layout, captions, icons, and the live password-strength checklist all legible; checklist green/muted states both read clearly against the dark surface. |
+| Map | Category dots and the new legend both read clearly; edge labels (Phase 6's opaque-surface fix) are if anything more legible in dark than the old semi-transparent style would have been. |
+| Relationships | Stat cards, ego-graph, and the connected-accounts panel all render correctly. **Found and fixed here**: the graph's zoom controls and the React Flow attribution link were rendering with xyflow's unstyled white default instead of the dark theme, because the dark-mode CSS was scoped to `.dependency-map` only and the Relationships screen uses a different wrapper class (`.relationship-graph`). Fixed by extending the existing selectors to cover both; see the Phase 7 frontend commit. |
+| Settings — System / Danger Zone | Device card, Storage, and the Danger Zone's red accents all render with correct contrast; confirmed via the contrast table above rather than eyeballing. |
+
+No other dark-mode-specific defects were found in this pass.
