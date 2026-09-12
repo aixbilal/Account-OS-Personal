@@ -718,6 +718,33 @@ p {
   fill: currentColor;
 }
 
+/* Icon source migration (UI Refinement Pass 2 follow-up): theSVG-sourced
+   marks inject a real `<svg>...</svg>` string inside this wrapper span
+   (see ServiceIdentity.tsx's `TheSvgGlyph`) - `display: contents` makes
+   the wrapper itself invisible to layout, so the injected `<svg>` is
+   still the effective grid item `.service-identity`'s own `place-items:
+   center` and the `.service-identity svg` sizing rule above both expect. */
+.thesvg-icon {
+  display: contents;
+}
+
+/* Theme-adaptive marks (a canonical black-or-white brand mark, e.g.
+   Apple/GitHub/OpenAI) render both the light-background and dark-
+   background variant and let CSS pick the right one, rather than
+   detecting theme in JS - consistent with how every other themed value in
+   this app works off `[data-theme]`. */
+.thesvg-theme-dark {
+  display: none;
+}
+
+[data-theme="dark"] .thesvg-theme-light {
+  display: none;
+}
+
+[data-theme="dark"] .thesvg-theme-dark {
+  display: contents;
+}
+
 .microsoft-mark {
   display: grid;
   width: 54%;
@@ -939,6 +966,20 @@ p {
   width: 34%;
   height: auto;
   aspect-ratio: 1;
+  fill: currentColor;
+}
+
+/* Icon source migration: the watermark now injects theSVG's real markup
+   (see ServiceIdentityHero) instead of always being the `<svg>` element
+   itself - size the injected element to fill this wrapper the same way
+   `.service-identity svg` does for the main glyph. A theSVG mono variant
+   has no explicit `fill` (inherits `currentColor`, same as the old
+   `simple-icons` paths did); a full-color fallback (Slack only, which
+   ships no mono variant) keeps its own real per-path colors instead of
+   tinting to one color - a minor, accepted difference for that one brand. */
+.service-hero-watermark-svg svg {
+  width: 100%;
+  height: 100%;
   fill: currentColor;
 }
 

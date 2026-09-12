@@ -1,31 +1,19 @@
-import { useId, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import type { Account } from "../domain/types";
 import { iconRegistry } from "../domain/iconRegistry";
 import { resolveCatalogService, type CatalogService } from "../domain/serviceCatalog";
+import { theSvgIcons, type TheSvgEntry } from "../domain/theSvgIcons";
 
 // Real bundled brand marks, keyed by catalog id (see domain/iconRegistry -
 // Phase 2 of the V3 UI correction pass fixed this from a hardcoded 8-id
 // allowlist to every service the installed `simple-icons` package covers).
+// Icon source migration (UI Refinement Pass 2 follow-up): `theSvgIcons`
+// (below) is checked first now - this is kept as fallback tier 3, for any
+// catalog id theSVG genuinely doesn't cover (see the migration report's
+// resolution-order table; currently every id this stays reachable for
+// happens to also be covered by theSVG, so this tier is dormant today, not
+// removed - a real future catalog addition may need it).
 const packagedIcons = iconRegistry;
-
-/**
- * A small, hand-curated set of catalog ids whose *real* brand mark is
- * genuinely multi-color - as opposed to the vast majority of
- * `simple-icons`-backed marks, which are correctly single-color by that
- * package's own design (Item 4, V3 fixture pass). Each entry reuses the
- * exact already-bundled/licensed `simple-icons` path for that id (Google's
- * "G", Gmail's envelope, Instagram's camera) and swaps only its fill from a
- * flat accent to the brand's own multi-hue palette - no new path geometry
- * is invented. Approximated as a straight gradient across the real brand
- * colors rather than the literal pinwheel/segment geometry (Google's G,
- * for instance) - close enough to read as "genuinely multi-color" without
- * hand-tracing brand artwork bezier-for-bezier.
- */
-const trueColorGradientStops: Record<string, string[]> = {
-  google: ["#4285F4", "#34A853", "#FBBC05", "#EA4335"],
-  gmail: ["#EA4335", "#FBBC04", "#34A853", "#4285F4"],
-  instagram: ["#4F5BD5", "#962FBF", "#D62976", "#FA7E1E", "#FEDA75"],
-};
 
 export interface ServiceIdentity {
   id: string;
@@ -79,23 +67,32 @@ function fromCatalog(service: CatalogService): ServiceIdentity {
 
 type IdentityAccount = Pick<Account, "serviceName"> & Partial<Pick<Account, "email" | "website">>;
 
-/** Renders an already-bundled/licensed `simple-icons` path filled with a
- * real multi-hue brand gradient instead of one flat accent (see
- * `trueColorGradientStops`). A per-instance gradient id (`useId`) avoids
- * collisions when the same service's mark renders more than once on a
- * page (sidebar row + inspector header + Map node, for example). */
-function TrueColorGlyph({ path, stops }: { path: string; stops: string[] }) {
-  const gradientId = `service-gradient-${useId()}`;
-  return (
-    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
-      <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-          {stops.map((color, index) => <stop key={color} offset={`${(index / (stops.length - 1)) * 100}%`} stopColor={color} />)}
-        </linearGradient>
-      </defs>
-      <path d={path} fill={`url(#${gradientId})`} />
-    </svg>
-  );
+/**
+ * Renders a theSVG-sourced mark by injecting its own real markup directly
+ * (each entry is a complete `<svg>...</svg>` string with its own viewBox
+ * and, for full-color marks, its own per-path fill colors) rather than
+ * re-deriving a single `d` path and re-coloring it the way the old
+ * `TrueColorGlyph` gradient-overlay technique had to for Google/Instagram.
+ * `dangerouslySetInnerHTML` is safe here: the markup comes only from our
+ * own bundled `@thesvg/icons` dependency, never from account/user data.
+ *
+ * For brands whose canonical mark is itself black-or-white rather than
+ * colored (`themeAdaptive`), both the light-background and dark-background
+ * variant are rendered and CSS (`.thesvg-theme-light`/`-dark`, tokens.css'
+ * `[data-theme="dark"]` selector) shows only the one that matches the
+ * active theme - simpler and more robust than detecting theme in JS, and
+ * consistent with how the rest of this app themes things.
+ */
+function TheSvgGlyph({ entry }: { entry: TheSvgEntry }) {
+  if (entry.themeAdaptive) {
+    return (
+      <>
+        <span aria-hidden="true" className="thesvg-icon thesvg-theme-light" dangerouslySetInnerHTML={{ __html: entry.themeAdaptive.light }} />
+        <span aria-hidden="true" className="thesvg-icon thesvg-theme-dark" dangerouslySetInnerHTML={{ __html: entry.themeAdaptive.dark }} />
+      </>
+    );
+  }
+  return <span aria-hidden="true" className="thesvg-icon" dangerouslySetInnerHTML={{ __html: entry.color }} />;
 }
 
 export function ServiceIdentityMark({ account, size = "regular" }: { account: IdentityAccount; size?: "small" | "regular" | "large" }) {
@@ -104,8 +101,8 @@ export function ServiceIdentityMark({ account, size = "regular" }: { account: Id
     "--service-accent": identity.accent,
     "--service-soft": identity.softAccent,
   } as CSSProperties;
+  const theSvg = theSvgIcons[identity.id];
   const packaged = packagedIcons[identity.id];
-  const gradientStops = trueColorGradientStops[identity.id];
   return (
     <span
       aria-label={`${identity.label} local identity`}
@@ -115,8 +112,8 @@ export function ServiceIdentityMark({ account, size = "regular" }: { account: Id
       role="img"
       style={style}
     >
-      {packaged && gradientStops ? (
-        <TrueColorGlyph path={packaged.path} stops={gradientStops} />
+      {theSvg ? (
+        <TheSvgGlyph entry={theSvg} />
       ) : packaged ? (
         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24"><path d={packaged.path} /></svg>
       ) : identity.id === "microsoft" ? (
@@ -143,8 +140,15 @@ export function ServiceIdentityHero({ account }: { account: Pick<Account, "servi
   // Phase 3 restyle: the banner watermark used to always be the 2-letter
   // monogram, even for services with a real bundled logo. When one exists,
   // fade the real mark into the banner instead; unmatched services keep
-  // the monogram watermark (there's nothing else to show).
+  // the monogram watermark (there's nothing else to show). Prefers
+  // theSVG's single-tone `mono` variant for the watermark specifically
+  // (a huge, low-opacity background silhouette reads better as one tone
+  // than as the full-color mark); falls back to the full-color mark for
+  // the handful of brands (Slack) that don't ship a mono variant, and
+  // further to the old `simple-icons` path for anything theSVG lacks.
+  const theSvg = theSvgIcons[identity.id];
   const packaged = packagedIcons[identity.id];
+  const watermarkMarkup = theSvg?.mono ?? theSvg?.color;
   return (
     <div className="service-identity-hero" data-service={identity.id} style={style}>
       <ServiceIdentityMark account={account} size="large" />
@@ -153,7 +157,9 @@ export function ServiceIdentityHero({ account }: { account: Pick<Account, "servi
         <h2>{account.accountName}</h2>
         <span>{account.category} · {account.email || account.username || "No sign-in identity"}</span>
       </div>
-      {packaged ? (
+      {watermarkMarkup ? (
+        <span aria-hidden="true" className="service-hero-watermark service-hero-watermark-svg" dangerouslySetInnerHTML={{ __html: watermarkMarkup }} />
+      ) : packaged ? (
         <svg aria-hidden="true" className="service-hero-watermark service-hero-watermark-svg" focusable="false" viewBox="0 0 24 24"><path d={packaged.path} /></svg>
       ) : (
         <strong aria-hidden="true" className="service-hero-watermark">{identity.monogram}</strong>
