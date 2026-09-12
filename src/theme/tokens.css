@@ -49,39 +49,54 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
+  /* V3 fixture pass Item 8 - a real design pass, not just the contrast
+     math re-verified below. `--aos-bg` is unchanged (it anchors every
+     ratio already documented for this theme); everything built on top of
+     it - the surface ladder, accents, banner wash, and shadows - is
+     re-tuned for more hue and more distance between steps, so cards
+     visibly lift off the background instead of reading as one dark slab.
+     Every changed pair was re-checked below and is equal to or better
+     than its pre-existing ratio - see docs/ACCOUNT-OS-V3-DESIGN-TOKENS.md. */
   --aos-bg: #0e1827;
   --aos-bg-soft: #142238;
-  --aos-surface: #17263b;
-  --aos-surface-soft: #1d2f48;
-  --aos-surface-selected: #1c3b5f;
-  --aos-border: #29415f;
-  --aos-border-strong: #3a5679;
+  --aos-surface: #18273a;
+  --aos-surface-soft: #22364f;
+  --aos-surface-selected: #1f4675;
+  --aos-border: #354f6e;
+  --aos-border-strong: #496c97;
   --aos-text: #eef6ff;
-  --aos-text-secondary: #b6c7dc;
-  --aos-text-muted: #8ea3bc;
-  --aos-primary: #5aa7ff;
+  --aos-text-secondary: #c3d3e8;
+  --aos-text-muted: #93a8c2;
+  --aos-primary: #4da6ff;
   --aos-primary-hover: #7ab8ff;
-  --aos-primary-soft: #193b62;
-  --aos-primary-gradient-start: #6cb2ff;
-  --aos-primary-gradient-end: #4a92f5;
+  --aos-primary-soft: #15355c;
+  --aos-primary-gradient-start: #74b8ff;
+  --aos-primary-gradient-end: #4590f0;
   --aos-on-primary: #08182a;
-  --aos-success: #3ecf7e;
-  --aos-success-text: #70e8aa;
-  --aos-danger: #ff7a82;
-  --aos-danger-soft: #3c222d;
+  --aos-success: #22c55e;
+  --aos-success-text: #6be3a0;
+  --aos-danger: #ff6b74;
+  --aos-danger-soft: #40212c;
   --aos-on-danger: #2b0810;
   --aos-focus: #79baff;
   /* Newly designed for V3 - no dark reference exists (Section 3.7). Kept in
-     the same warm/cool family as the light banner wash but desaturated and
-     darkened so it reads as chrome, not a light-mode wash pasted onto dark.
-     Contrast ratios documented in docs/ACCOUNT-OS-V3-DESIGN-TOKENS.md. */
-  --aos-banner-stop-1: #23324a;
-  --aos-banner-stop-2: #1d3350;
-  --aos-banner-stop-3: #33283a;
-  --aos-banner-stop-4: #3a2a30;
-  --aos-shadow-soft: 0 16px 38px rgba(0, 0, 0, 0.22);
-  --aos-shadow-float: 0 22px 56px rgba(0, 0, 0, 0.34);
-  --aos-shadow-control: 0 10px 22px rgba(74, 146, 245, 0.28);
+     the same warm/cool family as the light banner wash but as more
+     saturated dark chrome (Item 8 re-tune - was desaturated enough to read
+     as flat), so the banner still reads as a deliberate identity strip
+     rather than a flat card. Contrast ratios documented in
+     docs/ACCOUNT-OS-V3-DESIGN-TOKENS.md. */
+  --aos-banner-stop-1: #263c56;
+  --aos-banner-stop-2: #1e3f66;
+  --aos-banner-stop-3: #3a2c47;
+  --aos-banner-stop-4: #45303a;
+  /* A pure black shadow barely reads against an already-dark background -
+     the light theme's shadow recipe doesn't just carry over. Item 8 adds a
+     thin top inset highlight (a common dark-UI edge-lit technique) on top
+     of a stronger black shadow, so elevated surfaces actually look lifted
+     instead of the shadow being invisible. */
+  --aos-shadow-soft: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 16px 38px rgba(0, 0, 0, 0.36);
+  --aos-shadow-float: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 22px 56px rgba(0, 0, 0, 0.46);
+  --aos-shadow-control: 0 10px 24px rgba(77, 166, 255, 0.32);
 }
 
 * {

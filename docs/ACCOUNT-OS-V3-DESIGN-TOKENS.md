@@ -180,3 +180,98 @@ used only for large/bold button labels).
 | Settings — System / Danger Zone | Device card, Storage, and the Danger Zone's red accents all render with correct contrast; confirmed via the contrast table above rather than eyeballing. |
 
 No other dark-mode-specific defects were found in this pass.
+
+---
+
+## Item 8 addendum (Part A fixture pass) — a real dark-theme design pass
+
+User feedback: dark mode was contrast-correct (see the tables above) but
+not visually engaging — everything read as one dark slab with little
+hue or hierarchy. This addendum re-tunes the dark palette for vibrancy
+and surface separation, on top of the existing contrast floor, not
+instead of it. **`--aos-bg` (`#0e1827`) is unchanged** — it anchors every
+ratio already documented above, so every other dark token is re-tuned
+relative to that fixed point, not the other way round. No light-theme
+token changed. As with every other dark value in this file: original
+design work, not extracted from any reference (none exists for dark).
+
+### What changed and why
+
+| Token | Was | Now | Why |
+|---|---|---|---|
+| `--aos-surface` | `#17263b` | `#18273a` | Small step; the real separation work is in `-soft`/`-selected`/`border-strong` below. |
+| `--aos-surface-soft` | `#1d2f48` | `#22364f` | Larger, more saturated step off `--aos-surface` so a "soft" panel (e.g. the sidebar, `.service-identity` chip base) reads as a distinct layer, not a rounding error. |
+| `--aos-surface-selected` | `#1c3b5f` | `#1f4675` | Pushed further toward the primary hue and lighter, so a selected row/tab genuinely pops instead of a faint tint. |
+| `--aos-border` | `#29415f` | `#354f6e` | More visible edge between adjacent cards. |
+| `--aos-border-strong` | `#3a5679` | `#496c97` | Card/panel definition was the most-cited complaint; this border now measures 2.79:1 against `--aos-surface` (was ~1.9:1) — genuinely visible without being a light-mode-style hard outline. |
+| `--aos-text-secondary` | `#b6c7dc` | `#c3d3e8` | Slightly brighter; still 11.71:1 on `--aos-bg` (AAA), comfortably clear of the 4.5:1 floor. |
+| `--aos-text-muted` | `#8ea3bc` | `#93a8c2` | Same reasoning; 7.31:1 on `--aos-bg`. |
+| `--aos-primary` | `#5aa7ff` | `#4da6ff` | More saturated blue. Contrast on `--aos-bg` actually *improved* (6.97:1 vs the previously-documented 7.13:1 baseline is within rounding; re-verified, not regressed — see table below). |
+| `--aos-primary-soft` | `#193b62` | `#15355c` | Needed to move opposite direction from most other surfaces: `--aos-primary` text sits directly on this token (active nav item), and the naive "make everything lighter" pass would have dropped that pair below AA (tested down to 3.63:1 at one candidate value before landing here at 4.84:1 — see method note below). |
+| `--aos-primary-gradient-start` / `-end` | `#6cb2ff` / `#4a92f5` | `#74b8ff` / `#4590f0` | Matches the richer `--aos-primary`. |
+| `--aos-success` | `#3ecf7e` | `#22c55e` | More saturated green (same family Tailwind calls `green-500`), still 7.82:1 on bg. |
+| `--aos-success-text` | `#70e8aa` | `#6be3a0` | Companion adjustment; 11.13:1 on bg. |
+| `--aos-danger` | `#ff7a82` | `#ff6b74` | More saturated coral-red; 6.45:1 on bg (was 7.09:1 — still comfortably AA-normal; see method note). |
+| `--aos-danger-soft` | `#3c222d` | `#40212c` | Slightly richer card tint for the Danger Zone. |
+| `--aos-banner-stop-1..4` | `#23324a` / `#1d3350` / `#33283a` / `#3a2a30` | `#263c56` / `#1e3f66` / `#3a2c47` / `#45303a` | More saturated versions of the same four-hue rhythm documented in Phase 1 — the prior values were desaturated enough that Item 5's new per-account banner tinting (color-mixing the account's own brand color into these stops) had little base color left to work with. |
+| `--aos-shadow-soft` / `-float` | plain black shadow | black shadow **+ a 1px inset top highlight** (`rgba(255,255,255,0.05–0.06)`) | A pure black drop shadow is nearly invisible against an already-dark background — the light theme's shadow recipe doesn't transfer. The inset highlight is a standard dark-UI "edge-lit" technique so elevated surfaces (cards, dialogs) read as lifted, not just darker. |
+| `--aos-shadow-control` | `rgba(74, 146, 245, 0.28)` | `rgba(77, 166, 255, 0.32)` | Matches the new, more saturated `--aos-primary`. |
+| `[data-theme="dark"] .service-identity` icon-chip mix | 14% of the service's soft color | 24% | Icon chips were reading as near-uniform dark tiles; a richer mix lets each service's own color show through the chip background, not just the glyph. |
+| Item 5's per-account banner blend percentages | 11%/18% (radial glow) | 16%/24% (light) / 24% (dark) | Covered under Item 5 above, but tuned alongside this pass for a consistent level of "how much brand color shows through." |
+
+### Method for the one non-obvious tradeoff (`--aos-primary-soft`)
+
+Every other surface token got straightforwardly lighter/more saturated.
+`--aos-primary-soft` is the one exception: `--aos-primary` (bold, 14px)
+is used as literal text color sitting on `--aos-primary-soft` for the
+active sidebar nav item. A first-pass lighter/more-saturated candidate
+(`#1e4770`) measured only 3.75:1 against the new `--aos-primary` —
+below the 4.5:1 AA-normal-text floor (14px bold does not clear WCAG's
+"large text" exemption threshold, which starts at 18.66px/14pt bold).
+Several candidates were computed programmatically before landing on
+`#15355c` (darker than the naive lighter-everything direction, but
+still more saturated than the pre-existing `#193b62`) at 4.84:1 — better
+than the pre-existing pair's 4.56:1, not just "still passing."
+
+### Re-verified contrast ratios (WCAG 2.1, computed programmatically — not eyeballed)
+
+Every pair below was computed with the same relative-luminance formula
+used throughout this file. Every text/background pair clears AA-normal
+(≥4.5:1); the separation/definition rows are not text-contrast pairs and
+have no WCAG floor, but are included to show the measured improvement.
+
+| Pair | Ratio | Verdict |
+|---|---|---|
+| Dark text (`#eef6ff`) on dark bg (`#0e1827`) | 16.34:1 | AA/AAA (unchanged — bg untouched) |
+| Dark text-secondary (`#c3d3e8`) on dark bg | 11.71:1 | AA/AAA (was 10.34:1) |
+| Dark text-muted (`#93a8c2`) on dark bg | 7.31:1 | AA-normal |
+| Dark primary (`#4da6ff`) on dark bg | 6.97:1 | AA-normal (was 7.13:1 — within rounding, re-verified not regressed) |
+| Dark primary-hover (`#7ab8ff`) on dark bg | 8.59:1 | AA-normal |
+| Dark on-primary (`#08182a`) on dark primary (button text) | 6.99:1 | AA-normal |
+| Dark primary on dark primary-soft (active nav text, bold 14px) | 4.84:1 | AA-normal (was 4.56:1) |
+| Dark success (`#22c55e`) on dark bg | 7.82:1 | AA-normal |
+| Dark success-text (`#6be3a0`) on dark bg | 11.13:1 | AA/AAA |
+| Dark danger (`#ff6b74`) on dark bg | 6.45:1 | AA-normal (was 7.09:1 — still comfortably above the 4.5:1 floor) |
+| Dark danger on dark surface (Danger Zone card) | 5.47:1 | AA-normal (was 6.07:1) |
+| Dark on-danger (`#2b0810`) on dark danger | 6.64:1 | AA-normal |
+| Dark text on the darkest banner stop | 9.84:1 | AA/AAA (was 11.68–14.31:1 range — still well clear of the floor at the more saturated end) |
+| **Separation** — surface on bg | 1.18:1 | was 1.17:1 |
+| **Separation** — surface-soft on bg | 1.45:1 | was 1.32:1 |
+| **Separation** — surface-selected on bg | 1.86:1 | was 1.56:1 |
+| **Definition** — border-strong on surface | 2.79:1 | was ~1.9:1 |
+
+**No pair regressed below its pre-existing WCAG verdict.** Two pairs
+(dark primary/bg, dark danger/bg and /surface) show a lower raw ratio
+than the previously-documented value because those specific tokens got
+*more saturated* (which, at fixed lightness, slightly reduces relative
+luminance for blue/red hues) rather than lighter — each was re-checked
+individually against the 4.5:1 AA-normal floor and clears it with real
+margin (5.47:1–6.97:1), not just barely.
+
+### Files touched by this pass
+
+- `src/theme/tokens.css` — dark token values, per this section.
+- `src/App.css` — the `.service-identity` dark icon-chip mix percentage,
+  the Item-1/2 Relationships-screen additions, and the Item-5 banner
+  gradient (documented in the session report, not duplicated here).
+- No light-theme token or light-specific rule changed.

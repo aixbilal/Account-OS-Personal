@@ -112,6 +112,152 @@ p {
   gap: 5px;
 }
 
+/* Item 3 (V3 fixture pass): the Ctrl+K global-search trigger. The app
+   shell has no full-width top header spanning the sidebar + workspace
+   grid, so this sits at the top of the sidebar - the closest persistent
+   "header" position this layout actually has. */
+.sidebar-search-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-control);
+  padding: 0 10px;
+  color: var(--aos-text-muted);
+  background: var(--aos-surface);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.sidebar-search-trigger:hover {
+  border-color: var(--aos-border-strong);
+  color: var(--aos-text-secondary);
+}
+
+.sidebar-search-trigger span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-search-trigger kbd {
+  flex: 0 0 auto;
+  border: 1px solid var(--aos-border);
+  border-radius: 5px;
+  padding: 2px 5px;
+  color: var(--aos-text-muted);
+  background: var(--aos-surface-soft);
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+/* Global search dialog */
+
+.global-search-dialog {
+  width: min(520px, calc(100vw - 44px));
+  padding: 10px;
+}
+
+.global-search-field {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-control);
+  padding: 0 12px;
+  color: var(--aos-text-muted);
+  background: var(--aos-surface-soft);
+}
+
+.global-search-field input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: 0;
+  color: var(--aos-text);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  outline: 0;
+}
+
+.global-search-field input::placeholder {
+  color: var(--aos-text-muted);
+  font-weight: 500;
+}
+
+.global-search-results {
+  display: grid;
+  max-height: 340px;
+  margin: 8px 0 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.global-search-result {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 11px;
+  border: 0;
+  border-radius: var(--aos-radius-control);
+  padding: 8px 10px;
+  color: var(--aos-text);
+  background: transparent;
+  text-align: left;
+}
+
+.global-search-result span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.global-search-result strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-result small {
+  overflow: hidden;
+  color: var(--aos-text-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search-result[data-active="true"] {
+  background: var(--aos-surface-selected);
+}
+
+.global-search-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 34px 18px 22px;
+  color: var(--aos-text-muted);
+  text-align: center;
+}
+
+.global-search-empty h3 {
+  color: var(--aos-text);
+  font-size: 14px;
+}
+
+.global-search-empty p {
+  font-size: 12px;
+}
+
 .nav-item,
 .sidebar-lock,
 .sidebar-preview {
@@ -578,6 +724,54 @@ p {
   letter-spacing: -0.08em;
 }
 
+/* Chrome ships no `simple-icons` path in the installed package version, so
+   this is a hand-built local mark (same rationale as .microsoft-mark
+   above): a 3-color ring approximating Chrome's real red/yellow/green
+   segments, punched into a ring shape via mask and topped with a solid
+   blue center dot. */
+.chrome-mark {
+  position: relative;
+  width: 62%;
+  aspect-ratio: 1;
+}
+
+.chrome-mark-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from -90deg, #ea4335 0deg 120deg, #fbbc05 120deg 240deg, #34a853 240deg 360deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 41%, black 45% 100%);
+  mask: radial-gradient(circle, transparent 0 41%, black 45% 100%);
+}
+
+.chrome-mark-center {
+  position: absolute;
+  inset: 33%;
+  border-radius: 50%;
+  background: #4285f4;
+}
+
+/* Slack also ships no `simple-icons` path in this package version. A
+   stylized four-color grid (Slack's own brand hues), not a pixel-accurate
+   reproduction of the swirl logo - same fidelity level as the
+   `.microsoft-mark` treatment it mirrors. */
+.slack-mark {
+  display: grid;
+  width: 56%;
+  aspect-ratio: 1;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.slack-mark i {
+  border-radius: 3px;
+}
+
+.slack-mark i:nth-child(1) { background: #36c5f0; }
+.slack-mark i:nth-child(2) { background: #2eb67d; }
+.slack-mark i:nth-child(3) { background: #ecb22e; }
+.slack-mark i:nth-child(4) { background: #e01e5a; }
+
 .account-inspector {
   position: relative;
   min-width: 0;
@@ -665,11 +859,19 @@ p {
   border-radius: var(--aos-radius-panel);
   padding: 23px 26px;
   /* Soft multi-hue pastel wash (Phase 1 tokens, measured from the
-     reference's account banner) with the service's own accent layered on
-     top as a subtle radial glow, rather than one flat single-accent tint. */
+     reference's account banner), tinted per account: each of the four
+     measured stops is blended toward that account's own resolved brand
+     colors (--service-accent/--service-soft, set inline per account -
+     Item 4/5 of the V3 fixture pass) instead of every banner sharing one
+     fixed wash regardless of which account is open. The radial glow on
+     top stays as an extra highlight, not the only per-account signal. */
   background:
-    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--service-accent) 11%, transparent), transparent 28%),
-    linear-gradient(100deg, var(--aos-banner-stop-1), var(--aos-banner-stop-2) 38%, var(--aos-banner-stop-3) 72%, var(--aos-banner-stop-4));
+    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--service-accent) 16%, transparent), transparent 28%),
+    linear-gradient(100deg,
+      color-mix(in srgb, var(--service-accent) 22%, var(--aos-banner-stop-1)),
+      color-mix(in srgb, var(--service-soft) 65%, var(--aos-banner-stop-2)) 38%,
+      color-mix(in srgb, var(--service-accent) 18%, var(--aos-banner-stop-3)) 72%,
+      color-mix(in srgb, var(--service-soft) 55%, var(--aos-banner-stop-4)));
   box-shadow: var(--aos-shadow-soft);
 }
 
@@ -1254,12 +1456,19 @@ p {
   transform: translateY(-50%);
 }
 
-.field-with-icon input,
-.field-with-icon select {
+/* Specificity note: these must out-rank the generic `.field-label
+   input/select/textarea { padding: 0 12px }` shorthand below (same class
+   count, so equal-specificity source order would otherwise decide it) -
+   that shorthand was silently canceling this padding-left and pulling the
+   icon on top of the field's text/placeholder. Scoping through
+   `.field-label` here (3 classes vs. 2) wins on specificity instead of
+   depending on rule order. */
+.field-label .field-with-icon input,
+.field-label .field-with-icon select {
   padding-left: 34px;
 }
 
-.field-with-icon textarea {
+.field-label .field-with-icon textarea {
   padding-left: 34px;
 }
 
@@ -1716,34 +1925,38 @@ p {
   background: var(--aos-surface);
 }
 
-.strength-checklist {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.strength-checklist li {
+.password-weak-suggestion {
   display: flex;
   align-items: center;
-  gap: 5px;
-  color: var(--aos-text-muted);
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid color-mix(in srgb, var(--aos-warning) 35%, var(--aos-border));
+  border-radius: var(--aos-radius-control);
+  background: color-mix(in srgb, var(--aos-warning) 10%, var(--aos-surface));
+  padding: 8px 8px 8px 12px;
+  color: var(--aos-text-secondary);
   font-size: 11px;
   font-weight: 600;
 }
 
-.strength-checklist li[data-met="true"] {
-  color: var(--aos-success-text);
+.password-weak-suggestion-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
 }
 
-.strength-checklist li svg {
+.password-weak-suggestion-actions .text-button {
+  color: var(--aos-warning);
+  font-size: 11px;
+}
+
+.password-weak-suggestion-actions .icon-button {
+  width: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  height: 22px;
   color: var(--aos-text-muted);
-}
-
-.strength-checklist li[data-met="true"] svg {
-  color: var(--aos-success);
 }
 
 .generator-toggle {
@@ -2577,9 +2790,10 @@ p {
 
 .relationship-graph-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 10px 14px;
   border-bottom: 1px solid var(--aos-border);
   padding: 14px 18px;
 }
@@ -2631,8 +2845,11 @@ p {
   display: grid;
   min-width: 0;
   min-height: 0;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 16px;
+  /* heading / tabs (Item 1) / flexible scrollable tab content / the
+     "Add relationship" button, which only renders on the Relationships
+     tab - an unused trailing track collapses to 0 on the other tabs. */
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  gap: 14px;
   overflow: hidden;
   border: 1px solid var(--aos-border);
   border-radius: var(--aos-radius-panel);
@@ -2672,6 +2889,294 @@ p {
   display: grid;
   gap: 8px;
   margin-top: 12px;
+}
+
+.relationship-connected-items li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.relationship-row-main {
+  min-width: 0;
+}
+
+.relationship-row-menu {
+  flex: 0 0 auto;
+}
+
+.relationship-side-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Item 2 (V3 fixture pass): the Graph/List/Matrix view toggle. */
+
+.relationship-view-toggle {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 3px;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-control);
+  padding: 3px;
+  background: var(--aos-surface-soft);
+}
+
+.relationship-view-toggle button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--aos-text-secondary);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 690;
+}
+
+.relationship-view-toggle button:hover {
+  color: var(--aos-text);
+}
+
+.relationship-view-toggle button[data-active="true"] {
+  color: var(--aos-primary);
+  background: var(--aos-surface);
+  box-shadow: var(--aos-shadow-soft);
+}
+
+/* List view */
+
+.relationship-list-view {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 18px 18px;
+}
+
+.relationship-list-view table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.relationship-list-view th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--aos-border);
+  padding: 8px 10px;
+  background: var(--aos-surface);
+  text-align: left;
+}
+
+.relationship-list-view th button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  padding: 0;
+  color: var(--aos-text-muted);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.relationship-list-view th button[data-active="true"] {
+  color: var(--aos-text);
+}
+
+.relationship-list-view th button svg[data-direction="desc"] {
+  transform: scaleY(-1);
+}
+
+.relationship-list-view td {
+  border-bottom: 1px solid var(--aos-border);
+  padding: 8px 10px;
+  color: var(--aos-text-secondary);
+  font-size: 12px;
+}
+
+.relationship-list-view tr[data-focused="true"] td {
+  background: var(--aos-surface-selected);
+}
+
+.relationship-list-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  padding: 0;
+  color: var(--aos-text);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.relationship-list-cell:hover {
+  color: var(--aos-primary);
+}
+
+/* Matrix view */
+
+.relationship-matrix-view {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 4px 18px 18px;
+}
+
+.relationship-matrix-view table {
+  border-collapse: collapse;
+}
+
+.relationship-matrix-view th,
+.relationship-matrix-view td {
+  border: 1px solid var(--aos-border);
+  padding: 0;
+  text-align: center;
+}
+
+.relationship-matrix-corner {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  background: var(--aos-surface);
+}
+
+.relationship-matrix-view thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 92px;
+  width: 30px;
+  max-width: 30px;
+  background: var(--aos-surface);
+  vertical-align: bottom;
+}
+
+.relationship-matrix-view thead th[data-focused="true"] {
+  background: var(--aos-surface-selected);
+}
+
+.relationship-matrix-view thead th span {
+  display: block;
+  overflow: hidden;
+  max-width: 84px;
+  color: var(--aos-text-muted);
+  font-size: 9px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transform: rotate(-45deg) translate(-6px, 0);
+  transform-origin: left bottom;
+}
+
+.relationship-matrix-view tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  max-width: 132px;
+  background: var(--aos-surface);
+}
+
+.relationship-matrix-view tbody th[data-focused="true"] {
+  background: var(--aos-surface-selected);
+}
+
+.relationship-matrix-view tbody th button {
+  display: block;
+  overflow: hidden;
+  max-width: 132px;
+  border: 0;
+  padding: 5px 8px;
+  color: var(--aos-text);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 650;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relationship-matrix-view td {
+  width: 30px;
+  height: 30px;
+}
+
+.relationship-matrix-self {
+  background: repeating-linear-gradient(135deg, var(--aos-border) 0, var(--aos-border) 1px, transparent 1px, transparent 6px);
+}
+
+.relationship-matrix-cell {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.relationship-matrix-cell::after {
+  content: "";
+  display: block;
+  width: 10px;
+  height: 10px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: var(--aos-primary);
+}
+
+.relationship-matrix-cell:hover::after {
+  background: var(--aos-primary-hover);
+}
+
+/* Item 1 (V3 fixture pass): Relationships / Details / Security / Notes tabs
+   in the focused-account side panel. */
+
+.relationship-tabs {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 2px;
+  border-bottom: 1px solid var(--aos-border);
+}
+
+.relationship-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 8px 4px;
+  color: var(--aos-text-muted);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 690;
+}
+
+.relationship-tabs button:hover {
+  color: var(--aos-text);
+}
+
+.relationship-tabs button[data-active="true"] {
+  border-bottom-color: var(--aos-primary);
+  color: var(--aos-primary);
+}
+
+.relationship-tab-fields {
+  display: grid;
+  min-height: 0;
+  gap: 14px;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.inspector-notes-text {
+  color: var(--aos-text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 /* Settings */
@@ -3043,13 +3548,20 @@ p {
 }
 
 [data-theme="dark"] .service-identity {
-  background: color-mix(in srgb, var(--service-soft) 14%, var(--aos-surface-soft));
+  /* Item 8: richer than the pre-existing 14% mix, so icon chips carry
+     more of each service's own color instead of reading as near-uniform
+     dark tiles. */
+  background: color-mix(in srgb, var(--service-soft) 24%, var(--aos-surface-soft));
 }
 
 [data-theme="dark"] .service-identity-hero {
   background:
-    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--service-accent) 18%, transparent), transparent 28%),
-    linear-gradient(100deg, var(--aos-banner-stop-1), var(--aos-banner-stop-2) 38%, var(--aos-banner-stop-3) 72%, var(--aos-banner-stop-4));
+    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--service-accent) 24%, transparent), transparent 28%),
+    linear-gradient(100deg,
+      color-mix(in srgb, var(--service-accent) 26%, var(--aos-banner-stop-1)),
+      color-mix(in srgb, var(--service-soft) 22%, var(--aos-banner-stop-2)) 38%,
+      color-mix(in srgb, var(--service-accent) 22%, var(--aos-banner-stop-3)) 72%,
+      color-mix(in srgb, var(--service-soft) 18%, var(--aos-banner-stop-4)));
 }
 
 [data-theme="dark"] .service-hero-watermark-svg {
