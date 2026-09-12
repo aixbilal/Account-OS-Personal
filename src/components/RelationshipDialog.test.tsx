@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { fakeVault } from "../data/fakeVault";
@@ -88,5 +88,73 @@ describe("RelationshipDialog", () => {
     expect(screen.getAllByText("Google sign-in for").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Recovery for").length).toBeGreaterThan(0);
     expect(screen.queryByText("GOOGLE_SSO")).not.toBeInTheDocument();
+  });
+
+  // Item 1 (V3 fixture pass): the Relationships screen's per-row "..." menu
+  // opens straight into editing/removing one specific relationship, instead
+  // of the full manage list - same edit/remove form and remove-confirm
+  // dialog either way, just a different, more direct entry point.
+  it("jumps straight to editing one relationship when opened with initialMode=\"edit\"", () => {
+    render(
+      <RelationshipDialog
+        accounts={fakeVault.accounts}
+        initialEditingId="relationship-github-supabase-test"
+        initialMode="edit"
+        onClose={vi.fn()}
+        onDelete={vi.fn()}
+        onSave={vi.fn()}
+        relationships={fakeVault.relationships}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Edit relationship" })).toBeInTheDocument();
+    expect(screen.getAllByText("Supabase TEST").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("GitHub TEST").length).toBeGreaterThan(0);
+  });
+
+  it("opens directly into the remove confirmation with autoConfirmRemove, and closes on cancel without deleting", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const onDelete = vi.fn();
+    render(
+      <RelationshipDialog
+        accounts={fakeVault.accounts}
+        autoConfirmRemove
+        initialEditingId="relationship-github-supabase-test"
+        initialMode="edit"
+        onClose={onClose}
+        onDelete={onDelete}
+        onSave={vi.fn()}
+        relationships={fakeVault.relationships}
+      />,
+    );
+
+    const confirmation = screen.getByRole("dialog", { name: "Remove relationship?" });
+    await user.click(within(confirmation).getByRole("button", { name: "Keep relationship" }));
+    expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("removes the exact relationship an autoConfirmRemove was opened for", async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const onDelete = vi.fn().mockResolvedValue(undefined);
+    render(
+      <RelationshipDialog
+        accounts={fakeVault.accounts}
+        autoConfirmRemove
+        initialEditingId="relationship-github-supabase-test"
+        initialMode="edit"
+        onClose={onClose}
+        onDelete={onDelete}
+        onSave={vi.fn()}
+        relationships={fakeVault.relationships}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: "Remove relationship" }));
+    expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: "relationship-github-supabase-test" }));
+    // No managingAccountId was given for this entry point, so removal
+    // closes the dialog outright instead of falling back to a manage list.
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

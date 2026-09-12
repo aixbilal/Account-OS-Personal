@@ -169,18 +169,18 @@ export function AccountInspector({ account, accounts, onAddFirstAccount, onDelet
   );
 }
 
-function CopyButton({ iconOnly = false, label, onClick }: { iconOnly?: boolean; label: string; onClick: () => void }) {
+export function CopyButton({ iconOnly = false, label, onClick }: { iconOnly?: boolean; label: string; onClick: () => void }) {
   return <button aria-label={label} className={iconOnly ? "icon-button field-icon-action" : "field-copy"} onClick={onClick} type="button"><Copy size={15} />{!iconOnly && "Copy"}</button>;
 }
 
-function OpenButton({ label, onClick }: { label: string; onClick: () => void }) {
+export function OpenButton({ label, onClick }: { label: string; onClick: () => void }) {
   return <button aria-label={label} className="field-copy" onClick={onClick} type="button"><ExternalLink size={15} />Open</button>;
 }
 
 /** Opens a stored website value in the default browser. Adds an `https://`
  * scheme when the user saved a bare domain, and refuses to open anything
  * that isn't (or can't be normalized into) a plain http(s) link. */
-function openWebsite(value: string) {
+export function openWebsite(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return;
   const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
@@ -193,11 +193,11 @@ function openWebsite(value: string) {
   }
 }
 
-function InspectorField({ action, label, subvalue, value }: { action?: React.ReactNode; label: string; subvalue?: string; value: string }) {
+export function InspectorField({ action, label, subvalue, value }: { action?: React.ReactNode; label: string; subvalue?: string; value: string }) {
   return <div className="inspector-field"><p className="eyebrow">{label}</p><div className="inspector-field-line"><strong>{value}</strong>{action}</div>{subvalue && <span>{subvalue}</span>}</div>;
 }
 
-function formatDate(value: string) {
+export function formatDate(value: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.valueOf())) return "recently";
   return new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" }).format(parsed);

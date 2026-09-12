@@ -1,11 +1,12 @@
 import { invoke } from "@tauri-apps/api/core";
-import { LockKeyhole, Map, Network, Settings, Vault, Wifi, WifiOff } from "lucide-react";
+import { LockKeyhole, Map, Network, Search, Settings, Vault, Wifi, WifiOff } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AccountEditor, type AccountDraft } from "./components/AccountEditor";
 import { AccountInspector } from "./components/AccountInspector";
 import { AccountList } from "./components/AccountList";
 import { AccountOsBrand } from "./components/Brand";
 import { DependencyMap } from "./components/DependencyMap";
+import { GlobalSearch } from "./components/GlobalSearch";
 import { RelationshipDialog } from "./components/RelationshipDialog";
 import { RelationshipsScreen } from "./components/RelationshipsScreen";
 import { SettingsScreen, type ThemePreference } from "./components/SettingsScreen";
@@ -24,7 +25,9 @@ interface NativeVaultStatus {
 }
 
 interface RelationshipUiState {
-  initialMode: "manage" | "add";
+  initialMode: "manage" | "add" | "edit";
+  autoConfirmRemove?: boolean;
+  editingRelationshipId?: string;
   managingAccountId?: string;
   sourceAccountId?: string;
 }
@@ -56,6 +59,7 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
   const [editingAccount, setEditingAccount] = useState<Account | null | undefined>(undefined);
   const [selectedAccountId, setSelectedAccountId] = useState<string>();
   const [relationshipUi, setRelationshipUi] = useState<RelationshipUiState | null>(null);
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const [vaultOperationBusy, setVaultOperationBusy] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<AccountCategory | "all">("all");
@@ -98,6 +102,22 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
   useEffect(() => {
     window.localStorage.setItem("account-os-theme", theme);
   }, [theme]);
+
+  // Item 3 (V3 fixture pass): global search, Ctrl+K / Cmd+K. Only live
+  // once a vault is unlocked - `vaultStatus` gates that, not `displayedVault`
+  // directly, since the effect must stay unconditional (before this
+  // component's early returns) like every other hook here.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        if (!vaultStatus?.unlocked) return;
+        event.preventDefault();
+        setGlobalSearchOpen(true);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [vaultStatus?.unlocked]);
 
   useEffect(() => {
     const documentTheme = vaultStatus?.unlocked ? resolvedTheme : "light";
@@ -246,6 +266,11 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
     setAuthenticationFilter("all");
   }
 
+  function openAccountInVault(account: Account) {
+    setSelectedAccountId(account.id);
+    setActiveView("vault");
+  }
+
   if (!vaultStatus) return <VaultLoading />;
   if (!vaultStatus.unlocked) return <VaultEntry hasVault={vaultStatus.hasVault} onCreate={handleCreateVault} onUnlock={handleUnlockVault} />;
 
@@ -254,6 +279,7 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
       <a className="skip-link" href="#main-content">Skip to main content</a>
       <aside className="sidebar" aria-label="Primary navigation">
         <AccountOsBrand />
+        <button className="sidebar-search-trigger" onClick={() => setGlobalSearchOpen(true)} type="button"><Search aria-hidden="true" size={15} /><span>Search accounts, domains…</span><kbd>Ctrl K</kbd></button>
         <nav className="nav-list">
           {navigation.map((item) => {
             const Icon = item.icon;
@@ -287,12 +313,22 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
         {activeView === "map" && (
           <section className="map-screen" aria-labelledby="map-title">
             <header className="screen-header"><div><p className="eyebrow">Identity map</p><h1 id="map-title">Map</h1><p>Explore real accounts and the relationships stored in your local vault.</p></div><span>{displayedVault?.accounts.length ?? 0} accounts · {displayedVault?.relationships.length ?? 0} relationships</span></header>
-            <DependencyMap accounts={displayedVault?.accounts ?? []} onOpenAccount={(account) => { setSelectedAccountId(account.id); setActiveView("vault"); }} onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })} onSelectAccount={(account) => setSelectedAccountId(account.id)} relationships={displayedVault?.relationships ?? []} />
+            <DependencyMap accounts={displayedVault?.accounts ?? []} onOpenAccount={openAccountInVault} onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })} onSelectAccount={(account) => setSelectedAccountId(account.id)} relationships={displayedVault?.relationships ?? []} />
           </section>
         )}
 
         {activeView === "relationships" && (
-          <RelationshipsScreen accounts={displayedVault?.accounts ?? []} onOpenAccount={(account) => { setSelectedAccountId(account.id); setActiveView("vault"); }} onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })} relationships={displayedVault?.relationships ?? []} />
+          <RelationshipsScreen
+            accounts={displayedVault?.accounts ?? []}
+            onDelete={deleteAccount}
+            onEdit={setEditingAccount}
+            onEditRelationship={(relationship) => setRelationshipUi({ initialMode: "edit", editingRelationshipId: relationship.id })}
+            onNotify={notify}
+            onOpenAccount={openAccountInVault}
+            onRemoveRelationship={(relationship) => setRelationshipUi({ initialMode: "edit", editingRelationshipId: relationship.id, autoConfirmRemove: true })}
+            onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })}
+            relationships={displayedVault?.relationships ?? []}
+          />
         )}
 
         {activeView === "settings" && <SettingsScreen isNative={isTauriRuntime} onCloudVaultRestored={applyRestoredVault} onMasterPasswordChanged={() => { if (isTauriRuntime) markLocalVaultChange(); }} onThemeChange={setTheme} onVaultDeleted={handleVaultDeleted} onVaultOperationChange={setVaultOperationBusy} onVaultRestored={handleLocalBackupRestored} theme={theme} />}
@@ -303,7 +339,11 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
       )}
 
       {relationshipUi && displayedVault && (
-        <RelationshipDialog accounts={displayedVault.accounts} initialMode={relationshipUi.initialMode} initialSourceId={relationshipUi.sourceAccountId} managingAccountId={relationshipUi.managingAccountId} onClose={() => setRelationshipUi(null)} onDelete={deleteRelationship} onOpenAccount={(account) => { setSelectedAccountId(account.id); setActiveView("vault"); setRelationshipUi(null); }} onSave={saveRelationship} relationships={displayedVault.relationships} />
+        <RelationshipDialog accounts={displayedVault.accounts} autoConfirmRemove={relationshipUi.autoConfirmRemove} initialEditingId={relationshipUi.editingRelationshipId} initialMode={relationshipUi.initialMode} initialSourceId={relationshipUi.sourceAccountId} managingAccountId={relationshipUi.managingAccountId} onClose={() => setRelationshipUi(null)} onDelete={deleteRelationship} onOpenAccount={(account) => { setSelectedAccountId(account.id); setActiveView("vault"); setRelationshipUi(null); }} onSave={saveRelationship} relationships={displayedVault.relationships} />
+      )}
+
+      {globalSearchOpen && (
+        <GlobalSearch accounts={displayedVault?.accounts ?? []} onClose={() => setGlobalSearchOpen(false)} onSelectAccount={openAccountInVault} />
       )}
 
     </div>

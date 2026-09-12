@@ -35,8 +35,19 @@ export function relationshipDirectionLabel(relationship: AccountRelationship, ac
 
 interface RelationshipDialogProps {
   accounts: Account[];
-  initialMode?: "manage" | "add";
+  /** "edit" jumps straight to editing `initialEditingId` (paired with
+   * `autoConfirmRemove` for a one-step remove from a row-level menu),
+   * instead of opening the full manage list first - same edit/remove form
+   * either way, just a different entry point. */
+  initialMode?: "manage" | "add" | "edit";
+  /** When `initialMode` is "edit": which relationship to start editing. */
+  initialEditingId?: string;
   initialSourceId?: string;
+  /** When `initialMode` is "edit": open straight into the remove
+   * confirmation instead of the edit form, for a row menu's "Remove"
+   * action - reuses the exact same confirm-and-delete path as the form's
+   * own Remove button, just pre-triggered. */
+  autoConfirmRemove?: boolean;
   managingAccountId?: string;
   onClose: () => void;
   onDelete: (relationship: AccountRelationship) => Promise<void>;
@@ -47,6 +58,8 @@ interface RelationshipDialogProps {
 
 export function RelationshipDialog({
   accounts,
+  autoConfirmRemove = false,
+  initialEditingId,
   initialMode = "manage",
   initialSourceId,
   managingAccountId,
@@ -57,8 +70,10 @@ export function RelationshipDialog({
   relationships,
 }: RelationshipDialogProps) {
   const [mode, setMode] = useState<"manage" | "add" | "edit">(initialMode);
-  const [editing, setEditing] = useState<AccountRelationship | null>(null);
-  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [editing, setEditing] = useState<AccountRelationship | null>(
+    () => (initialMode === "edit" && initialEditingId ? relationships.find((relationship) => relationship.id === initialEditingId) ?? null : null),
+  );
+  const [confirmingRemove, setConfirmingRemove] = useState(() => Boolean(autoConfirmRemove && initialMode === "edit" && initialEditingId));
   const [removeError, setRemoveError] = useState("");
   const [removing, setRemoving] = useState(false);
   const managingAccount = accounts.find((account) => account.id === managingAccountId);
