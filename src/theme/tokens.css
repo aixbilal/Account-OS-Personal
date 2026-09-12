@@ -1,5 +1,18 @@
 :root {
-  font-family: "Segoe UI Variable", "Segoe UI", Aptos, system-ui, sans-serif;
+  /* "Segoe UI Variable" (no suffix) is not a real installed family name on
+     Windows - the OS only registers "Segoe UI Variable Text/Display/Small"
+     (see docs/ACCOUNT-OS-V3-UI-REFINEMENT-PASS-2-REPORT.md Item 2). The
+     bare name silently fails to match and the whole app has been falling
+     through to static "Segoe UI" instead, which only ships a handful of
+     discrete weight files (Regular/Semibold/Bold/Black) - so the many
+     fractional font-weight values used throughout this stylesheet (650,
+     690, 710, 735, 745, 760, 780...) were being snapped to the nearest
+     static weight rather than rendering as designed. "Segoe UI Variable
+     Text" is the real family name and actually supports a continuous
+     weight axis. "Aptos" is also dropped - verified not installed here
+     and not a Windows system UI font (it's an Office document font); it
+     did nothing in the old stack either.  */
+  font-family: "Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
   color: #10254a;
   background: #f6fafe;
   font-synthesis: none;
