@@ -23,7 +23,7 @@
 import {
   siAliexpress, siAnthropic, siApple, siAsana, siBitbucket, siCloudflare, siCoinbase, siCoursera,
   siCursor, siDigitalocean, siDiscord, siDocker, siDropbox, siEbay, siEpicgames, siEtsy, siFacebook,
-  siFigma, siFirebase, siGithub, siGitlab, siGoogle, siHuggingface, siInstagram, siJira,
+  siFigma, siFirebase, siGithub, siGitlab, siGmail, siGoogle, siHuggingface, siInstagram, siJira,
   siKhanacademy, siLinear, siMoodle, siNetflix, siNetlify, siNotion, siNpm, siPayoneer, siPaypal,
   siPerplexity, siPinterest, siPlaystation, siProton, siPypi, siRailway, siReddit, siRender,
   siReplit, siRevolut, siShopify, siSnapchat, siSpotify, siStackoverflow, siSteam, siStripe,
@@ -52,6 +52,7 @@ export interface RegisteredIcon {
  */
 export const iconRegistry: Record<string, RegisteredIcon> = {
   google: siGoogle,
+  gmail: siGmail,
   apple: siApple,
   proton: siProton,
   zoho: siZoho,

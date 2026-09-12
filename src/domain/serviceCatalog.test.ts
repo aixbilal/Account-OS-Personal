@@ -10,7 +10,7 @@ describe("local service identity catalog", () => {
 
   it.each([
     ["https://accounts.google.com/login", "Google"],
-    ["MAIL.GOOGLE.COM", "Google"],
+    ["MAIL.GOOGLE.COM", "Gmail"],
     ["https://github.com/settings", "GitHub"],
     ["https://chatgpt.com/", "OpenAI"],
   ])("normalizes %s locally", (input, expected) => expect(resolveCatalogService("", input)?.displayName).toBe(expected));
@@ -35,7 +35,10 @@ describe("local service identity catalog", () => {
     const domains = serviceCatalog.flatMap((service) => service.domains);
     const aliases = serviceCatalog.flatMap((service) => service.aliases.map((alias) => alias.toLowerCase()));
 
-    expect(serviceCatalog).toHaveLength(94);
+    // 94 + `gmail` + `chrome` (V3 fixture pass Item 4: real distinct Gmail
+    // identity instead of showing the Google mark, plus a Chrome catalog
+    // entry for its true-color mark).
+    expect(serviceCatalog).toHaveLength(96);
     expect(new Set(ids).size).toBe(ids.length);
     expect(new Set(domains).size).toBe(domains.length);
     expect(new Set(aliases).size).toBe(aliases.length);
