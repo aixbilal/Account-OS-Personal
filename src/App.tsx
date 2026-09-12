@@ -313,7 +313,18 @@ function AccountOsApplication({ previewVault }: { previewVault?: VaultData }) {
         {activeView === "map" && (
           <section className="map-screen" aria-labelledby="map-title">
             <header className="screen-header"><div><p className="eyebrow">Identity map</p><h1 id="map-title">Map</h1><p>Explore real accounts and the relationships stored in your local vault.</p></div><span>{displayedVault?.accounts.length ?? 0} accounts · {displayedVault?.relationships.length ?? 0} relationships</span></header>
-            <DependencyMap accounts={displayedVault?.accounts ?? []} onOpenAccount={openAccountInVault} onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })} onSelectAccount={(account) => setSelectedAccountId(account.id)} relationships={displayedVault?.relationships ?? []} />
+            <DependencyMap
+              accounts={displayedVault?.accounts ?? []}
+              onDelete={deleteAccount}
+              onEdit={setEditingAccount}
+              onEditRelationship={(relationship) => setRelationshipUi({ initialMode: "edit", editingRelationshipId: relationship.id })}
+              onNotify={notify}
+              onOpenAccount={openAccountInVault}
+              onRemoveRelationship={(relationship) => setRelationshipUi({ initialMode: "edit", editingRelationshipId: relationship.id, autoConfirmRemove: true })}
+              onRequestRelationship={(sourceAccountId) => setRelationshipUi({ initialMode: "add", sourceAccountId })}
+              onSelectAccount={(account) => setSelectedAccountId(account.id)}
+              relationships={displayedVault?.relationships ?? []}
+            />
           </section>
         )}
 

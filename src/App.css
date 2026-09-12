@@ -683,20 +683,33 @@ p {
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  font-size: 9px;
+  /* Item 1 (UI Refinement Pass 2): the monogram fallback's text used to sit
+     at ~30% of the tile's height, well under the ~52% a real bundled-logo
+     SVG fills in the same tile (see .service-identity svg below) - the
+     reference's own "DS" fallback mark (10-dialogs-and-edge-states-
+     reference.png, panel 7) reads far bolder and larger than that. Sized up
+     to read at a comparable visual weight to a real icon, monogram and SVG
+     treatments alike. */
+  font-size: 13px;
 }
 
 .service-identity-regular {
   width: 42px;
   height: 42px;
-  font-size: 11px;
+  font-size: 16px;
 }
 
 .service-identity-large {
   width: 62px;
   height: 62px;
-  border-radius: 17px;
-  font-size: 15px;
+  /* Item 1 (UI Refinement Pass 2): the reference (04-vault-populated-
+     account-selected.png, 06-edit-account.png) draws this hero-scale mark
+     as a full circle, distinct from the rounded-square tile every smaller/
+     repeated-list-row size correctly uses - this is the only size class
+     `.service-identity-large` is used for (ServiceIdentityHero), so this
+     doesn't affect the small/regular list-row tiles. */
+  border-radius: 50%;
+  font-size: 23px;
 }
 
 .service-identity svg {
@@ -1818,7 +1831,9 @@ p {
 .editor-identity .service-identity-large {
   width: 48px;
   height: 48px;
-  border-radius: 13px;
+  /* Matches the reference's circular Edit-account identity mark
+     (06-edit-account.png) - see .service-identity-large above. */
+  border-radius: 50%;
 }
 
 .editor-identity .service-hero-copy h2 {
@@ -2368,11 +2383,31 @@ p {
   margin-right: auto;
 }
 
+/* Item 4 (UI Refinement Pass 2) - Filters: reuses the exact category-
+   filter pattern already built for the Vault list (`.vault-filters
+   select`), applied here to which map nodes are visible instead of which
+   Vault rows are visible. */
+.map-filter {
+  height: 40px;
+  min-width: 0;
+  border: 1px solid var(--aos-border);
+  border-radius: var(--aos-radius-control);
+  padding: 0 10px;
+  color: var(--aos-text-secondary);
+  background: var(--aos-surface);
+  font-size: 12px;
+}
+
 .map-layout {
   display: grid;
   min-width: 0;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) 268px;
+  /* 300px to match the Relationships screen's own side panel width
+     (`.relationships-layout`) now that both render the same
+     `AccountConnectionsPanel` (Item 3, UI Refinement Pass 2) - the richer
+     tabbed content needs the same room there that it was already tuned
+     for. */
+  grid-template-columns: minmax(0, 1fr) 300px;
 }
 
 .dependency-map {
@@ -2550,125 +2585,20 @@ p {
   opacity: 0.15;
 }
 
+/* Item 3 (UI Refinement Pass 2): the Map's side panel is now the same
+   `AccountConnectionsPanel` component the Relationships screen uses - this
+   class supplies only the Map's own "blended into the toolbar card"
+   chrome (border-left, tinted background); the shared structure (grid
+   rows, padding, tab layout) lives in `.account-connections-panel` below,
+   the same base the Relationships screen's own `.relationship-side-panel`
+   chrome sits on. */
 .map-inspector {
-  min-width: 0;
-  overflow-y: auto;
   border-left: 1px solid var(--aos-border);
-  padding: 18px;
   background: color-mix(in srgb, var(--aos-surface) 91%, var(--aos-bg-soft));
-}
-
-.map-inspector-heading {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 11px;
-}
-
-.map-inspector-heading > div {
-  min-width: 0;
-}
-
-.map-inspector-heading h3,
-.map-inspector-heading span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.map-inspector-heading h3 {
-  margin-top: 4px;
-  font-size: 14px;
-}
-
-.map-inspector-heading span {
-  display: block;
-  margin-top: 3px;
-  color: var(--aos-text-muted);
-  font-size: 9px;
-}
-
-.map-counts {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.map-counts > div {
-  border: 1px solid var(--aos-border);
-  border-radius: 11px;
-  padding: 10px;
-  background: var(--aos-surface);
-}
-
-.map-counts strong,
-.map-counts span {
-  display: block;
-}
-
-.map-counts strong {
-  color: var(--aos-primary);
-  font-size: 18px;
-}
-
-.map-counts span {
-  margin-top: 2px;
-  color: var(--aos-text-muted);
-  font-size: 9px;
-}
-
-.map-connections {
-  margin-top: 19px;
-}
-
-.map-connections > div {
-  display: grid;
-  width: 100%;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 9px;
-  margin-top: 7px;
-  border: 1px solid var(--aos-border);
-  border-radius: 9px;
-  padding: 8px;
-  color: var(--aos-text-secondary);
-  background: var(--aos-surface-soft);
-  text-align: left;
-}
-
-.map-connections > div > span {
-  min-width: 0;
-}
-
-.map-connections > div strong,
-.map-connections > div small {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.map-connections > div strong {
-  color: var(--aos-text);
-  font-size: 10px;
-  font-weight: 650;
-}
-
-.map-connections > div small {
-  margin-top: 3px;
-  color: var(--aos-text-muted);
-  font-size: 8px;
 }
 
 .react-flow__edge.selected .map-edge-path {
   stroke: var(--aos-primary);
-}
-
-.map-inspector-actions {
-  display: grid;
-  gap: 8px;
-  margin-top: 19px;
 }
 
 .map-inspector-empty,
@@ -2841,19 +2771,33 @@ p {
   background-size: 22px 22px;
 }
 
-.relationship-side-panel {
+/* Shared structure for `AccountConnectionsPanel` (Item 3, UI Refinement
+   Pass 2) - the Relationships screen and the Map both render this
+   component, each supplying its own chrome class alongside this one
+   (`.relationship-side-panel` for the Relationships screen's floating
+   card, `.map-inspector` for the Map's blended-into-the-toolbar-card
+   look) so one component's structure serves two different surrounding
+   shells without duplicating markup. */
+.account-connections-panel {
   display: grid;
   min-width: 0;
   min-height: 0;
-  /* heading / tabs (Item 1) / flexible scrollable tab content / the
-     "Add relationship" button, which only renders on the Relationships
-     tab - an unused trailing track collapses to 0 on the other tabs. */
+  /* heading / tabs / flexible scrollable tab content / the "Add
+     relationship" button, which only renders on the Relationships tab -
+     an unused trailing track collapses to 0 on the other tabs. */
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 14px;
   overflow: hidden;
+  padding: 18px;
+}
+
+.account-connections-empty {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.relationship-side-panel {
   border: 1px solid var(--aos-border);
   border-radius: var(--aos-radius-panel);
-  padding: 18px;
   background: var(--aos-surface);
   box-shadow: var(--aos-shadow-soft);
 }
@@ -2896,6 +2840,26 @@ p {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
+}
+
+/* Item 3 (UI Refinement Pass 2): the relationship-type/direction badge,
+   standardized in `AccountConnectionsPanel` (both the Map and the
+   Relationships screen) in place of plain concatenated text like "2FA for
+   · alex.demo@example.test" - reproduced live in both places before this
+   fix. Reuses the same pill recipe as the existing account-category tag
+   (`.account-heading small`), tinted with the primary color instead of
+   neutral so it still reads as a distinct kind of label. */
+.relationship-badge {
+  display: inline-block;
+  flex: 0 0 auto;
+  margin-left: 8px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: var(--aos-primary);
+  background: var(--aos-primary-soft);
+  font-size: 9px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .relationship-row-main {
@@ -3669,10 +3633,6 @@ p {
     padding: 18px 21px 21px;
   }
 
-  .map-layout {
-    grid-template-columns: minmax(0, 1fr) 244px;
-  }
-
   .settings-screen {
     grid-template-columns: 210px minmax(0, 1fr);
   }
@@ -3697,10 +3657,6 @@ p {
 
   .screen-header > span {
     display: none;
-  }
-
-  .map-layout {
-    grid-template-columns: minmax(0, 1fr) 225px;
   }
 }
 
