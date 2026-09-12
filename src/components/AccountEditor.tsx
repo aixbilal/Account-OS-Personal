@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Circle, Copy, Eye, EyeOff, FileText, KeyRound, LoaderCircle, LockKeyhole, ShieldCheck, Sparkles, Tag, Trash2, X } from "lucide-react";
+import { ChevronDown, Copy, Eye, EyeOff, FileText, KeyRound, LoaderCircle, LockKeyhole, ShieldCheck, Sparkles, Tag, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ACCOUNT_CATEGORIES, AUTHENTICATION_METHODS, type Account } from "../domain/types";
 import { copySecretToClipboard } from "../domain/clipboard";
@@ -306,6 +306,15 @@ function CredentialField({ onChange, onNotify, value }: { onChange: (value: stri
   const [symbols, setSymbols] = useState(true);
   const [visible, setVisible] = useState(false);
   const [generatorOpen, setGeneratorOpen] = useState(false);
+  const [suggestionDismissed, setSuggestionDismissed] = useState(false);
+  // Most values saved here are passwords for pre-existing external accounts
+  // whose password policy this app doesn't control, not new credentials
+  // being created here - so weakness is a suggestion, never a gate (see
+  // domain/passwordStrength.ts). Reset the dismissal once the value stops
+  // being weak, so a later weak paste/edit surfaces the suggestion again
+  // instead of staying silenced from an earlier, unrelated value.
+  const isWeak = value.length > 0 && evaluatePasswordStrength(value).some((check) => !check.met);
+  useEffect(() => { if (!isWeak) setSuggestionDismissed(false); }, [isWeak]);
 
   async function copyPassword() {
     if (!value) return;
@@ -336,27 +345,26 @@ function CredentialField({ onChange, onNotify, value }: { onChange: (value: stri
         <button className="secondary-button compact-button" onClick={generate} type="button"><Sparkles size={15} />Generate</button>
         <button className="field-copy" disabled={!value} onClick={() => void copyPassword()} type="button"><Copy size={15} />Copy</button>
       </div>
-      {/* Informational only - never blocks saving. Applies the same five
-          criteria regardless of whether this holds an actual password or
-          another kind of sensitive value (Section 3.3: don't force every
-          sensitive value to be graded like a password). */}
-      <PasswordStrengthChecklist value={value} />
+      {/* Never blocks saving - a password manager mostly stores passwords
+          for pre-existing external accounts whose policy it doesn't set,
+          so a persistent requirements checklist would misrepresent what's
+          actually enforced here. Instead: a soft, dismissible nudge toward
+          the existing Generate function, shown only while the value looks
+          weak (domain/passwordStrength.ts's same five criteria - applied
+          the same way whether this holds an actual password or another
+          kind of sensitive value). */}
+      {isWeak && !suggestionDismissed && (
+        <div className="password-weak-suggestion" role="status">
+          <span>This looks weak — generate a stronger one instead?</span>
+          <div className="password-weak-suggestion-actions">
+            <button className="text-button" onClick={generate} type="button"><Sparkles size={13} />Generate</button>
+            <button aria-label="Dismiss weak password suggestion" className="icon-button" onClick={() => setSuggestionDismissed(true)} type="button"><X size={13} /></button>
+          </div>
+        </div>
+      )}
       <button aria-expanded={generatorOpen} className="generator-toggle" onClick={() => setGeneratorOpen((open) => !open)} type="button">Generator options <ChevronDown aria-hidden="true" data-open={generatorOpen} size={14} /></button>
       {generatorOpen && <div className="generator-options"><label>Length<input aria-label="Password length" max="64" min="8" name="generatedPasswordLength" onChange={(event) => setLength(Number(event.target.value))} type="number" value={length} /></label><label><input checked={uppercase} name="generatedPasswordUppercase" onChange={(event) => setUppercase(event.target.checked)} type="checkbox" />Uppercase</label><label><input checked={lowercase} name="generatedPasswordLowercase" onChange={(event) => setLowercase(event.target.checked)} type="checkbox" />Lowercase</label><label><input checked={numbers} name="generatedPasswordNumbers" onChange={(event) => setNumbers(event.target.checked)} type="checkbox" />Numbers</label><label><input checked={symbols} name="generatedPasswordSymbols" onChange={(event) => setSymbols(event.target.checked)} type="checkbox" />Symbols</label></div>}
     </div>
   );
 }
 
-function PasswordStrengthChecklist({ value }: { value: string }) {
-  const checks = evaluatePasswordStrength(value);
-  return (
-    <ul className="strength-checklist" aria-label="Password strength checklist">
-      {checks.map((check) => (
-        <li data-met={check.met} key={check.id}>
-          {check.met ? <Check aria-hidden="true" size={13} /> : <Circle aria-hidden="true" size={13} />}
-          {check.label}
-        </li>
-      ))}
-    </ul>
-  );
-}

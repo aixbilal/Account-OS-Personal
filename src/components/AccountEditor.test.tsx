@@ -88,4 +88,48 @@ describe("AccountEditor", () => {
     await user.click(within(confirmation).getByRole("button", { name: "Delete account" }));
     await waitFor(() => expect(onDelete).toHaveBeenCalledWith(account));
   });
+
+  // Item 7 (V3 fixture pass): reconciling a direct contradiction with the
+  // prior session's report - live testing found the strength checklist
+  // blocked saving. Verified here: it never does, regardless of strength,
+  // and a weak value gets a soft dismissible suggestion instead of a
+  // persistent requirements checklist.
+  it("never blocks saving on password strength, weak or empty", async () => {
+    const user = userEvent.setup();
+    const { onSave } = renderEditor();
+    const password = screen.getByLabelText(/Password \/ sensitive value/);
+
+    await user.clear(password);
+    await user.type(password, "weak");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ password: "weak" })));
+  });
+
+  it("shows a dismissible weak-password suggestion with a one-click path to Generate, not a persistent checklist", async () => {
+    const user = userEvent.setup();
+    renderEditor({ account: null });
+    const password = screen.getByLabelText(/Password \/ sensitive value/);
+
+    expect(screen.queryByText(/looks weak/)).not.toBeInTheDocument();
+
+    await user.type(password, "weak");
+    expect(screen.getByText(/This looks weak/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Dismiss weak password suggestion" }));
+    expect(screen.queryByText(/This looks weak/)).not.toBeInTheDocument();
+  });
+
+  it("hides the weak-password suggestion once the value meets every strength criterion", async () => {
+    const user = userEvent.setup();
+    renderEditor();
+    const password = screen.getByLabelText(/Password \/ sensitive value/);
+
+    await user.clear(password);
+    await user.type(password, "weak");
+    expect(screen.getByText(/This looks weak/)).toBeInTheDocument();
+
+    await user.clear(password);
+    await user.type(password, "Str0ng-Enough-Passw0rd!");
+    expect(screen.queryByText(/This looks weak/)).not.toBeInTheDocument();
+  });
 });
