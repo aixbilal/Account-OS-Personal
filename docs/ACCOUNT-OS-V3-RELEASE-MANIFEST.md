@@ -2,11 +2,10 @@
 
 ## Authoritative checkpoint
 
-`32f18f7` — `docs(v3): Phase 7 dark-theme final-regression addendum to
-design tokens doc`. This is the end of the "V3 UI Correction & Enhancement"
-workstream (Phases 1–7 of `ACCOUNT-OS-V3-UI-CORRECTION-MASTER-PLAN.md`,
-which may since have been deleted per that plan's own instructions — see
-`ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md` at the repo root for the
+`ea73281` — `docs(v3): fixture-pass final report, walkthrough screenshots,
+checkpoint update`. This is the end of the Part A fixture pass that followed
+the "V3 UI Correction & Enhancement" workstream (see
+`ACCOUNT-OS-V3-FIXTURE-PASS-REPORT.md` at the repo root for the
 self-contained account of what changed and why).
 
 Code state, in order: `5622fae` (Phase 1, tokens) → `c1d081e` (Phase 2,
@@ -14,7 +13,10 @@ icon fix) → `a129758` (Phase 3, inspector restyle) → `abc4fe7` (Phase 4,
 Add/Edit form) → `bd6ba88` (Phase 5, new Relationships screen) →
 `b3fac75` (Phase 6, Map restyle) → `6e4c624` + `af7578f` (Phase 7,
 Settings/Danger Zone + dark-mode fix) → `6e0923c` + `32f18f7` (Phase 7
-docs). Supersedes the `bee3fd0` checkpoint and everything older.
+docs) → `b926fdb` (fixture-pass Item 7) → `e1dd78c` (fixture-pass Item 4)
+→ `dac2357` (fixture-pass Items 1–3) → `e705d98` (fixture-pass Items
+5/6/8) → `ea73281` (fixture-pass docs). Supersedes the `32f18f7`
+checkpoint and everything older.
 
 ## Version and metadata
 
@@ -26,19 +28,26 @@ invented. **Version decision required before public release.**
 
 `npx tauri build` (which runs `npm run build` first) completed with exit 0 and
 produced all three bundles. These files are **not** committed (`.gitignore`
-excludes `src-tauri/target/`); the hashes below identify this build.
+excludes `src-tauri/target/`); the hashes below identify this build. Sizes
+verified two ways (Git Bash `ls`/`sha256sum` and PowerShell `Get-Item`/
+`Get-FileHash`) after Git Bash's `ls -la` initially reported an implausible
+identical byte count for all three files on the space-containing `bundle/msi`
+and `bundle/nsis` paths — a path-resolution quirk in that shell, not a build
+or hashing problem; the hashes from both tools matched exactly, and
+PowerShell's sizes are the ones recorded below.
 
 | Artifact | Path | Size (bytes) | SHA-256 |
 | --- | --- | ---: | --- |
-| EXE | `src-tauri/target/release/account-os.exe` | 9,711,104 | `d2b52d1b169d49befa3030274a1eba42447c9469988084cd81d1ba0c64d375ba` |
-| MSI | `src-tauri/target/release/bundle/msi/Account OS_0.1.0_x64_en-US.msi` | 3,350,528 | `72b342a61230b10ff1491bbd6bf52ae32e35e22be397d7ecf7c679bd51f1d763` |
-| NSIS | `src-tauri/target/release/bundle/nsis/Account OS_0.1.0_x64-setup.exe` | 2,247,383 | `4a8a283e209f0e17e3cab714482858cd682a39ec095f45f0064db2c8adc47627` |
+| EXE | `src-tauri/target/release/account-os.exe` | 9,715,200 | `bbcc0dada558d9c8587536e0beed06ea5b9316293e25c127980c5a576286cdee` |
+| MSI | `src-tauri/target/release/bundle/msi/Account OS_0.1.0_x64_en-US.msi` | 3,354,624 | `e7a5f81267920dbfe7a1c19c7bba237af99712961061a8b5e7faca9962184f8f` |
+| NSIS | `src-tauri/target/release/bundle/nsis/Account OS_0.1.0_x64-setup.exe` | 2,256,230 | `8d771a08636c339b2b7571d54a44d2387720ccf05196d6aa2ac34e677c5ff9a8` |
 
 x64 (`0x8664`), all three unsigned. Windows SmartScreen/reputation warnings may
 occur; no signing certificate was created or simulated.
 
-The prior 2026-09-11 artifacts (EXE `99f81007…`, MSI `404213bb…`, NSIS
-`25803a3c…`) and everything before them are superseded by this build.
+The prior 2026-09-12 artifacts (EXE `d2b52d1b…`, MSI `72b342a6…`, NSIS
+`4a8a283e…`, built from the 7-phase workstream's `32f18f7` checkpoint) and
+everything before them are superseded by this build.
 
 ## Verification — 2026-09-12, at HEAD `32f18f7`
 

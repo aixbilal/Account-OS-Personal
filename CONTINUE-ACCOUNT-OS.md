@@ -62,7 +62,7 @@ Account OS is a local-first encrypted account/password vault with a first-class 
 - Frontend: **136/136** tests passed (23 files), `npm test` (was 114/114; the fixture pass added 22 - see `ACCOUNT-OS-V3-FIXTURE-PASS-REPORT.md`).
 - Rust: **30/30** tests passed, `cargo test` (unchanged - the fixture pass did not touch `src-tauri/`, no vault/crypto work per the ground rules).
 - Typecheck (`tsc --noEmit`): pass. Production build (`npm run build`): pass, non-blocking 788.75 kB chunk-size warning (pre-existing category; grew from 773.63 kB for the fixture pass's Gmail icon path + GlobalSearch component + Relationships-screen additions).
-- `npx tauri build`: **NOT rerun this session** - the fixture pass was a frontend/web-renderer-testable session (per its own scope) and did not rebuild native installers. The installers under `src-tauri/target/release/` and the hashes in `docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md` are from the 7-phase workstream's 2026-09-12 build and are now **stale relative to HEAD** - rebuild before any native acceptance pass or release.
+- `npx tauri build`: rebuilt from HEAD `ea73281` on 2026-09-12 (exit 0, verified) at the owner's explicit request after the fixture pass landed. Fresh EXE/MSI/NSIS hashes are in `docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md`.
 - `npm audit` and `npm audit --omit=dev`: **0 vulnerabilities** (re-run this session).
 - `cargo audit`: re-run this session - **0 vulnerabilities**; 7 allowed warnings (6 "unmaintained" unic-*, 1 "unsound" glib 0.18.5 - GTK/Linux transitive, not on the Windows path). None in the crypto path; same set as every prior report, unchanged.
 - `cargo clippy --all-targets`: clean, 0 warnings (re-run this session).
@@ -86,7 +86,7 @@ Account OS is a local-first encrypted account/password vault with a first-class 
 
 Version metadata is `0.1.0`; artifacts are x64 and unsigned. Windows SmartScreen/reputation warnings may occur. Code signing is not configured.
 
-The installers under `src-tauri/target/release/` were rebuilt from HEAD on **2026-09-12** via `npx tauri build` (exit 0). `src-tauri/target/` is gitignored; the SHA-256 hashes that identify this build are in `docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md`. All earlier builds (2026-09-11 and before) are superseded.
+The installers under `src-tauri/target/release/` were rebuilt from HEAD `ea73281` on **2026-09-12** via `npx tauri build` (exit 0), after the Part A fixture pass landed. `src-tauri/target/` is gitignored; the SHA-256 hashes that identify this build are in `docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md`. All earlier builds (including the 7-phase workstream's own same-day build) are superseded.
 
 ## H. Design state
 
@@ -201,16 +201,15 @@ Automated QA: PASS (frontend 136/136, Rust 30/30, typecheck, build,
   clippy clean)
 Known automated P0/P1/P2 bugs: NONE
 Local commits pushed to origin: NO (owner's call)
-Release installers: rebuilt from HEAD on 2026-09-12 during the 7-phase
-  workstream (see RELEASE-MANIFEST) - NOT rebuilt again for the fixture
-  pass's commits; STALE relative to current HEAD, rebuild before any
-  native acceptance pass or release.
+Release installers: rebuilt from HEAD `ea73281` on 2026-09-12, after the
+  fixture pass (see RELEASE-MANIFEST for fresh hashes) - current.
 Human native visual acceptance (incl. rekey flow, the Settings System
   tab / Delete Vault / Reset App, AND everything the fixture pass
   touched): PENDING
 Interactive installer smoke: PENDING
 Public version decision / merge / tag / freeze / publish: NOT AUTHORIZED YET
 Do NOT start 1.0 Final scope until the owner explicitly freezes V3.
-NEXT STEP: OWNER READS THE FIXTURE PASS REPORT, THEN REBUILDS INSTALLERS,
-  THEN NATIVE ACCEPTANCE + INSTALLER SMOKE + OUTSTANDING DECISIONS
+NEXT STEP: OWNER READS THE FIXTURE PASS REPORT, THEN NATIVE ACCEPTANCE +
+  INSTALLER SMOKE (installers are current, rebuilt at ea73281) +
+  OUTSTANDING DECISIONS
 ```
