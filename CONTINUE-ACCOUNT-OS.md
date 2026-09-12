@@ -13,12 +13,12 @@ this branch before that change and is not part of the V3 finish-out.
 ## A. Project state
 
 - Product: Account OS - Personal Digital Identity Vault.
-- Current generation: V3, calm-light product layer implemented; the 7-phase "UI Correction & Enhancement" workstream (design-token re-extraction, icon fix, Vault/Add-Edit restyle, new Relationships screen, Map restyle, Settings Device/Danger-Zone + dark-theme regression) is done.
+- Current generation: V3, calm-light product layer implemented; the 7-phase "UI Correction & Enhancement" workstream is done, and a follow-up "Part A fixture pass" (real hands-on user testing found genuine gaps/bugs the 7-phase workstream's automated pass missed) is also done - see `ACCOUNT-OS-V3-FIXTURE-PASS-REPORT.md`.
 - Status: **ENGINEERING COMPLETE / HUMAN VISUAL ACCEPTANCE + INSTALLER SMOKE PENDING**.
 - Repository: `C:\Account OS`.
 - Branch: `v3-design-intelligence`.
-- Authoritative checkpoint: `32f18f7 docs(v3): Phase 7 dark-theme final-regression addendum` (2026-09-12). Code state, in order: `5622fae` (Phase 1 tokens) → `c1d081e` (Phase 2 icon fix) → `a129758` (Phase 3 inspector) → `abc4fe7` (Phase 4 Add/Edit) → `bd6ba88` (Phase 5 Relationships) → `b3fac75` (Phase 6 Map) → `6e4c624`+`af7578f` (Phase 7 Settings/dark-mode fix) → `6e0923c`+`32f18f7` (Phase 7 docs).
-- This supersedes `bee3fd0` and everything older. Full self-contained account of this workstream: `ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md` (repo root).
+- Authoritative checkpoint: `e705d98 fix(v3): Items 5, 6, 8 - banner gradient, field-icon overlap, dark theme vibrancy pass` (2026-09-12). Code state, in order: `5622fae` (Phase 1 tokens) → `c1d081e` (Phase 2 icon fix) → `a129758` (Phase 3 inspector) → `abc4fe7` (Phase 4 Add/Edit) → `bd6ba88` (Phase 5 Relationships) → `b3fac75` (Phase 6 Map) → `6e4c624`+`af7578f` (Phase 7 Settings/dark-mode fix) → `6e0923c`+`32f18f7` (Phase 7 docs) → `b926fdb` (fixture-pass Item 7) → `e1dd78c` (fixture-pass Item 4) → `dac2357` (fixture-pass Items 1-3) → `e705d98` (fixture-pass Items 5/6/8).
+- This supersedes `32f18f7`, `bee3fd0`, and everything older as the authoritative checkpoint. Full self-contained account of the 7-phase workstream: `ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md` (repo root). Full self-contained account of the fixture pass on top of it: `ACCOUNT-OS-V3-FIXTURE-PASS-REPORT.md` (repo root).
 - Git state at checkpoint: clean. **Local commits are NOT yet pushed to `origin/v3-design-intelligence`** - pushing is the owner's call.
 - Application version: `0.1.0`.
 
@@ -57,17 +57,17 @@ Account OS is a local-first encrypted account/password vault with a first-class 
 - Offline-first operation; optional ciphertext-only cloud-sync foundation.
 - Windows EXE / MSI / NSIS packaging (unsigned x64).
 
-## E. Verified QA state (2026-09-12)
+## E. Verified QA state (2026-09-12, updated after the fixture pass)
 
-- Frontend: **114/114** tests passed (21 files), `npm test`.
-- Rust: **30/30** tests passed, `cargo test` (adds 4 tests this workstream for `vault_file_size`/`storage_dir`/`delete_vault_file`).
-- Typecheck (`tsc --noEmit`): pass. Production build (`npm run build`): pass, non-blocking 773.63 kB chunk-size warning (pre-existing category; grew mainly from Phase 2's ~55 additional bundled brand icon SVGs).
-- `npx tauri build`: pass (exit 0) - EXE + MSI + NSIS. Hashes in `docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md`.
-- `npm audit` and `npm audit --omit=dev`: **0 vulnerabilities**.
-- `cargo audit`: run this session (network available) - **0 vulnerabilities**; 7 allowed warnings (6 "unmaintained" unic-*, 1 "unsound" glib 0.18.5 - GTK/Linux transitive, not on the Windows path). None in the crypto path; same set as every prior report.
-- `cargo clippy --all-targets`: clean, 0 warnings.
-- Secret scan of `src/`, `dist/`, and `src-tauri/src/`: passed. `dist/` carries only the Supabase project URL + `sb_publishable_` key (intentional Vite client config). No private keys, service-role keys, JWTs, PATs, or AWS keys.
-- Full renderer walkthrough (2026-09-12) at the end of the 7-phase workstream: every touched screen, light and dark, zero console errors. Screenshots in `docs/walkthrough-2026-09-11-phase7/{light,dark}/`. Full account in `ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md`.
+- Frontend: **136/136** tests passed (23 files), `npm test` (was 114/114; the fixture pass added 22 - see `ACCOUNT-OS-V3-FIXTURE-PASS-REPORT.md`).
+- Rust: **30/30** tests passed, `cargo test` (unchanged - the fixture pass did not touch `src-tauri/`, no vault/crypto work per the ground rules).
+- Typecheck (`tsc --noEmit`): pass. Production build (`npm run build`): pass, non-blocking 788.75 kB chunk-size warning (pre-existing category; grew from 773.63 kB for the fixture pass's Gmail icon path + GlobalSearch component + Relationships-screen additions).
+- `npx tauri build`: **NOT rerun this session** - the fixture pass was a frontend/web-renderer-testable session (per its own scope) and did not rebuild native installers. The installers under `src-tauri/target/release/` and the hashes in `docs/ACCOUNT-OS-V3-RELEASE-MANIFEST.md` are from the 7-phase workstream's 2026-09-12 build and are now **stale relative to HEAD** - rebuild before any native acceptance pass or release.
+- `npm audit` and `npm audit --omit=dev`: **0 vulnerabilities** (re-run this session).
+- `cargo audit`: re-run this session - **0 vulnerabilities**; 7 allowed warnings (6 "unmaintained" unic-*, 1 "unsound" glib 0.18.5 - GTK/Linux transitive, not on the Windows path). None in the crypto path; same set as every prior report, unchanged.
+- `cargo clippy --all-targets`: clean, 0 warnings (re-run this session).
+- Secret scan of `src/`, `dist/`, and `src-tauri/src/`: passed (re-run this session). `dist/` carries only the Supabase project URL + `sb_publishable_` key (intentional Vite client config). No private keys, service-role keys, JWTs, PATs, or AWS keys.
+- Full renderer walkthrough at the end of the 7-phase workstream: screenshots in `docs/walkthrough-2026-09-11-phase7/{light,dark}/`, account in `ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md`. Full renderer walkthrough for the fixture pass (2026-09-12): every item reproduced live and re-verified live in both themes, screenshots in `docs/walkthrough-2026-09-12-fixture-pass/{light,dark}/`, account in `ACCOUNT-OS-V3-FIXTURE-PASS-REPORT.md`.
 
 **ZERO KNOWN REPRODUCIBLE AUTOMATABLE P0/P1/P2 BUGS: YES.**
 
@@ -137,8 +137,10 @@ Do not touch/reset the real/default private vault; delete V1/V2 history; casuall
 
 ## M. Important files
 
+- `ACCOUNT-OS-V3-FIXTURE-PASS-REPORT.md` (repo root) — self-contained final report for the Part A fixture pass that followed the 7-phase workstream (Relationships panel parity, Graph/List/Matrix toggle, Ctrl+K global search, true-color icons, per-account banner gradient, an icon/text overlap CSS bug, password-strength reconciliation, and a dark-theme vibrancy pass). Read this first for anything about that pass.
 - `ACCOUNT-OS-V3-UI-CORRECTION-REPORT.md` (repo root) — self-contained final report for the 7-phase UI Correction & Enhancement workstream (tokens, icon fix, Vault/Add-Edit restyle, new Relationships screen, Map restyle, Settings Device/Danger-Zone, dark theme). Read this first for anything about that workstream; it does not depend on the plan doc it was generated from still existing.
-- `docs/ACCOUNT-OS-V3-DESIGN-TOKENS.md` — the re-extracted light palette (with sample coordinates/methodology) and the dark theme's contrast-ratio documentation.
+- `docs/ACCOUNT-OS-V3-DESIGN-TOKENS.md` — the re-extracted light palette (with sample coordinates/methodology), the dark theme's contrast-ratio documentation, and (new) the fixture pass's "Item 8 addendum" re-tuning the dark palette for vibrancy with a full before/after contrast table.
+- `docs/walkthrough-2026-09-12-fixture-pass/{light,dark}/` — fixture-pass renderer walkthrough screenshots, every item's before/after or verification shot in both themes.
 - `docs/ACCOUNT-OS-V3-SCOPE-CLARITY.md` — feature-by-feature diff of Settings and Relationships against the approved reference frames, with each gap marked intentional (docs say do not build) or unfinished. **Partly superseded** by the UI correction report: the Relationships screen this doc calls "not in the locked architecture" was subsequently built under an explicit, scoped exception — see the report.
 - `docs/walkthrough-2026-09-11-phase7/{light,dark}/` — latest renderer walkthrough screenshots (end of the UI correction workstream), every touched screen in both themes.
 - `docs/ACCOUNT-OS-V3-WALKTHROUGH-2026-09-11-LEDGER-CLEANUP.md` — walkthrough for the security-ledger cleanup that immediately preceded the UI workstream (Debug redaction, clipboard auto-clear, stale-tmp sweep).
@@ -162,7 +164,7 @@ Do not touch/reset the real/default private vault; delete V1/V2 history; casuall
 ## N. Agent handoff summary
 
 ```text
-ACCOUNT OS V3 CONTINUATION STATE  (authoritative checkpoint 32f18f7, 2026-09-12)
+ACCOUNT OS V3 CONTINUATION STATE  (authoritative checkpoint e705d98, 2026-09-12)
 
 Workflow: Claude Code is sole implementer AND reviewer. Codex is gone.
 Calm-light product layer: IMPLEMENTED across all screens
@@ -178,17 +180,37 @@ Calm-light product layer: IMPLEMENTED across all screens
   System Device card + real vault size + Delete Vault + Reset App; ran a
   full dark-theme final regression (found and fixed one dark-mode CSS bug
   on the new Relationships screen).
-Automated QA: PASS (frontend 114/114, Rust 30/30, typecheck, build,
+2026-09-12 Part A fixture pass (see ACCOUNT-OS-V3-FIXTURE-PASS-REPORT.md):
+  real hands-on testing found gaps the automated pass missed. Brought the
+  Relationships focused-account panel to real parity with the Vault
+  inspector (Edit/overflow, Details/Security/Notes tabs, per-row
+  edit/remove); added a Graph/List/Matrix view toggle; added Ctrl+K
+  global search (another pre-approved, logged exception to a locked
+  decision); extended true-color icon marks to Google/Gmail/Instagram/
+  Chrome/Slack (Gmail was a real identity bug, not just color); fixed the
+  account-hero banner to actually derive from each account's brand color
+  instead of one shared wash; found and fixed a CSS specificity bug that
+  overlapped icons onto field text app-wide; reconciled a direct
+  contradiction with the prior report about password-strength blocking
+  (confirmed live: it never blocked; replaced the checklist with a soft
+  dismissible weak-password suggestion); ran a real dark-theme vibrancy
+  pass (surface separation, accent saturation, banner/icon richness) with
+  every contrast ratio re-verified, none regressed.
+Automated QA: PASS (frontend 136/136, Rust 30/30, typecheck, build,
   npm audit 0, cargo audit 0 vulns / 7 allowed transitive warnings,
   clippy clean)
 Known automated P0/P1/P2 bugs: NONE
 Local commits pushed to origin: NO (owner's call)
-Release installers: rebuilt from HEAD 2026-09-12 (see RELEASE-MANIFEST)
-Human native visual acceptance (incl. rekey flow AND the new Settings
-  System tab / Delete Vault / Reset App): PENDING
+Release installers: rebuilt from HEAD on 2026-09-12 during the 7-phase
+  workstream (see RELEASE-MANIFEST) - NOT rebuilt again for the fixture
+  pass's commits; STALE relative to current HEAD, rebuild before any
+  native acceptance pass or release.
+Human native visual acceptance (incl. rekey flow, the Settings System
+  tab / Delete Vault / Reset App, AND everything the fixture pass
+  touched): PENDING
 Interactive installer smoke: PENDING
 Public version decision / merge / tag / freeze / publish: NOT AUTHORIZED YET
 Do NOT start 1.0 Final scope until the owner explicitly freezes V3.
-NEXT STEP: OWNER READS THE UI CORRECTION REPORT, THEN NATIVE ACCEPTANCE +
-  INSTALLER SMOKE + OUTSTANDING DECISIONS
+NEXT STEP: OWNER READS THE FIXTURE PASS REPORT, THEN REBUILDS INSTALLERS,
+  THEN NATIVE ACCEPTANCE + INSTALLER SMOKE + OUTSTANDING DECISIONS
 ```
