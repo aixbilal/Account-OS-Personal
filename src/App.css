@@ -1161,19 +1161,34 @@ p {
   min-width: 0;
 }
 
-.inspector-relationship strong,
-.inspector-relationship span {
+/* Icon alignment consistency fix: these three rules used to read
+   `.inspector-relationship strong` / `.inspector-relationship span` -
+   bare-element descendant selectors meant only for the row's own text
+   block (name + email/notes line). Reproduced live: `span` also matched
+   ServiceIdentityMark's outer `.service-identity` wrapper (itself a
+   `<span>`, sitting right next to the text block as a grid sibling), so
+   the icon silently picked up `display: block` (stomping its own
+   `inline-grid`/`place-items: center`), a stray 3px top margin, and the
+   text block's muted 10px color/size - breaking the icon's centering
+   inside its row (14.5px above it vs 11.5px below, live-measured) even
+   though the row's own `align-items: center` was already correct. Scoped
+   to the text block's own `.inspector-relationship-text` class instead,
+   so only that element and its `strong` match - the same fix the Vault
+   list row's icon never needed, since `.account-summary` was already a
+   dedicated class rather than a bare `span`. */
+.inspector-relationship-text strong,
+.inspector-relationship-text {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.inspector-relationship strong {
+.inspector-relationship-text strong {
   font-size: 12px;
 }
 
-.inspector-relationship span {
+.inspector-relationship-text {
   margin-top: 3px;
   color: var(--aos-text-muted);
   font-size: 10px;

@@ -187,7 +187,7 @@ export function AccountConnectionsPanel({
                     <li key={relationship.id}>
                       <button className="inspector-relationship relationship-row-main" onClick={() => onFocusAccount(counterpart.id)} type="button">
                         <ServiceIdentityMark account={counterpart} size="small" />
-                        <span><strong>{counterpart.accountName}</strong>{counterpart.email && <small>{counterpart.email}</small>}</span>
+                        <span className="inspector-relationship-text"><strong>{counterpart.accountName}</strong>{counterpart.email && <small>{counterpart.email}</small>}</span>
                         <RelationshipBadge>{relationshipDirectionLabel(relationship, account.id)}</RelationshipBadge>
                       </button>
                       <div className="inspector-overflow relationship-row-menu">

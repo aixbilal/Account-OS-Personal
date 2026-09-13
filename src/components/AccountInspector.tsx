@@ -141,7 +141,7 @@ export function AccountInspector({ account, accounts, onAddFirstAccount, onDelet
               return (
                 <button className="inspector-relationship" disabled={!related} key={relationship.id} onClick={() => related && onOpenAccount(related)} type="button">
                   {related ? <ServiceIdentityMark account={related} size="small" /> : <span className="missing-identity">?</span>}
-                  <span><strong>{related?.accountName ?? "Missing account"}</strong><small>{relationshipDirectionLabel(relationship, account.id)}{relationship.notes ? ` · ${relationship.notes}` : ""}</small></span>
+                  <span className="inspector-relationship-text"><strong>{related?.accountName ?? "Missing account"}</strong><small>{relationshipDirectionLabel(relationship, account.id)}{relationship.notes ? ` · ${relationship.notes}` : ""}</small></span>
                   <span aria-hidden="true">→</span>
                 </button>
               );
