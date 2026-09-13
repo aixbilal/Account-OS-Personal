@@ -52,7 +52,15 @@ const settingsSections: Array<{ id: SettingsSection; label: string; icon: typeof
 const themeOptions: ThemePreference[] = ["light", "dark", "system"];
 
 export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswordChanged, onThemeChange, onVaultDeleted, onVaultOperationChange, onVaultRestored, theme }: SettingsScreenProps) {
-  const [section, setSection] = useState<SettingsSection>("appearance");
+  // Item 5 (UI Refinement Pass 2): the nav no longer switches which
+  // section is rendered - every section is always in the DOM now, in one
+  // continuous scroll. `activeSection` instead tracks which nav item to
+  // highlight, driven by an IntersectionObserver (scroll position) and by
+  // clicking a nav item (an immediate jump, ahead of the observer, so the
+  // highlight doesn't visibly lag the smooth-scroll animation).
+  const [activeSection, setActiveSection] = useState<SettingsSection>("appearance");
+  const contentRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef(new Map<SettingsSection, HTMLElement>());
   const [importPath, setImportPath] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -281,24 +289,42 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
     }
   }
 
-  function changeSection(nextSection: SettingsSection) {
-    if (section === "data" && nextSection !== "data") {
-      setMasterPassword("");
-      setPasswordVisible(false);
-      setConfirmRestore(false);
-    }
-    if (section === "security" && nextSection !== "security") {
-      resetRekeyFields();
-      setRekeyStatus(null);
-    }
-    if (section === "system" && nextSection !== "system") {
-      setOpenFolderStatus(null);
-      setResetAppStatus(null);
-      setDeleteVaultStatus(null);
-      setConfirmResetApp(false);
-      setConfirmDeleteVault(false);
-    }
-    setSection(nextSection);
+  /** Scrolls to a section (nav click) and marks it current immediately,
+   * rather than waiting for the IntersectionObserver to catch up once the
+   * (possibly animated) scroll finishes. */
+  function scrollToSection(id: SettingsSection) {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    sectionRefs.current.get(id)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    setActiveSection(id);
+  }
+
+  // Scrollspy: watches every section's heading and marks whichever one has
+  // most recently crossed a line near the top of the scrollable content as
+  // "current" - the standard IntersectionObserver scrollspy recipe. A
+  // narrow `rootMargin` band (rather than the whole container) means only
+  // one section transitions in/out of view at a time for ordinary
+  // scrolling, so the most recent transition is a reliable answer.
+  useEffect(() => {
+    const root = contentRef.current;
+    if (!root) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = (entry.target as HTMLElement).dataset.settingsSection as SettingsSection | undefined;
+            if (id) setActiveSection(id);
+          }
+        }
+      },
+      { root, rootMargin: "-24px 0px -70% 0px", threshold: 0 },
+    );
+    for (const element of sectionRefs.current.values()) observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  function registerSectionRef(id: SettingsSection, element: HTMLElement | null) {
+    if (element) sectionRefs.current.set(id, element);
+    else sectionRefs.current.delete(id);
   }
 
   function handleThemeKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -327,12 +353,16 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
         <div><p className="eyebrow">Settings</p><h1 id="settings-title">Preferences</h1></div>
         {settingsSections.map((item) => {
           const Icon = item.icon;
-          return <button aria-current={section === item.id ? "page" : undefined} data-active={section === item.id} disabled={(exportWorking || restoreWorking || cloudWorking) && section !== item.id} key={item.id} onClick={() => changeSection(item.id)} type="button"><Icon aria-hidden="true" size={17} /><span>{item.label}</span></button>;
+          // `aria-current="location"` (not "page"): this nav doesn't switch
+          // page content anymore, it indicates which part of one
+          // continuous page is currently in view (WAI-ARIA 1.2's token for
+          // exactly this on-page-location/scrollspy pattern).
+          return <button aria-current={activeSection === item.id ? "location" : undefined} data-active={activeSection === item.id} key={item.id} onClick={() => scrollToSection(item.id)} type="button"><Icon aria-hidden="true" size={17} /><span>{item.label}</span></button>;
         })}
       </aside>
 
-      <div className="settings-content">
-        {section === "appearance" && (
+      <div className="settings-content" ref={contentRef}>
+        <div data-settings-section="appearance" id="settings-section-appearance" ref={(element) => registerSectionRef("appearance", element)}>
           <SettingsSectionHeading description="Choose how Account OS looks on this device." icon={Palette} title="Appearance">
             <div className="theme-choice" role="radiogroup" aria-label="Appearance theme">
               {themeOptions.map((option, index) => (
@@ -344,9 +374,9 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
               ))}
             </div>
           </SettingsSectionHeading>
-        )}
+        </div>
 
-        {section === "security" && (
+        <div data-settings-section="security" id="settings-section-security" ref={(element) => registerSectionRef("security", element)}>
           <SettingsSectionHeading description="Verified properties of the local vault—not simulated settings." icon={ShieldCheck} title="Security">
             <div className="settings-list">
               <InfoRow icon={LockKeyhole} label="Vault locking" value="Manual lock from the navigation" />
@@ -365,9 +395,9 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
             </article>
             <p className="settings-callout"><Info size={17} />Windows Hello and automatic lock controls are not part of this V3 candidate.</p>
           </SettingsSectionHeading>
-        )}
+        </div>
 
-        {section === "data" && (
+        <div data-settings-section="data" id="settings-section-data" ref={(element) => registerSectionRef("data", element)}>
           <SettingsSectionHeading description="Create and validate encrypted Account OS backups." icon={DatabaseBackup} title="Data & Recovery">
             <div className="recovery-grid">
               <article className="settings-card">
@@ -387,15 +417,15 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
               </article>
             </div>
           </SettingsSectionHeading>
-        )}
+        </div>
 
-        {section === "connected" && (
+        <div data-settings-section="connected" id="settings-section-connected" ref={(element) => registerSectionRef("connected", element)}>
           <SettingsSectionHeading description="Cloud identity and local vault unlock stay separate." icon={Cloud} title="Connected">
             <CloudSyncPanel isNative={isNative} onBusyChange={setCloudWorking} onVaultRestored={onCloudVaultRestored} />
           </SettingsSectionHeading>
-        )}
+        </div>
 
-        {section === "system" && (
+        <div data-settings-section="system" id="settings-section-system" ref={(element) => registerSectionRef("system", element)}>
           <SettingsSectionHeading description="Build information for this Account OS installation." icon={MonitorCog} title="System">
             <div className="settings-list">
               <InfoRow icon={Info} label="Application" value="Account OS" />
@@ -441,7 +471,7 @@ export function SettingsScreen({ isNative, onCloudVaultRestored, onMasterPasswor
               <OperationMessage status={deleteVaultStatus} />
             </article>
           </SettingsSectionHeading>
-        )}
+        </div>
       </div>
 
       {confirmRestore && (

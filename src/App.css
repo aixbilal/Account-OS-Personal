@@ -3240,7 +3240,7 @@ p {
   background: var(--aos-surface);
 }
 
-.settings-nav button[aria-current="page"] {
+.settings-nav button[aria-current="location"] {
   border-color: color-mix(in srgb, var(--aos-primary) 18%, var(--aos-border));
   color: var(--aos-primary);
   background: var(--aos-primary-soft);
@@ -3254,8 +3254,20 @@ p {
   scrollbar-color: var(--aos-border-strong) transparent;
 }
 
+/* Item 5 (UI Refinement Pass 2): every section now renders in one
+   continuous scroll (see SettingsScreen.tsx) instead of one at a time -
+   space them apart so each still reads as its own distinct section
+   rather than a run-on wall of cards. `scroll-margin-top` gives
+   `scrollIntoView` (triggered by clicking a nav item) some breathing room
+   above the section instead of tucking its heading flush against the
+   scroll container's own edge. */
 .settings-section {
   width: min(760px, 100%);
+  scroll-margin-top: 20px;
+}
+
+.settings-content > div:not(:last-child) {
+  margin-bottom: 64px;
 }
 
 .settings-section-header {

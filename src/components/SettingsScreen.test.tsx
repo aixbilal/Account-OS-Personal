@@ -161,7 +161,12 @@ describe("SettingsScreen — change master password", () => {
     await user.type(screen.getByLabelText("Confirm new master password"), "new-master-TEST");
     await user.click(screen.getByRole("button", { name: "Change master password" }));
 
-    expect(await screen.findByText(/available in the installed desktop application/)).toBeInTheDocument();
+    // Item 5 (UI Refinement Pass 2) made every section always-rendered, so
+    // the generic phrase "available in the installed desktop application"
+    // now also matches the System section's own always-visible device-info
+    // placeholder - matched on the specific rekey message instead to keep
+    // this assertion about the rekey status, not any status.
+    expect(await screen.findByText(/Changing the master password is available/)).toBeInTheDocument();
     // Not just the rekey call: isNative false also skips the mount-time
     // device_info/vault_file_size fetches, so nothing should call invoke at all.
     expect(invoke).not.toHaveBeenCalled();
