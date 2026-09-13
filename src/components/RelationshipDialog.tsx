@@ -17,18 +17,29 @@ export const relationshipTypeLabels: Record<RelationshipType, string> = {
   "2FA_DEVICE": "2FA device",
 };
 
+/** Bug fix (UI exactness pass, Item 1): the incoming-direction labels used
+ * to be built by appending " for" to the outward label (e.g. "2FA for",
+ * "GitHub sign-in for") - reproduced live as a genuinely incomplete
+ * sentence, not a truncation/overflow bug: the template only ever produced
+ * "{type} for" with nothing after it, since the badge doesn't carry (and
+ * per the reference, doesn't need) the counterpart's name - the panel's
+ * own header already establishes which two accounts are connected. Each
+ * entry below is now a complete, self-contained label on its own, matching
+ * the reference's pattern (04/07 show "Uses", "Shares login", "Same
+ * account", "Syncs with", "Owns", "Depends on" - all short and complete).
+ * GOOGLE_SSO, GITHUB_SSO and 2FA_DEVICE aren't listed here because their
+ * outward label ("Google sign-in", "GitHub sign-in", "2FA device") is
+ * already a complete, direction-neutral badge - no separate incoming
+ * wording was needed once the broken " for" suffix was removed. */
 export function relationshipDirectionLabel(relationship: AccountRelationship, accountId: string) {
   const incoming = relationship.targetAccountId === accountId;
   const outward = relationshipTypeLabels[relationship.relationshipType];
   if (!incoming) return outward;
   const incomingLabels: Partial<Record<RelationshipType, string>> = {
-    LOGIN_WITH: "Login for",
-    GOOGLE_SSO: "Google sign-in for",
-    GITHUB_SSO: "GitHub sign-in for",
-    RECOVERY_EMAIL: "Recovery for",
+    LOGIN_WITH: "Shares login",
+    RECOVERY_EMAIL: "Recovery contact",
     OWNS: "Owned by",
     DEPENDS_ON: "Required by",
-    "2FA_DEVICE": "2FA for",
   };
   return incomingLabels[relationship.relationshipType] ?? outward;
 }

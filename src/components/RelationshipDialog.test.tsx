@@ -85,8 +85,8 @@ describe("RelationshipDialog", () => {
       />,
     );
 
-    expect(screen.getAllByText("Google sign-in for").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Recovery for").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Google sign-in").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Recovery contact").length).toBeGreaterThan(0);
     expect(screen.queryByText("GOOGLE_SSO")).not.toBeInTheDocument();
   });
 
