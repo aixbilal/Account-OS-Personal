@@ -670,11 +670,23 @@ p {
   flex: 0 0 auto;
   place-items: center;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--service-accent) 15%, var(--aos-border));
+  /* UI exactness pass, Item 2: this tile used to wash the tile's own
+     border/background/shadow/monogram-color in the per-service accent
+     (--service-accent/--service-soft, set inline per account by
+     ServiceIdentityMark/Hero). Reproduced live: every small icon instance
+     (Vault list rows, Map nodes, Relationships panel rows/header) carried
+     a visible brand tint, while the reference (04/07/08) keeps every one
+     of those neutral and reserves color exclusively for
+     ServiceIdentityHero's giant watermark (.service-hero-watermark-svg,
+     untouched by this change) and the hero's own gradient wash
+     (.service-identity-hero, also untouched). Neutral now at every size,
+     including .service-identity-large - the hero's own icon avatar reads
+     as a plain white/gray tile in the reference too, same as a list row. */
+  border: 1px solid var(--aos-border);
   border-radius: 12px;
-  color: var(--service-accent);
-  background: color-mix(in srgb, var(--service-soft) 78%, var(--aos-surface));
-  box-shadow: 0 7px 18px color-mix(in srgb, var(--service-accent) 9%, transparent);
+  color: var(--aos-text);
+  background: var(--aos-surface);
+  box-shadow: 0 7px 18px rgba(47, 89, 132, 0.09);
   font-weight: 780;
   letter-spacing: -0.03em;
 }
@@ -3565,10 +3577,12 @@ p {
 }
 
 [data-theme="dark"] .service-identity {
-  /* Item 8: richer than the pre-existing 14% mix, so icon chips carry
-     more of each service's own color instead of reading as near-uniform
-     dark tiles. */
-  background: color-mix(in srgb, var(--service-soft) 24%, var(--aos-surface-soft));
+  /* UI exactness pass, Item 2: the fixture pass's Item 8 richened this to
+     a 24% per-service mix so tiles wouldn't read as uniform dark blocks -
+     but that's exactly the brand-tint-on-small-tiles bug this pass fixes
+     (see the base .service-identity rule above). Plain neutral dark
+     surface now, consistent with the light-theme fix. */
+  background: var(--aos-surface-soft);
 }
 
 [data-theme="dark"] .service-identity-hero {
