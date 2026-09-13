@@ -1135,7 +1135,20 @@ p {
   border-radius: var(--aos-radius-card);
   padding: 9px;
   color: var(--aos-text);
-  background: var(--aos-surface-soft);
+  /* UI exactness pass, Item 4: this used to be --aos-surface-soft, a pale
+     blue-tinted fill (#f4f8fc light) barely distinguishable from its own
+     border (#dbe8f3) and from the panel background around it - reproduced
+     live, it read as one shared light-blue container rather than the
+     reference's (04) individually distinct white bordered cards. Same
+     background + shadow recipe .inspector-section already uses for its own
+     card definition (border + shadow do the separating, not a background
+     tint), so this reads consistently whether it's shown by AccountInspector
+     (Vault) or AccountConnectionsPanel (Relationships/Map, which reuses
+     this same class via .relationship-row-main) - both are still separate
+     component implementations of their own surrounding panel, but this
+     specific row/card treatment is now the one shared style either draws. */
+  background: var(--aos-surface);
+  box-shadow: 0 6px 16px rgba(47, 89, 132, 0.07);
   text-align: left;
 }
 
