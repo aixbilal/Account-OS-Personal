@@ -1206,8 +1206,14 @@ p {
   gap: 11px;
   border-radius: var(--aos-radius-card);
   padding: 13px 15px;
-  color: var(--aos-success);
-  background: color-mix(in srgb, var(--aos-success) 8%, var(--aos-surface));
+  /* UI exactness pass, Item 3: this reassurance banner rendered green
+     (--aos-success) live; the reference (04-vault-populated-account-
+     selected.png) renders it blue, matching the app's primary/informational
+     color rather than a "success" one - this isn't confirming an action
+     succeeded, it's a standing reassurance statement, so --aos-primary is
+     the semantically correct token too, not just a color match. */
+  color: var(--aos-primary);
+  background: color-mix(in srgb, var(--aos-primary) 8%, var(--aos-surface));
 }
 
 .local-encryption-note strong,
